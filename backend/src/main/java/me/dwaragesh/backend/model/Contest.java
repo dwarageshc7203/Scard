@@ -2,11 +2,14 @@ package me.dwaragesh.backend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
+import me.dwaragesh.backend.model.enums.Platform;
 
 import java.time.LocalDate;
 
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Contest {
@@ -18,7 +21,7 @@ public class Contest {
     @ManyToOne
     private Profile profile;
 
-    private String platform;
+    private Platform platform;
     private String contestName;
     private LocalDate contestDate;
     private long contestRating;

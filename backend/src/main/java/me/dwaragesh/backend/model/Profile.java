@@ -2,11 +2,13 @@ package me.dwaragesh.backend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Profile {
@@ -22,6 +24,7 @@ public class Profile {
 
     private String designation;
     private String profileUrl;
+    private String asciiArt;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Contribution> contributions;

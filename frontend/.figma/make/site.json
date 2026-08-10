@@ -1,0 +1,10 @@
+{
+  "description": "Scard streamlines project management by allowing users to create, organize, and track tasks efficiently, enhancing productivity for teams and individuals.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -9,6 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ContributionRepository extends JpaRepository<Contribution, Long> {
-    List<Contribution> findByProfileProfileIdAndPlatform(UUID profileId, String platform);
-    Optional<Contribution> findByProfileProfileIdAndPlatformAndContributionDate(UUID profileId, String platform, LocalDate date);
+    List<Contribution> findByProfileProfileIdAndPlatform(int profileId, String platform);
+    Optional<Contribution> findByProfileProfileIdAndPlatformAndContributionDate(int profileId, String platform, LocalDate date);
 }

@@ -2,6 +2,7 @@ package me.dwaragesh.backend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -11,7 +12,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "app_user")
-
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
@@ -22,6 +23,7 @@ public class User {
     private String googleId;
     private String email;
     private String imageURL;
+    private String userName;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;

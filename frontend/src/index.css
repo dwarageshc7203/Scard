@@ -1,0 +1,148 @@
+@import "./fonts.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Graphik', 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-mono: 'Graphik', SFMono-Regular, Consolas, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+}
+
+:root {
+  /* Default Theme: Dark Mode */
+  --bg: #252525;
+  --surface: #141414;
+  --surface-2: #1C1C1C;
+  --border: #252525;
+  --text: #F0F0F0;
+  --muted: #888888;
+  --accent: #3B82F6;
+}
+
+html.light {
+  /* Light Mode */
+  --bg: #FAFAFA;
+  --surface: #FFFFFF;
+  --surface-2: #F4F4F5;
+  --border: #E4E4E7;
+  --text: #09090B;
+  --muted: #71717A;
+  --accent: #2563EB;
+}
+
+html {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom noteSnips branding typography styles */
+.sansation-bold-italic {
+  font-family: 'Sansation', sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.sansation-regular {
+  font-family: 'Sansation', sans-serif;
+  font-weight: 400;
+}
+
+/* Fade in blur keyframe animations */
+@keyframes fadeInBlur {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0px);
+  }
+}
+
+.animate-fade-in-blur {
+  animation: fadeInBlur 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+
+/* Custom timeline styles */
+.timeline-dot {
+  position: relative;
+}
+.timeline-dot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  bottom: -40px;
+  width: 1px;
+  background-color: var(--border);
+  transform: translateX(-50%);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Linear sweep transition from right top to left bottom using View Transitions API */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: 650ms cubic-bezier(0.4, 0, 0.2, 1) both theme-swipe;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-swipe {
+  from {
+    clip-path: circle(0% at 100% 0%);
+  }
+  to {
+    clip-path: circle(150% at 100% 0%);
+  }
+}

@@ -1,7 +1,37 @@
 package me.dwaragesh.backend.service;
 
+import me.dwaragesh.backend.model.User;
+import me.dwaragesh.backend.model.dto.MeResponse;
+import me.dwaragesh.backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+
+    @Autowired
+    private UserRepository repository;
+
+    public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
+        return repository.findByGoogleId(googleId)
+                .orElseGet(() -> {
+                    User user = new User();
+                    user.setGoogleId(googleId);
+                    user.setEmail(email);
+                    user.setImageURL(imageURL);
+                    return repository.save(user);
+                });
+    }
+
+    public MeResponse toMeResponse(User user) {
+        boolean hasProfile = user.getProfile() != null;
+        return new MeResponse(
+                user.getUserId(),
+                user.getEmail(),
+                hasProfile ? user.getProfile().getUserName(): null,
+                user.getImageURL(),
+                hasProfile
+        );
+    }
+
 }

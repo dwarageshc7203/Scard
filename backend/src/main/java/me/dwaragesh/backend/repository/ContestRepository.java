@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ContestRepository extends JpaRepository<Contest, Integer> {
-    List<Contest> findByProfileProfileId(UUID profileId);
+    List<Contest> findByProfileProfileId(int profileId);
 }

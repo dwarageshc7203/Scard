@@ -1,11 +1,10 @@
 package me.dwaragesh.backend.model.dto;
 
-public record Profile(
+public record ProfileResponse(
 
         String userName,
         String designation,
-        String asciiArt,
-        
+        String profileURL
 
 ) {
 }

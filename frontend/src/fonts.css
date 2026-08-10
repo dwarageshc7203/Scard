@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/862da263b00d51fa087de8ae18a40653.woff2') format('woff2'),
+    url('https://db.onlinewebfonts.com/t/862da263b00d51fa087de8ae18a40653.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/5bf5075d9e504c546e5fc576a8d8e578.woff2') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/f4d75ae31bf939ae022137be80757a3e.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}

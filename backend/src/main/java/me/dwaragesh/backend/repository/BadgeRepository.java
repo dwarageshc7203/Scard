@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BadgeRepository extends JpaRepository<Badge, Integer> {
-    List<Badge> findByProfileProfileId(UUID profileId);
+    List<Badge> findByProfileProfileId(int profileId);
 }

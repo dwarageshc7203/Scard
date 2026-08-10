@@ -1,0 +1,94 @@
+package me.dwaragesh.backend.service;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+
+@Service
+public class AsciiArtService {
+
+    private static final String RAMP = "@%#*+=-:. "; // darkest to lightest
+    private static final int GRID_WIDTH = 100;   // characters wide
+    private static final int GRID_HEIGHT = 100;  // characters tall
+    private static final int CHAR_PIXEL_SIZE = 8; // output image scale per character
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
+
+    /** Step 1: image -> ASCII text grid */
+    public String generateAsciiText(InputStream imageStream) throws IOException {
+        BufferedImage original = ImageIO.read(imageStream);
+        if (original == null) {
+            throw new IllegalArgumentException("Could not read image — unsupported or corrupt file");
+        }
+        BufferedImage resized = resize(original, GRID_WIDTH, GRID_HEIGHT);
+
+        StringBuilder ascii = new StringBuilder();
+        for (int y = 0; y < resized.getHeight(); y++) {
+            for (int x = 0; x < resized.getWidth(); x++) {
+                int gray = toGrayscale(resized.getRGB(x, y));
+                int rampIndex = gray * (RAMP.length() - 1) / 255;
+                ascii.append(RAMP.charAt(rampIndex));
+            }
+            ascii.append("\n");
+        }
+        return ascii.toString();
+    }
+
+    /** Step 2: ASCII text -> rendered PNG, saved to disk, returns the public URL path */
+    public String renderAndSave(String asciiText, String filenamePrefix) throws IOException {
+        String[] lines = asciiText.split("\n");
+        int width = lines[0].length() * CHAR_PIXEL_SIZE;
+        int height = lines.length * CHAR_PIXEL_SIZE;
+
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+        g.setColor(Color.BLACK);
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, CHAR_PIXEL_SIZE));
+
+        for (int row = 0; row < lines.length; row++) {
+            g.drawString(lines[row], 0, (row + 1) * CHAR_PIXEL_SIZE);
+        }
+        g.dispose();
+
+        File dir = new File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        String filename = filenamePrefix + "-" + UUID.randomUUID() + ".png";
+        File outFile = new File(dir, filename);
+        ImageIO.write(image, "png", outFile);
+
+        return "/uploads/" + filename;
+    }
+
+    /** Convenience: does both steps for a MultipartFile upload */
+    public String processUpload(MultipartFile file, String filenamePrefix) throws IOException {
+        String asciiText = generateAsciiText(file.getInputStream());
+        return renderAndSave(asciiText, filenamePrefix);
+    }
+
+    private BufferedImage resize(BufferedImage original, int width, int height) {
+        BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = resized.createGraphics();
+        g.drawImage(original, 0, 0, width, height, null);
+        g.dispose();
+        return resized;
+    }
+
+    private int toGrayscale(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return (int) (0.299 * r + 0.587 * g + 0.114 * b); // luminance-weighted, not flat average
+    }
+}
