@@ -4,6 +4,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import me.dwaragesh.backend.model.Badge;
 import me.dwaragesh.backend.model.Contribution;
 import me.dwaragesh.backend.model.Profile;
+import me.dwaragesh.backend.model.enums.Platform;
 import me.dwaragesh.backend.repository.BadgeRepository;
 import me.dwaragesh.backend.repository.ContributionRepository;
 import me.dwaragesh.backend.repository.ProfileRepository;
@@ -36,11 +37,11 @@ public class ExportService {
     }
 
     private String buildHtml(String userName) {
-        Profile profile = profileRepository.findByUserName(userName)
+        Profile profile = profileRepository.findFirstByUserName(userName)
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
         List<Contribution> contributions = contributionRepository
-                .findByProfileProfileIdAndPlatform(profile.getProfileId(), "GITHUB");
+                .findByProfileProfileIdAndPlatform(profile.getProfileId(), Platform.GITHUB);
         List<Badge> badges = badgeRepository.findByProfileProfileId(profile.getProfileId());
 
         StringBuilder heatmapHtml = new StringBuilder();

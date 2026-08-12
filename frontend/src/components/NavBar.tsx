@@ -50,7 +50,12 @@ const NavBar: FC<NavBarProps> = ({ currentPage, onNavigate }) => {
             {renderThemeIcon()}
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => { }} className="hidden md:inline-flex gap-1.5">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.location.href = '/oauth2/authorization/google'} 
+            className="hidden md:inline-flex gap-1.5"
+          >
             <LogIn className="w-4 h-4" />
             <span>Log in</span>
           </Button>

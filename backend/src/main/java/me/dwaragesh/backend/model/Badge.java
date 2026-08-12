@@ -19,8 +19,10 @@ public class Badge {
     private int badgeId;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Profile profile;
 
+    @Enumerated(EnumType.STRING)
     private Platform platform;
     private String badgeName;
     private String badgeURL;

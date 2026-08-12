@@ -16,8 +16,8 @@
 
 :root {
   /* Default Theme: Dark Mode */
-  --bg: #252525;
-  --surface: #141414;
+  --bg: #191919;
+  --surface: #272727;
   --surface-2: #1C1C1C;
   --border: #252525;
   --text: #F0F0F0;
@@ -37,7 +37,7 @@ html.light {
 }
 
 html {
-  background-color: var(--bg);
+  background-color: var(--surface);
   color: var(--text);
   font-family: var(--font-sans);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -45,7 +45,7 @@ html {
 }
 
 body {
-  background-color: var(--bg);
+  background-color: var(--surface);
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -71,6 +71,7 @@ body {
     filter: blur(8px);
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     filter: blur(0px);
@@ -98,6 +99,7 @@ body {
 .timeline-dot {
   position: relative;
 }
+
 .timeline-dot::after {
   content: '';
   position: absolute;
@@ -142,6 +144,7 @@ body {
   from {
     clip-path: circle(0% at 100% 0%);
   }
+
   to {
     clip-path: circle(150% at 100% 0%);
   }

@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import type { User } from '../data/mockData'
+import type { User } from '../types'
 import Button from '../components/ui/button'
 import Card, { CardHeader, CardContent } from '../components/ui/card'
 import Avatar from '../components/ui/avatar'

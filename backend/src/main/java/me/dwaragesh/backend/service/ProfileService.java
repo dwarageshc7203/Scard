@@ -9,8 +9,13 @@ import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ProfileService {
 
     @Autowired
@@ -20,12 +25,16 @@ public class ProfileService {
         return new ProfileResponse(
                 profile.getUserName(),
                 profile.getDesignation(),
-                profile.getProfileUrl());
+                profile.getProfileUrl(),
+                profile.getAsciiArt(),
+                profile.getBadges(),
+                profile.getContest(),
+                profile.getContributions());
     }
 
     public ProfileResponse createProfile(User user, OnBoardingRequest request) {
 
-        if (repository.existsByUserName(user.getUserName())) {
+        if (repository.existsByUserName(request.userName())) {
             throw new UsernameTakenException("Username already taken: " + request.userName());
         }
 
@@ -40,9 +49,15 @@ public class ProfileService {
     }
 
     public ProfileResponse getProfile(String userName) {
-        Profile profile = repository.findByUserName(userName)
+        Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
         return toResponse(profile);
+    }
+
+    public List<ProfileResponse> getAllProfiles() {
+        return repository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     public ProfileResponse patchProfile(User user, PatchProfileRequest request) {

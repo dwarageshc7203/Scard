@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react'
-import type { User } from '../data/mockData'
+import type { User } from '../types'
 import Avatar from './ui/avatar'
 import Badge from './ui/badge'
 import Button from './ui/button'

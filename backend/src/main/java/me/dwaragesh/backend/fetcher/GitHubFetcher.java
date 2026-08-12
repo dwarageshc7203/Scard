@@ -61,7 +61,7 @@ public class GitHubFetcher implements PlatformFetcher{
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(githubToken);
+            headers.setBearerAuth(githubToken != null ? githubToken.trim() : "");
 
             String body = objectMapper.writeValueAsString(new GraphQLRequest(QUERY,
                     new Variables(externalUsername)));
@@ -90,7 +90,8 @@ public class GitHubFetcher implements PlatformFetcher{
             return new PlatformSyncResult(contributions, badges, contests);
 
         } catch (Exception e) {
-            throw new PlatformFetchException("Failed to fetch GitHub data for " + externalUsername);
+            e.printStackTrace();
+            throw new PlatformFetchException("Failed to fetch GitHub data for " + externalUsername, e);
         }
     }
 

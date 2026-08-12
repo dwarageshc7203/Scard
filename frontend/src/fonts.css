@@ -21,3 +21,31 @@
   font-weight: 300;
   font-style: normal;
 }
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/076550ba1f35c1eeb75f430fee2bb6a9.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/373efd69166d31c2b5052a505527acbf.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/2aa5f6db10ab7b69465c95555c235503.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('https://db.onlinewebfonts.com/t/d20eb52d29d9f6d56c1c8fc0eefc560e.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}

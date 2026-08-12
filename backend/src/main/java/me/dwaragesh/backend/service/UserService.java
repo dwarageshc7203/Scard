@@ -15,11 +15,16 @@ public class UserService {
     public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
         return repository.findByGoogleId(googleId)
                 .orElseGet(() -> {
-                    User user = new User();
-                    user.setGoogleId(googleId);
-                    user.setEmail(email);
-                    user.setImageURL(imageURL);
-                    return repository.save(user);
+                    return repository.findAll().stream()
+                            .filter(u -> email != null && email.equals(u.getEmail()))
+                            .findFirst()
+                            .orElseGet(() -> {
+                                User user = new User();
+                                user.setGoogleId(googleId);
+                                user.setEmail(email);
+                                user.setImageURL(imageURL);
+                                return repository.save(user);
+                            });
                 });
     }
 

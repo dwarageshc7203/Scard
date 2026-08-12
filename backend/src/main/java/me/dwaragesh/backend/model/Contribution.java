@@ -19,8 +19,10 @@ public class Contribution {
     private long contributionId;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Profile profile;
 
+    @Enumerated(EnumType.STRING)
     private Platform platform;
     private LocalDate contributionDate;
     private int count;

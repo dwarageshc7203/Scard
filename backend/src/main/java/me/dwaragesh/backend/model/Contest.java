@@ -19,8 +19,10 @@ public class Contest {
     private int contestId;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Profile profile;
 
+    @Enumerated(EnumType.STRING)
     private Platform platform;
     private String contestName;
     private LocalDate contestDate;

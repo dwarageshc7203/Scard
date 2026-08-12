@@ -19,6 +19,7 @@ public class Profile {
 
     @OneToOne
     @JoinColumn(name = "userId")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
     private String userName;
 

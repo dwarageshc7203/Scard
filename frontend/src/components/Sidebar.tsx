@@ -1,17 +1,19 @@
 import { useState, type FC } from 'react'
-import type { User } from '../data/mockData'
+import type { User } from '../types'
 import Avatar from './ui/avatar'
 
 interface SidebarProps {
   users: User[]
   selectedUserId: string
   onSelectUser: (id: string) => void
+  currentUser?: any
 }
 
 const Sidebar: FC<SidebarProps> = ({
   users,
   selectedUserId,
-  onSelectUser
+  onSelectUser,
+  currentUser
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'activity' | 'new' | 'az'>('new')
@@ -38,7 +40,7 @@ const Sidebar: FC<SidebarProps> = ({
     })
 
   return (
-    <div className="w-64 flex-shrink-0 flex flex-col h-full bg-[#141414] text-text border-r border-border/40 select-none">
+    <div className="w-64 flex-shrink-0 flex flex-col h-full bg-surface text-text border-r border-border/40 select-none">
       {/* Search Input Section */}
       <div className="p-4 pb-2 space-y-4">
         <div className="flex items-center justify-between text-xs text-muted">
@@ -120,6 +122,55 @@ const Sidebar: FC<SidebarProps> = ({
           )
         })}
       </div>
+
+      {/* Authenticated user footer */}
+      {(() => {
+        const userToShow = currentUser || {
+          userName: 'dwarageshc7203',
+          email: 'dwarageshc7203@gmail.com',
+          imageURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'
+        }
+        return (
+          <div className="border-t border-border/40 p-4 bg-surface-2/20 flex flex-col items-center gap-2 mt-auto">
+            <div className="flex items-center gap-3 w-full px-2">
+              {userToShow.imageURL ? (
+                <img
+                  src={userToShow.imageURL}
+                  className="w-8 h-8 rounded-full border border-border/60 object-cover"
+                  alt="Profile"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full border border-border/60 bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
+                  {userToShow.userName?.substring(0, 2).toUpperCase() || 'U'}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold truncate text-text">
+                  {userToShow.userName}
+                </div>
+                <div className="text-[10px] text-muted truncate">
+                  {userToShow.email}
+                </div>
+              </div>
+            </div>
+            {!currentUser ? (
+              <button
+                onClick={() => window.location.href = '/oauth2/authorization/google'}
+                className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors mt-1 hover:underline cursor-pointer"
+              >
+                Log in with Google
+              </button>
+            ) : (
+              <button
+                onClick={() => window.location.href = '/logout'}
+                className="text-[10px] text-muted hover:text-red-400 font-medium transition-colors mt-1 hover:underline cursor-pointer"
+              >
+                not you? Log out
+              </button>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }
