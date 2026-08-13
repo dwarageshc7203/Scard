@@ -121,9 +121,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
           {/* Hero Banner & Overlapping Avatar */}
           <div className="relative pt-[40px]">
             {/* Banner Background */}
-            <div className="absolute top-0 left-0 right-0 h-[140px] bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none transition-colors duration-300" />
+            <div className="absolute top-0 left-0 right-0 h-[220px] bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none transition-colors duration-300" />
 
-            <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-end -mt-16 sm:mt-[10px]">
+            <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-end -mt-16 sm:mt-[120px]">
               {/* Avatar overlapping the banner */}
               <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-2 shadow-2xl transition-colors duration-300">
                 <Avatar

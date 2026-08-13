@@ -1,5 +1,4 @@
-import type { FC } from 'react'
-import HeatMap from '@uiw/react-heat-map'
+import { FC, useMemo } from 'react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTheme } from '@/context/ThemeContext'
 
@@ -11,82 +10,117 @@ interface HeatmapProps {
 const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
   const { resolvedTheme } = useTheme()
 
-  const customTheme = {
-    dark: {
-      0: '#222222ff', // empty
-      1: '#0e4429', // 1-3
-      4: '#006d32', // 4-7
-      8: '#26a641', // 8-11
-      12: '#39d353' // 12+
-    },
-    light: {
-      0: '#ebedf0',
-      1: '#9be9a8',
-      4: '#40c463',
-      8: '#30a14e',
-      12: '#216e39'
-    },
-  }
-
-  // 1. Determine start and end dates for the selected year
   const currentYear = new Date().getFullYear()
   const displayYear = year ? parseInt(year.toString(), 10) : currentYear
   const isCurrentYear = displayYear === currentYear
 
-  // Generate 12 months for the selected year
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const firstDay = new Date(displayYear, i, 1)
-    let lastDay = new Date(displayYear, i + 1, 0)
+  // Start on Jan 1st of displayYear
+  const startDate = new Date(displayYear, 0, 1)
+  // End on Dec 31st (or today if current year)
+  const endDate = isCurrentYear ? new Date() : new Date(displayYear, 11, 31)
 
-    // If it's the current year and the current month, end on today
-    if (isCurrentYear && i === new Date().getMonth()) {
-      lastDay = new Date()
+  // Map data by date string for O(1) lookup
+  const dataMap = useMemo(() => {
+    const map = new Map<string, number>()
+    data.forEach(d => map.set(d.date, d.count))
+    return map
+  }, [data])
+
+  // Generate all days
+  const allDays = useMemo(() => {
+    const days: Date[] = []
+    let current = new Date(startDate)
+    while (current <= endDate) {
+      days.push(new Date(current))
+      current.setDate(current.getDate() + 1)
     }
+    return days
+  }, [startDate, endDate])
 
+  // Group by month
+  const months = useMemo(() => {
+    const monthGroups: { name: string; columns: (Date | null)[][] }[] = []
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    return {
-      name: monthNames[i],
-      start: firstDay,
-      end: lastDay,
-      isFuture: isCurrentYear && i > new Date().getMonth()
-    }
-  }).filter(m => !m.isFuture) // Hide future months if it's the current year
 
-  // Filter out 0 count so they fall back to emptyColor safely
-  const validData = data.filter(d => d.count > 0)
+    let currentMonth = -1
+    let currentColumn: (Date | null)[] = []
+
+    allDays.forEach(day => {
+      const monthIdx = day.getMonth()
+      const dayOfWeek = day.getDay() // 0 = Sun, 6 = Sat
+
+      if (monthIdx !== currentMonth) {
+        // Start a new month
+        currentMonth = monthIdx
+        currentColumn = Array(7).fill(null)
+        monthGroups.push({
+          name: monthNames[monthIdx],
+          columns: [currentColumn]
+        })
+      }
+
+      currentColumn[dayOfWeek] = day
+
+      if (dayOfWeek === 6) {
+        // End of week, start new column
+        currentColumn = Array(7).fill(null)
+        monthGroups[monthGroups.length - 1].columns.push(currentColumn)
+      }
+    })
+
+    // Prune trailing empty columns
+    monthGroups.forEach(m => {
+      if (m.columns.length > 0 && m.columns[m.columns.length - 1].every(d => d === null)) {
+        m.columns.pop()
+      }
+    })
+
+    return monthGroups
+  }, [allDays])
+
+  const getColor = (count: number) => {
+    if (count === 0) return resolvedTheme === 'dark' ? '#3f3f3fff' : '#ebedf0'
+    if (count <= 3) return resolvedTheme === 'dark' ? '#0e4429' : '#9be9a8'
+    if (count <= 7) return resolvedTheme === 'dark' ? '#006d32' : '#40c463'
+    if (count <= 11) return resolvedTheme === 'dark' ? '#26a641' : '#30a14e'
+    return resolvedTheme === 'dark' ? '#39d353' : '#216e39'
+  }
+
+  const formatDate = (date: Date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
 
   return (
     <div className="w-full overflow-x-auto pb-4 flex items-center justify-start min-h-[160px] relative" style={{ scrollbarWidth: 'thin' }}>
       <TooltipProvider delayDuration={300}>
-        <div className="flex gap-4 px-2 pt-4 min-w-max">
-          {months.map((month, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-3">
-              <div className="relative overflow-visible">
-                <HeatMap
-                  value={validData}
-                  width={month.end.getDate() > 28 ? 100 : 80}
-                  startDate={month.start}
-                  endDate={month.end}
-                  rectSize={14}
-                  space={4}
-                  rectProps={{ rx: 3 }}
-                  style={{ color: 'transparent' }} // Hide built-in labels
-                  emptyColor={resolvedTheme === 'dark' ? '#222222' : '#ebedf0'}
-                  panelColors={resolvedTheme === 'dark' ? { 0: '#434242ff', 1: '#0e4429', 4: '#006d32', 8: '#26a641', 12: '#39d353' } : { 0: '#ebedf0', 1: '#9be9a8', 4: '#40c463', 8: '#30a14e', 12: '#216e39' }}
-                  weekLabels={idx === 0 ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['', '', '', '', '', '', '']}
-                  monthPlacement="bottom"
-                  monthLabels={['', '', '', '', '', '', '', '', '', '', '', '']} // Hide month labels inside
-                  rectRender={(props, data) => (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <rect {...props} />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className={`py-2 px-3 shadow-lg border ${resolvedTheme === 'dark' ? 'bg-[#2A2A2A] border-white/10' : 'bg-white border-gray-200'}`}>
-                        <span className={`font-bold ${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{data.count || 0}</span> submissions on <span className={`font-mono ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{data.date || 'unknown date'}</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                />
+        <div className="flex gap-5 px-2 pt-4 min-w-max">
+          {months.map((month, mIdx) => (
+            <div key={mIdx} className="flex flex-col items-center gap-3">
+              <div className="flex gap-[4px]">
+                {month.columns.map((col, cIdx) => (
+                  <div key={cIdx} className="flex flex-col gap-[4px]">
+                    {col.map((day, dIdx) => {
+                      if (!day) {
+                        return <div key={dIdx} className="w-[14px] h-[14px]" /> // Empty space
+                      }
+                      const dateStr = formatDate(day)
+                      const count = dataMap.get(dateStr) || 0
+                      return (
+                        <Tooltip key={dIdx}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="w-[14px] h-[14px] rounded-[3px] transition-all hover:ring-1 hover:ring-gray-400 cursor-pointer"
+                              style={{ backgroundColor: getColor(count) }}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className={`py-2 px-3 shadow-lg border ${resolvedTheme === 'dark' ? 'bg-[#2A2A2A] border-white/10' : 'bg-white border-gray-200'}`}>
+                            <span className={`font-bold ${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{count}</span> submissions on <span className={`font-mono ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{dateStr}</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
               <span className="text-[11px] text-gray-500 font-medium">{month.name}</span>
             </div>
