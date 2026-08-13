@@ -2,214 +2,219 @@ import React, { useState, useEffect, type FC } from 'react'
 import type { User } from '../types'
 import Sidebar from '../components/Sidebar'
 import Avatar from '../components/ui/avatar'
-import Badge from '../components/ui/badge'
+import BadgeContainer from '../components/BadgeContainer'
+import ContestGraph from '../components/ContestGraph'
 import Heatmap from '../components/Heatmap'
+import { mapContributionsToHeatmap } from '../lib/api'
 import EditProfileModal from '../components/EditProfileModal'
-import { Menu, Pencil, FileText, Globe, ExternalLink } from 'lucide-react'
-
-// Simple SVG Icons for coding platforms matching the requested look
-const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-  </svg>
-)
-
-const LeetCodeIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M16.102 17.93l-2.69 2.607c-.466.451-1.111.696-1.744.696a2.285 2.285 0 0 1-1.666-.696L5.352 16.03a2.38 2.38 0 0 1 0-3.327l6.652-6.52a2.286 2.286 0 0 1 1.666-.696c.633 0 1.278.245 1.744.696l2.69 2.607a.382.382 0 0 1 0 .54l-1.1 1.069a.377.377 0 0 1-.533 0l-2.8-2.713a.759.759 0 0 0-.583-.231c-.198 0-.401.077-.556.231l-5.902 5.784a.82.82 0 0 0 0 1.15l5.902 5.783c.155.155.358.232.556.232.222 0 .43-.082.583-.232l2.8-2.712a.38.38 0 0 1 .533 0l1.1 1.068a.382.382 0 0 1 0 .541zm3.626-3.623l-1.1 1.069a.382.382 0 0 1-.533 0l-2.8-2.712a.763.763 0 0 0-.584-.232c-.198 0-.4.077-.555.232l-1.1 1.077a.377.377 0 0 1-.534 0L9.82 9.997a.382.382 0 0 1 0-.54l1.1-1.07a.377.377 0 0 1 .533 0l2.8 2.713c.155.154.358.231.556.231.22 0 .428-.083.583-.231l4.137-4.055a.38.38 0 0 1 .533 0l1.1 1.07a.382.382 0 0 1 0 .54l-5.636 5.626z" />
-  </svg>
-)
-
-const CodeForcesIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4.5 12h3V24h-3zM10.5 0h3v24h-3zM16.5 6h3v18h-3z" />
-  </svg>
-)
+import { Menu, Pencil, BarChart2, Users } from 'lucide-react'
+import scardLogo from '../images/scard.png'
 
 interface ProfilePageProps {
   users: User[]
-  variant: 'directory' | 'standalone'
+  variant?: 'directory' | 'standalone'
   initialUserId?: string
   currentUser?: any
 }
 
-const ProfilePage: FC<ProfilePageProps> = ({ users, variant, initialUserId, currentUser }) => {
-  const [selectedUserId, setSelectedUserId] = useState(initialUserId ?? users[0].id)
-  const [sidebarOpen, setSidebarOpen] = useState(variant === 'directory')
+const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initialUserId, currentUser }) => {
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId || users[0]?.id)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [localUsers, setLocalUsers] = useState<User[]>(users)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [heatmapPlatforms, setHeatmapPlatforms] = useState<string[]>(['github', 'leetcode', 'codeforces'])
 
   useEffect(() => {
     setLocalUsers(users)
   }, [users])
 
   const selectedUser = localUsers.find((u) => u.id === selectedUserId) ?? localUsers[0]
+  const activeUser = variant === 'standalone' ? (localUsers.find(u => u.id === initialUserId) || localUsers[0]) : selectedUser
+
+  const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
+  const [heatmapYear, setHeatmapYear] = useState<string>(new Date().getFullYear().toString())
+
+  const togglePlatform = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setHeatmapPlatform(e.target.value)
+  }
+
+  const toggleYear = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setHeatmapYear(e.target.value)
+  }
+
+  // Recompute heatmap based on filtered platforms
+  const backendContribs = activeUser.rawContributions
+    ?.filter(c => heatmapPlatform === 'all' || c.platform.toLowerCase() === heatmapPlatform)
+    // You can also filter by year here if rawContributions has proper date strings
+    ?.filter(c => c.date.startsWith(heatmapYear))
+    .map(c => ({
+      platform: c.platform,
+      contributionDate: c.date,
+      count: c.count
+    })) || []
+  const { heatmapData } = mapContributionsToHeatmap(backendContribs, 'All')
 
   return (
-    <div className="flex bg-bg/95 relative overflow-hidden" style={{ height: '100vh' }}>
+    <div className="flex bg-gray-50 dark:bg-[#202020] text-gray-900 dark:text-gray-200 relative overflow-hidden transition-colors duration-300" style={{ height: '100vh' }}>
 
-      {/* Sidebar with toggle width */}
+      {/* Floating Icon Sidebar */}
+      <nav className="absolute left-6 top-1/2 -translate-y-1/2 w-[64px] py-8 bg-[#252525] border border-white/10 rounded-[32px] flex flex-col items-center gap-10 z-50 shadow-2xl">
+        <img src={scardLogo} className="w-8 h-8 rounded-[8px]" alt="Scard Logo" />
+
+        <div className="flex flex-col gap-10 flex-1 mt-6">
+          <button className="text-gray-400 hover:text-white transition-colors" title="Activity">
+            <BarChart2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-gray-400 hover:text-white transition-colors"
+            title="Directory"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <button className="text-gray-400 hover:text-white transition-colors" title="Network">
+            <Users className="w-5 h-5" />
+          </button>
+        </div>
+
+        {currentUser && currentUser.userName === selectedUser.username && (
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="text-gray-400 hover:text-white transition-colors mt-8"
+            title="Edit Profile"
+          >
+            <Pencil className="w-5 h-5" />
+          </button>
+        )}
+      </nav>
+
+      {/* Sliding Directory Overlay */}
       <div
-        className={`transition-all duration-300 border-r border-border/40 overflow-hidden h-full ${sidebarOpen ? 'w-64 opacity-100' : 'w-0 opacity-0'
+        className={`absolute top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
           }`}
       >
-        <Sidebar
-          users={localUsers}
-          selectedUserId={selectedUserId}
-          onSelectUser={setSelectedUserId}
-          currentUser={currentUser}
-        />
+        <div className="h-full bg-surface border-r border-border/40 pl-24 w-[340px]">
+          <Sidebar
+            users={localUsers}
+            selectedUserId={selectedUserId}
+            onSelectUser={(id) => {
+              setSelectedUserId(id)
+              setSidebarOpen(false)
+            }}
+            currentUser={currentUser}
+          />
+        </div>
       </div>
 
-      {/* Main panel content matching the reference image layout */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-12 relative bg-surface">
-        <div className="max-w-[720px] mx-auto space-y-8 pb-24 text-text/80 text-[13px] leading-relaxed">
+      {/* Click outside overlay to close directory */}
+      {sidebarOpen && (
+        <div
+          className="absolute inset-0 z-30 bg-black/20 backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          {/* Top Profile Header */}
-          <div className="flex items-center gap-5">
-            <div className="relative">
+      {/* Main Layout Area */}
+      <main className="flex-1 overflow-y-auto pl-28 pr-6 md:pl-36 md:pr-12 py-12">
+        <div className="max-w-4xl mx-auto space-y-8">
 
-              <Avatar
-                initials={selectedUser.initials}
-                color={selectedUser.color}
-                size="xl"
-                isOnline={selectedUser.isOnline}
-                className="w-16 h-16 sm:w-20 sm:h-20"
-              />
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text">
-                {selectedUser.displayName}
-              </h1>
-              <p className="text-xs text-muted font-medium">
-                {selectedUser.title}
-              </p>
+          {/* Hero Banner & Overlapping Avatar */}
+          <div className="relative pt-[40px]">
+            {/* Banner Background */}
+            <div className="absolute top-0 left-0 right-0 h-[140px] bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none transition-colors duration-300" />
+
+            <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-end -mt-16 sm:mt-[10px]">
+              {/* Avatar overlapping the banner */}
+              <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-2 shadow-2xl transition-colors duration-300">
+                <Avatar
+                  initials={selectedUser.initials}
+                  color={selectedUser.color}
+                  size="xl"
+                  isOnline={selectedUser.isOnline}
+                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full"
+                />
+              </div>
+
+              {/* Name & Title */}
+              <div className="flex flex-col mt-4 sm:mt-0 pb-4 sm:pb-6 z-10 w-full sm:w-auto">
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white transition-colors duration-300">
+                  {activeUser.displayName}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 font-medium text-lg mt-1 transition-colors duration-300">
+                  {activeUser.title}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Status Message / Looking for a job */}
-          {selectedUser.statusMessage && (
-            <div className="p-4 rounded-xl bg-surface border border-border/60 max-w-xl">
-              <div className="text-xs font-semibold text-text">
-                {selectedUser.statusMessage}
-              </div>
-              <div className="text-[10px] text-muted mt-1">
-                {selectedUser.statusTime || 'Recently'}
-              </div>
-            </div>
-          )}
+          {/* 2-Column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 
-          {/* Section fields */}
-          <div className="space-y-8 pt-4">
-
-            {/* Heatmap Field */}
-            <div className="space-y-2">
-              <span className="text-[10px] text-muted uppercase tracking-widest font-bold block">Heatmap (Consolidated)</span>
-              <div className="p-4 rounded-xl bg-surface border border-border/40 overflow-hidden">
-                <Heatmap data={selectedUser.heatmapData} />
+            {/* Contest Rating Widget */}
+            <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none transition-colors duration-300">
+              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
+              <div className="mt-10 flex-1 relative flex items-center justify-center">
+                {selectedUser.contests && selectedUser.contests.length > 0 ? (
+                  <ContestGraph contests={selectedUser.contests} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-xs text-muted">No contests available</div>
+                )}
               </div>
             </div>
 
-            {/* Badges Field */}
-            {selectedUser.badges && selectedUser.badges.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[10px] text-muted uppercase tracking-widest font-bold block">Badges</span>
-                <div className="flex flex-wrap gap-2">
-                  {selectedUser.badges.map((badge, idx) => (
-                    <Badge key={idx} variant={badge.platform} className="text-[10px] font-medium py-1 px-2.5">
-                      {badge.label}
-                    </Badge>
-                  ))}
-                </div>
+            {/* Badges Widget */}
+            <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none transition-colors duration-300">
+              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Badges</span>
+              <div className="mt-12 flex-1 relative">
+                {selectedUser.badges && selectedUser.badges.length > 0 ? (
+                  <BadgeContainer badges={selectedUser.badges} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+                )}
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Contests Field */}
-            {selectedUser.contests && selectedUser.contests.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[10px] text-muted uppercase tracking-widest font-bold block">Contests</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {selectedUser.contests.map((contest, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border border-border/40 bg-surface/30">
-                      <div className="text-xs font-bold text-text truncate">{contest.name}</div>
-                      <div className="text-[10px] text-muted mt-1">
-                        Rating: <span className="text-text font-semibold">{contest.rating}</span> · Rank: {contest.rank}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Full Width Heatmap Widget */}
+          <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[250px] overflow-hidden shadow-sm dark:shadow-none transition-colors duration-300">
+            <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Heat Map</span>
 
-            {/* Coding Platforms / Socials Field */}
-            {selectedUser.socials && (
-              <div className="space-y-2">
-                <span className="text-[10px] text-muted uppercase tracking-widest font-bold block">Coding Platforms</span>
-                <div className="flex items-center gap-4">
-                  {selectedUser.socials.github && (
-                    <a
-                      href={selectedUser.socials.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-surface border border-border/60 hover:border-text text-text hover:bg-surface-2 transition-all"
-                      title="GitHub Profile"
-                    >
-                      <GitHubIcon className="w-5 h-5" />
-                    </a>
-                  )}
-                  {selectedUser.socials.leetcode && (
-                    <a
-                      href={selectedUser.socials.leetcode}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-surface border border-border/60 hover:border-text text-text hover:bg-surface-2 transition-all"
-                      title="LeetCode Profile"
-                    >
-                      <LeetCodeIcon className="w-5 h-5" />
-                    </a>
-                  )}
-                  {selectedUser.socials.codeforces && (
-                    <a
-                      href={selectedUser.socials.codeforces}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-surface border border-border/60 hover:border-text text-text hover:bg-surface-2 transition-all"
-                      title="Codeforces Profile"
-                    >
-                      <CodeForcesIcon className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Switchers (Top Right) */}
+            <div className="absolute top-5 right-6 z-10 flex items-center gap-3">
+              <select
+                value={heatmapPlatform}
+                onChange={togglePlatform}
+                className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
+                style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                <option value="all">Current (All)</option>
+                <option value="github">GitHub</option>
+                <option value="leetcode">LeetCode</option>
+                <option value="codeforces">Codeforces</option>
+              </select>
 
+              <select
+                value={heatmapYear}
+                onChange={toggleYear}
+                className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
+                style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
+
+            <div className="mt-14 overflow-x-auto pt-2">
+              <Heatmap data={heatmapData} year={heatmapYear} />
+            </div>
           </div>
 
         </div>
       </main>
 
-      {/* Floating menu buttons outside the sidebar sliding dynamically */}
-      <div
-        className="absolute bottom-6 flex items-center gap-3.5 z-40 transition-all duration-300"
-        style={{ left: sidebarOpen ? '280px' : '24px' }}
-      >
-        <button
-          onClick={() => setSidebarOpen((prev) => !prev)}
-          className="w-11 h-11 rounded-full bg-surface border border-border/80 flex items-center justify-center text-text hover:bg-surface-2 hover:border-text transition-all duration-200 cursor-pointer shadow-lg outline-none"
-          aria-label="Toggle Directory Menu"
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => setIsEditModalOpen(true)}
-          className="w-11 h-11 rounded-full bg-surface border border-border/80 flex items-center justify-center text-text hover:bg-surface-2 hover:border-text transition-all duration-200 cursor-pointer shadow-lg outline-none"
-          aria-label="Edit Profile"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
+      {/* Edit Profile Modal */}
       {isEditModalOpen && (
         <EditProfileModal
           user={selectedUser}
@@ -221,7 +226,6 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant, initialUserId, curr
           }}
         />
       )}
-
     </div>
   )
 }

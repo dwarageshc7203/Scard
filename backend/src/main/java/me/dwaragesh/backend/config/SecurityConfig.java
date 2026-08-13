@@ -15,13 +15,17 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // public: anyone can view, create, or update profile pages
-                        .requestMatchers("/api/profile", "/api/profile/**").permitAll()
+                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles").permitAll()
                         // everything else under /api requires a logged-in session
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("http://localhost:5173/", true) // wherever your React dev server runs
+                        .defaultSuccessUrl("http://localhost:5173/?login=success", true) // wherever your React dev server runs
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("http://localhost:5173/?logout=success")
+                        .permitAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {

@@ -1,6 +1,7 @@
 package me.dwaragesh.backend.repository;
 
 import me.dwaragesh.backend.model.Profile;
+import me.dwaragesh.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -8,4 +9,5 @@ import java.util.Optional;
 public interface ProfileRepository extends JpaRepository<Profile, Integer> {
     Optional<Profile> findFirstByUserName(String userName);
     Boolean existsByUserName(String username);
+    Profile findByUser(User user);
 }

@@ -5,6 +5,9 @@ import Badge from './ui/badge'
 import Button from './ui/button'
 import Card, { CardContent, CardHeader } from './ui/card'
 import Heatmap from './Heatmap'
+import { mapContributionsToHeatmap } from '../lib/api'
+import BadgeContainer from './BadgeContainer'
+import ContestGraph from './ContestGraph'
 import { Terminal, Image, Globe, Star } from 'lucide-react'
 
 interface ProfileMainPanelProps {
@@ -30,6 +33,16 @@ const SectionLabel: FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const ProfileMainPanel: FC<ProfileMainPanelProps> = ({ user }) => {
   const [showAscii, setShowAscii] = useState(false)
+  const [heatmapPlatform, setHeatmapPlatform] = useState<string>('All')
+
+  // Recompute heatmap based on filter
+  // We need to map rawContributions to BackendContribution format
+  const backendContribs = user.rawContributions.map(c => ({
+    platform: c.platform,
+    contributionDate: c.date,
+    count: c.count
+  }))
+  const { heatmapData } = mapContributionsToHeatmap(backendContribs, heatmapPlatform)
 
   return (
     <main className="flex-1 overflow-y-auto bg-gradient-to-b from-bg to-surface/20 transition-all duration-300">
@@ -108,37 +121,44 @@ const ProfileMainPanel: FC<ProfileMainPanelProps> = ({ user }) => {
 
         {/* Contributions */}
         <section className="space-y-4">
-          <SectionLabel>Contributions Activity</SectionLabel>
+          <div className="flex items-center justify-between">
+            <SectionLabel>Contributions Activity</SectionLabel>
+            <div className="flex bg-surface-2/50 p-1 rounded-lg text-[10px] font-semibold border border-border/40">
+              {['All', 'GitHub', 'LeetCode', 'CodeForces'].map(platform => (
+                <button
+                  key={platform}
+                  onClick={() => setHeatmapPlatform(platform)}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    heatmapPlatform === platform
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'text-muted hover:text-text'
+                  }`}
+                >
+                  {platform}
+                </button>
+              ))}
+            </div>
+          </div>
           <Card className="bg-surface/20 border-border/50">
             <CardContent className="p-6 overflow-x-auto">
-              <Heatmap data={user.heatmapData} />
+              <Heatmap data={heatmapData} />
             </CardContent>
           </Card>
         </section>
 
-        {/* Platforms */}
+        {/* Contest Ratings */}
         <section className="space-y-4">
-          <SectionLabel>Connected Platforms</SectionLabel>
+          <SectionLabel>Contest Ratings</SectionLabel>
           <Card className="bg-surface/20 border-border/50">
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {user.badges.map((badge, i) => (
-                  <div 
-                    key={i} 
-                    className="flex flex-col p-3 rounded-lg border border-border/40 bg-surface/30 hover:bg-surface-2/40 hover:border-border/80 transition-all duration-300 group"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant={badge.platform} className="capitalize text-[10px] tracking-wide font-bold">
-                        {badge.platform}
-                      </Badge>
-                      <Star className="w-3.5 h-3.5 text-muted/40 group-hover:text-accent transition-colors" />
-                    </div>
-                    <span className="text-xs font-semibold text-text/90 font-mono truncate">{badge.label}</span>
-                  </div>
-                ))}
-              </div>
+              <ContestGraph contests={user.contests || []} />
             </CardContent>
           </Card>
+        </section>
+
+        <section className="space-y-4">
+          <SectionLabel>Badges</SectionLabel>
+          <BadgeContainer badges={user.badges} />
         </section>
       </div>
     </main>

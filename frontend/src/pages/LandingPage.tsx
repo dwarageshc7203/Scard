@@ -123,6 +123,10 @@ interface LandingPageProps {
 }
 
 const LandingPage: FC<LandingPageProps> = ({ featuredUser, onGetStarted }) => {
+  const handleGetStarted = () => {
+    window.location.href = '/oauth2/authorization/google'
+  }
+
   return (
     <div className="min-h-screen bg-bg relative overflow-hidden transition-colors duration-300">
 
@@ -158,7 +162,7 @@ const LandingPage: FC<LandingPageProps> = ({ featuredUser, onGetStarted }) => {
                 <div className="bg-foreground/5 rounded-xl border border-border p-0.5 shadow-lg">
                   <Button
                     variant="default"
-                    onClick={onGetStarted}
+                    onClick={handleGetStarted}
                     className="h-10 rounded-lg px-6 text-base font-semibold shadow-md shadow-accent/15 gap-1.5"
                   >
                     <span>Try Scard Free</span>
@@ -215,7 +219,7 @@ const LandingPage: FC<LandingPageProps> = ({ featuredUser, onGetStarted }) => {
               Link your developer profiles now and claim your permanent subdomain portfolio in seconds.
             </p>
             <div className="flex justify-center pt-2">
-              <Button variant="default" size="lg" onClick={onGetStarted} className="rounded-xl px-8 shadow-lg shadow-accent/25">
+              <Button onClick={handleGetStarted} size="lg" className="w-full sm:w-auto font-semibold shadow-lg shadow-accent/20">
                 Get Started
               </Button>
             </div>

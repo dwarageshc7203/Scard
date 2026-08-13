@@ -10,12 +10,16 @@
     "format": "oxfmt"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.2.16",
+    "@uiw/react-heat-map": "^2.3.4",
+    "@uiw/react-tooltip": "^4.22.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",
     "react": "^19.0.0",
-    "react-activity-calendar": "^3.2.1",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.2",
+    "recharts": "^3.10.1",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

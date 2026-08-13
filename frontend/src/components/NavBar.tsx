@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import Button from './ui/button'
 import { Compass, User, LogIn, Sparkles, Sun, Moon, Laptop } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
+import scardLogo from '../images/scard.png'
 
 type Page = 'landing' | 'directory' | 'standalone'
 
@@ -32,9 +33,7 @@ const NavBar: FC<NavBarProps> = ({ currentPage, onNavigate }) => {
           onClick={() => onNavigate('landing')}
           className="text-lg font-bold tracking-tight text-text hover:opacity-90 flex items-center gap-2 cursor-pointer select-none transition-all duration-200"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-accent to-blue-400 flex items-center justify-center text-white font-black text-base shadow-lg shadow-blue-500/20">
-            S
-          </div>
+          <img src={scardLogo} alt="Scard Logo" className="w-8 h-8 object-contain rounded-[8px] drop-shadow-md" />
           <span className="bg-gradient-to-r from-text via-text to-muted bg-clip-text text-transparent">Scard</span>
         </button>
 

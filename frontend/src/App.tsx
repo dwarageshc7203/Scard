@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import LandingPage from './pages/LandingPage'
 import ProfilePage from './pages/ProfilePage'
 import ThemeProvider from './context/ThemeContext'
+import { Toaster } from 'sonner'
 import { fetchProfiles, fetchMe, createProfile } from './lib/api'
 import type { User } from './types'
 
@@ -45,24 +46,29 @@ function AppContent() {
       })
   }, [])
 
+  const creatingProfile = useRef(false)
+
   useEffect(() => {
     fetchMe()
       .then(async me => {
         if (me) {
           setCurrentUser(me)
-          if (me.hasProfile) {
-            if (location.pathname === '/') {
-              navigate(`/${me.userName}`)
-            }
-          } else {
-            const suggestedUsername = me.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
-            try {
-              await createProfile(suggestedUsername, 'Software Engineer')
-              const updatedUsers = await fetchProfiles()
-              setUsers(updatedUsers)
-              navigate(`/${suggestedUsername}`)
-            } catch (err) {
-              console.error('Error creating profile:', err)
+          if (location.search.includes('login=success')) {
+            if (me.hasProfile) {
+              navigate(`/${me.userName}`, { replace: true })
+            } else if (!creatingProfile.current) {
+              creatingProfile.current = true
+              const suggestedUsername = me.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
+              try {
+                await createProfile(suggestedUsername, 'Software Engineer')
+                const updatedUsers = await fetchProfiles()
+                setUsers(updatedUsers)
+                navigate(`/${suggestedUsername}`, { replace: true })
+              } catch (err) {
+                console.error('Error creating profile:', err)
+              } finally {
+                creatingProfile.current = false
+              }
             }
           }
         }
@@ -70,7 +76,7 @@ function AppContent() {
       .catch(err => {
         console.error('Error checking authentication status:', err)
       })
-  }, [location.pathname, navigate])
+  }, []) // run once on mount — not on every navigation
 
   // Sync current page state with pathnames for NavBar active states
   useEffect(() => {
@@ -163,6 +169,7 @@ export default function App() {
     <ThemeProvider>
       <Router>
         <AppContent />
+        <Toaster theme="system" />
       </Router>
     </ThemeProvider>
   )

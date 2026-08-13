@@ -1,5 +1,6 @@
 package me.dwaragesh.backend.controller;
 
+import me.dwaragesh.backend.exception.PlatformFetchException;
 import me.dwaragesh.backend.model.Profile;
 import me.dwaragesh.backend.model.User;
 import me.dwaragesh.backend.model.dto.LinkPlatformRequest;
@@ -7,6 +8,8 @@ import me.dwaragesh.backend.repository.ProfileRepository;
 import me.dwaragesh.backend.repository.UserRepository;
 import me.dwaragesh.backend.service.SyncService;
 import me.dwaragesh.backend.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +36,7 @@ public class PlatformController {
     }
 
     @PostMapping
-    public String linkAndSync(
+    public ResponseEntity<String> linkAndSync(
             @AuthenticationPrincipal OidcUser principal,
             @RequestBody LinkPlatformRequest request
     ) {
@@ -42,22 +45,26 @@ public class PlatformController {
             user = userService.findOrCreateFromGoogle(
                     principal.getSubject(), principal.getEmail(), principal.getPicture());
         } else {
-            user = userService.findOrCreateFromGoogle("mock-sub", "dwarageshc7203@gmail.com", null);
+            // Unauthenticated request — reject instead of using a hardcoded mock user
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
         }
-        
+
         Profile profile = user.getProfile();
         if (profile == null) {
-            profile = new Profile();
-            profile.setUser(user);
-            profile.setUserName("dwarageshc7203");
-            profile.setDesignation("Software Engineer");
-            profile = profileRepository.save(profile);
-            
-            user.setProfile(profile);
-            userRepository.save(user);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Profile not found. Please create a profile first.");
         }
-        
-        syncService.syncPlatform(profile, request.platform(), request.externalUsername());
-        return "Synced";
+
+        try {
+            syncService.syncPlatform(profile, request.platform(), request.externalUsername());
+            return ResponseEntity.ok("Synced");
+        } catch (PlatformFetchException e) {
+            // Return 422 with the fetch error message so the frontend can display it
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("Sync failed: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
 }

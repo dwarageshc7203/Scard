@@ -3,12 +3,14 @@ export type Platform = 'github' | 'leetcode' | 'codeforces' | 'hackerrank'
 export interface Badge {
   platform: Platform
   label: string
+  iconUrl?: string
 }
 
 export interface Contest {
   name: string
   rating: number
   rank: string
+  date: string
 }
 
 export interface SocialLinks {
@@ -33,6 +35,7 @@ export interface User {
   badges: Badge[]
   contests?: Contest[]
   socials?: SocialLinks
-  heatmapData: number[][]
+  heatmapData: Array<{ date: string; count: number }>
+  rawContributions: Array<{ platform: string; date: string; count: number }>
   isOnline: boolean
 }

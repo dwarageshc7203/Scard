@@ -12,7 +12,7 @@ public class UserService {
     @Autowired
     private UserRepository repository;
 
-    public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
+    public synchronized User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
         return repository.findByGoogleId(googleId)
                 .orElseGet(() -> {
                     return repository.findAll().stream()

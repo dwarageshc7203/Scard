@@ -17,7 +17,6 @@ export interface BackendContest {
 }
 
 export interface BackendContribution {
-  contributionId: number
   platform: string
   contributionDate: string
   count: number
@@ -39,43 +38,42 @@ function stringToColor(str: string): string {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
   }
   const colors = [
-    '#1E3A5F', '#3B1F5E', '#1F4A3B', '#4A3A1F', '#1F3A4A', 
+    '#1E3A5F', '#3B1F5E', '#1F4A3B', '#4A3A1F', '#1F3A4A',
     '#4A1F3A', '#3A4A1F', '#2D1F4A', '#1F4A2D', '#4A2D1F'
   ]
   const index = Math.abs(hash) % colors.length
   return colors[index]
 }
 
-function mapContributionsToHeatmap(contributions?: BackendContribution[]): { heatmapData: number[][], total: number } {
-  const grid: number[][] = Array.from({ length: 53 }, () => Array(7).fill(0))
+export function mapContributionsToHeatmap(contributions?: BackendContribution[], filterPlatform?: string): { heatmapData: Array<{ date: string; count: number }>, total: number } {
   if (!contributions || contributions.length === 0) {
-    return { heatmapData: grid, total: 0 }
+    return { heatmapData: [], total: 0 }
   }
 
   const countMap = new Map<string, number>()
   let total = 0
   contributions.forEach(c => {
-    countMap.set(c.contributionDate, c.count)
-    total += c.count
+    if (!filterPlatform || filterPlatform === 'All' || filterPlatform.toLowerCase() === c.platform.toLowerCase()) {
+      countMap.set(c.contributionDate, (countMap.get(c.contributionDate) || 0) + c.count)
+      total += c.count
+    }
   })
 
-  const msPerDay = 24 * 60 * 60 * 1000
-  const today = new Date()
-  
-  let dayCount = 53 * 7 - 1
-  for (let w = 52; w >= 0; w--) {
-    for (let d = 6; d >= 0; d--) {
-      const date = new Date(today.getTime() - dayCount * msPerDay)
-      const dateStr = date.toISOString().split('T')[0]
-      const count = countMap.get(dateStr) || 0
-      
-      const level = count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 10 ? 3 : count < 15 ? 4 : 5
-      grid[w][d] = level
-      dayCount--
+  // Fill in missing days for the last 365 days
+  const heatmapData = Array.from({ length: 365 }, (_, i) => {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    
+    return {
+      date: dateStr,
+      count: countMap.get(dateStr) || 0
     }
-  }
+  }).reverse()
 
-  return { heatmapData: grid, total }
+  return { heatmapData, total }
 }
 
 export function mapProfileToUser(profile: BackendProfile): User {
@@ -98,19 +96,22 @@ export function mapProfileToUser(profile: BackendProfile): User {
     isOnline: true,
     badges: (profile.badges || []).map(b => ({
       platform: b.platform.toLowerCase() as Platform,
-      label: `${b.platform} · ${b.badgeName}`
+      label: `${b.platform} · ${b.badgeName}`,
+      iconUrl: b.badgeURL
     })),
     contests: (profile.contests || []).map(c => ({
       name: c.contestName,
       rating: c.contestRating,
-      rank: 'Rank N/A'
-    })),
+      rank: 'Rank N/A',
+      date: c.contestDate
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     socials: {
       github: savedSocials.githubUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'github')?.badgeURL || '',
       leetcode: savedSocials.leetcodeUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'leetcode')?.badgeURL || '',
       codeforces: savedSocials.codeforcesUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'codeforces')?.badgeURL || '',
     },
     heatmapData,
+    rawContributions: (profile.contributions || []).map(c => ({ platform: c.platform, date: c.contributionDate, count: c.count }))
   }
 }
 
@@ -159,21 +160,16 @@ export async function updateProfile(designation?: string, profileURL?: string) {
 }
 
 export async function syncPlatform(platform: 'GITHUB' | 'LEETCODE' | 'CODEFORCES', externalUsername: string) {
-  try {
-    const res = await fetch('/api/profile/platforms', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ platform, externalUsername }),
-    })
-    if (!res.ok) {
-      console.warn(`Backend sync returned non-ok status for ${platform}. Simulation used.`);
-      return "Synced"
-    }
-    return res.text()
-  } catch (e) {
-    console.warn(`Connection failed while syncing ${platform}. Simulation used.`);
-    return "Synced"
+  const res = await fetch('/api/profile/platforms', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ platform, externalUsername }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => res.statusText)
+    throw new Error(`Sync failed for ${platform}: ${body}`)
   }
+  return res.text()
 }

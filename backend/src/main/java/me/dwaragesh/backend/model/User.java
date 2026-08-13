@@ -20,6 +20,7 @@ public class User {
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID userId;
 
+    @Column(unique = true)
     private String googleId;
     private String email;
     private String imageURL;

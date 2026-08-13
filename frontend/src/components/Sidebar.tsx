@@ -124,53 +124,46 @@ const Sidebar: FC<SidebarProps> = ({
       </div>
 
       {/* Authenticated user footer */}
-      {(() => {
-        const userToShow = currentUser || {
-          userName: 'dwarageshc7203',
-          email: 'dwarageshc7203@gmail.com',
-          imageURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'
-        }
-        return (
-          <div className="border-t border-border/40 p-4 bg-surface-2/20 flex flex-col items-center gap-2 mt-auto">
-            <div className="flex items-center gap-3 w-full px-2">
-              {userToShow.imageURL ? (
-                <img
-                  src={userToShow.imageURL}
-                  className="w-8 h-8 rounded-full border border-border/60 object-cover"
-                  alt="Profile"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full border border-border/60 bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
-                  {userToShow.userName?.substring(0, 2).toUpperCase() || 'U'}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate text-text">
-                  {userToShow.userName}
-                </div>
-                <div className="text-[10px] text-muted truncate">
-                  {userToShow.email}
-                </div>
+      <div className="border-t border-border/40 p-4 bg-surface-2/20 flex flex-col items-center gap-2 mt-auto">
+        {currentUser ? (
+          <div className="flex items-center gap-3 w-full px-2">
+            {currentUser.imageURL ? (
+              <img
+                src={currentUser.imageURL}
+                className="w-8 h-8 rounded-full border border-border/60 object-cover"
+                alt="Profile"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full border border-border/60 bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
+                {currentUser.userName?.substring(0, 2).toUpperCase() || 'U'}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold truncate text-text">
+                {currentUser.userName}
+              </div>
+              <div className="text-[10px] text-muted truncate">
+                {currentUser.email}
               </div>
             </div>
-            {!currentUser ? (
-              <button
-                onClick={() => window.location.href = '/oauth2/authorization/google'}
-                className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors mt-1 hover:underline cursor-pointer"
-              >
-                Log in with Google
-              </button>
-            ) : (
-              <button
-                onClick={() => window.location.href = '/logout'}
-                className="text-[10px] text-muted hover:text-red-400 font-medium transition-colors mt-1 hover:underline cursor-pointer"
-              >
-                not you? Log out
-              </button>
-            )}
           </div>
-        )
-      })()}
+        ) : null}
+        {!currentUser ? (
+          <button
+            onClick={() => window.location.href = '/oauth2/authorization/google'}
+            className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors mt-1 hover:underline cursor-pointer"
+          >
+            Log in with Google
+          </button>
+        ) : (
+          <button
+            onClick={() => window.location.href = '/logout'}
+            className="text-[10px] text-muted hover:text-red-400 font-medium transition-colors mt-1 hover:underline cursor-pointer"
+          >
+            not you? Log out
+          </button>
+        )}
+      </div>
     </div>
   )
 }

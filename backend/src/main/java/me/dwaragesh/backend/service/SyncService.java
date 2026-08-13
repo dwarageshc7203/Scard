@@ -10,6 +10,8 @@ import me.dwaragesh.backend.fetcher.dto.PlatformSyncResult;
 import me.dwaragesh.backend.model.*;
 import me.dwaragesh.backend.model.enums.Platform;
 import me.dwaragesh.backend.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,44 +25,35 @@ public class SyncService {
 
     private final Map<Platform, PlatformFetcher> fetchers;
     private final ProfileRepository profileRepository;
-    private final ContributionRepository contributionRepository;
     private final BadgeRepository badgeRepository;
     private final ContestRepository contestRepository;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public SyncService(
             List<PlatformFetcher> fetcherList,
             ProfileRepository profileRepository,
-            ContributionRepository contributionRepository,
             BadgeRepository badgeRepository,
             ContestRepository contestRepository
     ) {
         this.fetchers = fetcherList.stream()
                 .collect(Collectors.toMap(PlatformFetcher::platform, Function.identity()));
         this.profileRepository = profileRepository;
-        this.contributionRepository = contributionRepository;
         this.badgeRepository = badgeRepository;
         this.contestRepository = contestRepository;
     }
 
     public void syncPlatform(Profile profile, Platform platform, String externalUsername) {
         PlatformFetcher fetcher = fetchers.get(platform);
-        PlatformSyncResult result;
-
         if (fetcher == null) {
-            System.err.println("No fetcher registered for platform: " + platform + ". Using mock fallback.");
-            result = createMockResult(platform, externalUsername);
-        } else {
-            try {
-                result = fetcher.fetch(externalUsername);
-            } catch (PlatformFetchException e) {
-                System.err.println("Sync failed for " + platform + "/" + externalUsername + ": " + e.getMessage() + ". Using mock fallback.");
-                result = createMockResult(platform, externalUsername);
-            }
+            throw new IllegalArgumentException("No fetcher registered for platform: " + platform);
         }
+        PlatformSyncResult result = fetcher.fetch(externalUsername);
 
         upsertContributions(profile, platform, result);
         upsertBadges(profile, platform, result);
         upsertContests(profile, platform, result);
+        
+        profileRepository.save(profile);
     }
 
     private PlatformSyncResult createMockResult(Platform platform, String externalUsername) {
@@ -93,17 +86,33 @@ public class SyncService {
     }
 
     private void upsertContributions(Profile profile, Platform platform, PlatformSyncResult result) {
-        result.contributions().forEach(c -> {
-            Contribution contribution = contributionRepository
-                    .findByProfileProfileIdAndPlatformAndContributionDate(profile.getProfileId(), platform, c.date())
-                    .orElseGet(Contribution::new);
+        try {
+            List<Map<String, Object>> allContributions;
+            String currentJson = profile.getHeatmapJson();
+            if (currentJson != null && !currentJson.trim().isEmpty() && !currentJson.equals("[]")) {
+                allContributions = mapper.readValue(currentJson, new TypeReference<List<Map<String, Object>>>() {});
+            } else {
+                allContributions = new java.util.ArrayList<>();
+            }
 
-            contribution.setProfile(profile);
-            contribution.setPlatform(platform);
-            contribution.setContributionDate(c.date());
-            contribution.setCount(c.count());
-            contributionRepository.save(contribution);
-        });
+            // Remove old contributions for this platform
+            allContributions.removeIf(c -> platform.name().equals(c.get("platform")));
+
+            // Add new contributions
+            for (ContributionData c : result.contributions()) {
+                if (c.count() > 0) {
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("platform", platform.name());
+                    map.put("contributionDate", c.date().toString());
+                    map.put("count", c.count());
+                    allContributions.add(map);
+                }
+            }
+
+            profile.setHeatmapJson(mapper.writeValueAsString(allContributions));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update heatmap json", e);
+        }
     }
 
     private void upsertBadges(Profile profile, Platform platform, PlatformSyncResult result) {

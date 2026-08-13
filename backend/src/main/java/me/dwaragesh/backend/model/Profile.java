@@ -18,7 +18,7 @@ public class Profile {
     private int profileId;
 
     @OneToOne
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "userId", unique = true)
     @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
     private String userName;
@@ -27,8 +27,8 @@ public class Profile {
     private String profileUrl;
     private String asciiArt;
 
-    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Contribution> contributions;
+    @Column(columnDefinition = "TEXT")
+    private String heatmapJson;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
