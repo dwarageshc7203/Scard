@@ -7,6 +7,7 @@ import me.dwaragesh.backend.model.dto.OnBoardingRequest;
 import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.repository.ProfileRepository;
+import me.dwaragesh.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class ProfileService {
 
     @Autowired
     private ProfileRepository repository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public ProfileResponse toResponse(Profile profile) {
         return new ProfileResponse(
@@ -85,6 +89,21 @@ public class ProfileService {
         if (request.profileURL() != null) {
             profile.setProfileUrl(request.profileURL());
         }
+        if (request.asciiArt() != null) {
+            profile.setAsciiArt(request.asciiArt());
+        }
+        if (request.userName() != null && !request.userName().isEmpty()) {
+            if (!request.userName().equals(profile.getUserName())) {
+                if (repository.existsByUserName(request.userName())) {
+                    throw new UsernameTakenException("Username already taken: " + request.userName());
+                }
+                profile.setUserName(request.userName());
+                user.setUserName(request.userName());
+            }
+        }
+        if (request.email() != null) {
+            user.setEmail(request.email());
+        }
         if (request.badges() != null) {
             profile.setBadges(request.badges());
         }
@@ -94,6 +113,7 @@ public class ProfileService {
         }
 
         Profile saved = repository.save(profile);
+        userRepository.save(user);
 
         return toResponse(saved);
     }

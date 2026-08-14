@@ -1,6 +1,8 @@
 @import "./fonts.css";
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Graphik', 'Poppins', 'Inter', system-ui, sans-serif;
   --font-mono: 'Graphik', SFMono-Regular, Consolas, monospace;
@@ -80,7 +82,7 @@ body {
 }
 
 .animate-fade-in-blur {
-  animation: fadeInBlur 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fadeInBlur 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animation-delay-200 {

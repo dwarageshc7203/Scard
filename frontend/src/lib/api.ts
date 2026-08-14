@@ -26,6 +26,7 @@ export interface BackendProfile {
   userName: string
   designation: string
   profileURL: string
+  email?: string
   asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
@@ -79,6 +80,7 @@ export function mapContributionsToHeatmap(contributions?: BackendContribution[],
 export function mapProfileToUser(profile: BackendProfile): User {
   const { heatmapData, total } = mapContributionsToHeatmap(profile.contributions || [])
   const savedSocials = JSON.parse(localStorage.getItem(`socials_${profile.userName}`) || '{}')
+  const savedAvatar = localStorage.getItem(`avatar_${profile.userName}`)
 
   return {
     id: profile.userName,
@@ -86,9 +88,12 @@ export function mapProfileToUser(profile: BackendProfile): User {
     displayName: profile.userName.charAt(0).toUpperCase() + profile.userName.slice(1),
     title: profile.designation || 'Full Stack Engineer',
     designation: profile.designation,
+    email: profile.email,
     pdfUrl: `/api/profile/${profile.userName}/export`,
     statusMessage: profile.asciiArt ? 'ASCII PFP Custom Art Loaded' : undefined,
     statusTime: 'Recently',
+    asciiArt: profile.asciiArt,
+    imageURL: savedAvatar || profile.imageURL,
     initials: profile.userName.substring(0, 2).toUpperCase(),
     color: stringToColor(profile.userName),
     joinedDaysAgo: 1,
@@ -147,13 +152,13 @@ export async function createProfile(userName: string, designation: string) {
   return res.json()
 }
 
-export async function updateProfile(designation?: string, profileURL?: string) {
+export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string) {
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ designation, profileURL }),
+    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName }),
   })
   if (!res.ok) throw new Error('Failed to update profile')
   return res.json()

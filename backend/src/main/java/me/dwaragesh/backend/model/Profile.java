@@ -25,6 +25,7 @@ public class Profile {
 
     private String designation;
     private String profileUrl;
+    @Column(columnDefinition = "TEXT")
     private String asciiArt;
 
     @Column(columnDefinition = "TEXT")

@@ -30,9 +30,11 @@ const ProfileMockup: FC<{ user: User }> = ({ user }) => (
           <Avatar
             initials={user.initials}
             color={user.color}
+            src={user.imageURL}
+            asciiArt={user.asciiArt}
             size="lg"
             isOnline={user.isOnline}
-            className="ring-2 ring-border/80"
+            className="ring-2 ring-border/80 shadow-lg"
           />
           <div>
             <div className="text-base font-bold text-text flex items-center gap-2">
@@ -52,17 +54,23 @@ const ProfileMockup: FC<{ user: User }> = ({ user }) => (
             Contributions Activity (Consolidated)
           </div>
           <div className="flex gap-[2.5px] overflow-hidden bg-bg/40 p-3 rounded-lg border border-border/30">
-            {user.heatmapData.slice(-24).map((week, wi) => (
-              <div key={wi} className="flex flex-col gap-[2.5px]">
-                {week.map((level, di) => (
-                  <div
-                    key={di}
-                    className="w-[10px] h-[10px] rounded-[2px]"
-                    style={{ backgroundColor: HEAT_COLORS[Math.max(0, Math.min(5, level))] }}
-                  />
-                ))}
-              </div>
-            ))}
+            {(() => {
+              const weeks: number[][] = []
+              for (let i = 0; i < user.heatmapData.length; i += 7) {
+                weeks.push(user.heatmapData.slice(i, i + 7).map((d: any) => d.count))
+              }
+              return weeks.slice(-24).map((week, wi) => (
+                <div key={wi} className="flex flex-col gap-[2.5px]">
+                  {week.map((level, di) => (
+                    <div
+                      key={di}
+                      className="w-[10px] h-[10px] rounded-[2px]"
+                      style={{ backgroundColor: HEAT_COLORS[Math.max(0, Math.min(5, level))] }}
+                    />
+                  ))}
+                </div>
+              ))
+            })()}
           </div>
         </div>
 

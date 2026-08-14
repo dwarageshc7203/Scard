@@ -107,7 +107,9 @@ const Sidebar: FC<SidebarProps> = ({
               <Avatar
                 initials={user.initials}
                 color={user.color}
-                size="sm"
+                src={user.imageURL}
+                asciiArt={user.asciiArt}
+                size="md"
                 isOnline={user.isOnline}
               />
               <div className="flex-1 min-w-0">

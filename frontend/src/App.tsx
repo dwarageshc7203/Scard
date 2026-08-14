@@ -22,7 +22,13 @@ const PLACEHOLDER_USER: User = {
   totalContributions: 0,
   badges: [],
   contests: [],
-  heatmapData: Array.from({ length: 53 }, () => Array(7).fill(0)),
+  heatmapData: Array.from({ length: 365 }, (_, i) => {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    return {
+      date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      count: Math.floor(Math.random() * 5)
+    }
+  }).reverse(),
   isOnline: true
 }
 
@@ -97,7 +103,7 @@ function AppContent() {
     else if (page === 'standalone') navigate(`/${firstUserId}`)
   }
 
-  const featuredUser = users[0] || PLACEHOLDER_USER
+  const featuredUser = (currentUser && users.find(u => u.username === currentUser.userName)) || users[0] || PLACEHOLDER_USER
 
   if (loading) {
     return (
@@ -160,7 +166,8 @@ function ProfilePageWrapper({ users, fallback, currentUser }: { users: User[], f
 function useParamsHelper(defaultId: string) {
   const location = useLocation()
   const parts = location.pathname.split('/')
-  const userId = parts[parts.length - 1]
+  const rawId = parts[parts.length - 1]
+  const userId = rawId ? decodeURIComponent(rawId) : ''
   return { userId: userId && userId !== 'profile' ? userId : defaultId }
 }
 

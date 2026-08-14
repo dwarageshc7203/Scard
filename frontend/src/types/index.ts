@@ -28,6 +28,9 @@ export interface User {
   pdfUrl?: string
   statusMessage?: string
   statusTime?: string
+  email?: string
+  asciiArt?: string
+  imageURL?: string
   initials: string
   color: string
   joinedDaysAgo: number

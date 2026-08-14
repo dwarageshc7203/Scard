@@ -1,9 +1,10 @@
 import { useState, useEffect, type FC } from 'react'
-import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor } from 'lucide-react'
+import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage } from 'lucide-react'
 import Button from './ui/button'
 import Input from './ui/input'
 import type { User } from '../types'
 import { updateProfile, syncPlatform, fetchProfile } from '../lib/api'
+import { generateAsciiFromImage, generateAsciiFromBase64 } from '../lib/ascii'
 import { useTheme } from '../context/ThemeContext'
 
 interface EditProfileModalProps {
@@ -14,7 +15,7 @@ interface EditProfileModalProps {
 
 const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'account'>('profile')
-  const [activeSection, setActiveSection] = useState<'details' | 'connections'>('details')
+  const [activeSection, setActiveSection] = useState<'details' | 'connections' | 'photo'>('details')
 
   // Theme support
   const { theme, setTheme } = useTheme()
@@ -25,16 +26,37 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   // Form Fields
   const [username, setUsername] = useState(user.username || '')
   const [designation, setDesignation] = useState(user.designation || '')
+  const [email, setEmail] = useState(user.email || '')
   const [website, setWebsite] = useState(user.socials?.github || user.pdfUrl || '')
   
+  // Helper to extract username from a URL or raw input
+  const extractUsername = (val: string) => {
+    if (!val) return ''
+    const trimmed = val.trim()
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/')
+      return parts[parts.length - 1] || parts[parts.length - 2] || ''
+    }
+    return trimmed
+  }
+
   // Connections
-  const [githubUrl, setGithubUrl] = useState(savedSocials.githubUrl || user.socials?.github || '')
-  const [leetcodeUrl, setLeetcodeUrl] = useState(savedSocials.leetcodeUrl || user.socials?.leetcode || '')
-  const [codeforcesUrl, setCodeforcesUrl] = useState(savedSocials.codeforcesUrl || user.socials?.codeforces || '')
+  const [githubUser, setGithubUser] = useState(extractUsername(savedSocials.githubUrl || user.socials?.github || ''))
+  const [leetcodeUser, setLeetcodeUser] = useState(extractUsername(savedSocials.leetcodeUrl || user.socials?.leetcode || ''))
+  const [codeforcesUser, setCodeforcesUser] = useState(extractUsername(savedSocials.codeforcesUrl || user.socials?.codeforces || ''))
+
+  // Photo / ASCII
+  const [useAscii, setUseAscii] = useState(!!user.asciiArt && !user.asciiArt.includes('<span'))
+  const [generatedAscii, setGeneratedAscii] = useState(() => {
+    const initial = user.asciiArt || ''
+    // If it contains stale HTML tags from previous version, clear it so it regenerates
+    return initial.includes('<span') ? '' : initial
+  })
+  const [showAsciiPreview, setShowAsciiPreview] = useState(false)
+  const [photoBase64, setPhotoBase64] = useState<string>(localStorage.getItem(`avatar_${user.username}`) || '')
 
   const [saving, setSaving] = useState(false)
 
-  // Freeze underlay scrolling on mount
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     const mainContainer = document.querySelector('main')
@@ -52,36 +74,43 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
     }
   }, [])
 
+  // Auto-generate ASCII from existing photo if missing
+  useEffect(() => {
+    if (photoBase64 && !generatedAscii) {
+      generateAsciiFromBase64(photoBase64)
+        .then(setGeneratedAscii)
+        .catch(console.error)
+    }
+  }, [photoBase64, generatedAscii])
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      // 1. Save connection links to localStorage
+      const githubUrl = githubUser ? `https://github.com/${githubUser}` : ''
+      const leetcodeUrl = leetcodeUser ? `https://leetcode.com/${leetcodeUser}` : ''
+      const codeforcesUrl = codeforcesUser ? `https://codeforces.com/profile/${codeforcesUser}` : ''
+
+      // 1. Save connection links & avatar to localStorage
       localStorage.setItem(
         `socials_${user.username}`,
         JSON.stringify({ githubUrl, leetcodeUrl, codeforcesUrl })
       )
+      if (photoBase64) {
+        localStorage.setItem(`avatar_${username}`, photoBase64)
+      } else {
+        localStorage.removeItem(`avatar_${username}`)
+      }
 
-      // 2. Patch designation and profileURL (website) to backend
+      // 2. Patch details to backend
       try {
-        await updateProfile(designation, website)
+        await updateProfile(designation, website, email, useAscii ? generatedAscii : '', username)
       } catch (e) {
-        console.error('Failed to update designation/website in backend:', e)
+        console.error('Failed to update details in backend:', e)
       }
       
-      // Helper to extract username from a URL or raw input
-      const extractUsername = (val: string) => {
-        if (!val) return ''
-        const trimmed = val.trim()
-        if (trimmed.includes('/')) {
-          const parts = trimmed.split('/')
-          return parts[parts.length - 1] || parts[parts.length - 2] || ''
-        }
-        return trimmed
-      }
-
-      const ghUser = extractUsername(githubUrl)
-      const lcUser = extractUsername(leetcodeUrl)
-      const cfUser = extractUsername(codeforcesUrl)
+      const ghUser = githubUser
+      const lcUser = leetcodeUser
+      const cfUser = codeforcesUser
 
       // 3. Sync platforms with backend
       if (ghUser) {
@@ -109,7 +138,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       // 4. Fetch updated profile from backend if possible, else create local update
       let updatedUser: User
       try {
-        updatedUser = await fetchProfile(user.username)
+        updatedUser = await fetchProfile(username)
       } catch (e) {
         console.error('Failed to fetch updated profile, using local state update:', e)
         updatedUser = {
@@ -211,6 +240,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   >
                     Connections
                   </button>
+                  <button
+                    onClick={() => setActiveSection('photo')}
+                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${
+                      activeSection === 'photo'
+                        ? 'bg-surface-2 text-text border border-border'
+                        : 'text-muted hover:text-text hover:bg-surface/50'
+                    }`}
+                  >
+                    Photo
+                  </button>
                 </>
               ) : (
                 <div className="px-3 py-2 text-[10px] uppercase font-mono tracking-widest text-muted">
@@ -250,6 +289,17 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     />
                   </div>
 
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-muted">Email</label>
+                    <Input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. johndoe@example.com"
+                      className="bg-surface border-border"
+                    />
+                  </div>
+
                   {/* Website */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-medium text-muted">Website</label>
@@ -262,17 +312,17 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     />
                   </div>
                 </div>
-              ) : (
+              ) : activeSection === 'connections' ? (
                 <div className="space-y-5 flex-1">
                   <h3 className="text-sm font-bold text-text mb-4">Connections</h3>
 
                   {/* GitHub URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">GitHub Profile URL</label>
+                    <label className="text-[11px] font-medium text-muted">GitHub Username</label>
                     <Input
-                      value={githubUrl}
-                      onChange={(e) => setGithubUrl(e.target.value)}
-                      placeholder="https://github.com/username"
+                      value={githubUser}
+                      onChange={(e) => setGithubUser(e.target.value)}
+                      placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -280,11 +330,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* LeetCode URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">LeetCode Profile URL</label>
+                    <label className="text-[11px] font-medium text-muted">LeetCode Username</label>
                     <Input
-                      value={leetcodeUrl}
-                      onChange={(e) => setLeetcodeUrl(e.target.value)}
-                      placeholder="https://leetcode.com/username"
+                      value={leetcodeUser}
+                      onChange={(e) => setLeetcodeUser(e.target.value)}
+                      placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -292,15 +342,106 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* Codeforces URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Codeforces Profile URL</label>
+                    <label className="text-[11px] font-medium text-muted">Codeforces Username</label>
                     <Input
-                      value={codeforcesUrl}
-                      onChange={(e) => setCodeforcesUrl(e.target.value)}
-                      placeholder="https://codeforces.com/profile/username"
+                      value={codeforcesUser}
+                      onChange={(e) => setCodeforcesUser(e.target.value)}
+                      placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
                   </div>
+                </div>
+              ) : (
+                <div className="space-y-5 flex-1 relative">
+                  <h3 className="text-sm font-bold text-text mb-4">Profile Photo</h3>
+                  
+                  <div className="space-y-4">
+                    <label className="text-[11px] font-medium text-muted block">Upload Photo</label>
+                    {photoBase64 ? (
+                      <div className="flex items-center gap-6">
+                        <div className="relative rounded-full overflow-hidden border border-border bg-surface-2/30 h-28 w-28 shrink-0 shadow-md">
+                          <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <button
+                          onClick={() => {
+                            setPhotoBase64('')
+                            setGeneratedAscii('')
+                            setUseAscii(false)
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs font-semibold border border-red-500/20"
+                          title="Remove Photo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="border border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center bg-surface-2/30 hover:bg-surface-2/50 transition-colors cursor-pointer relative">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              try {
+                                const ascii = await generateAsciiFromImage(file)
+                                setGeneratedAscii(ascii)
+                                
+                                const reader = new FileReader()
+                                reader.onload = (re) => setPhotoBase64(re.target?.result as string)
+                                reader.readAsDataURL(file)
+                                
+                                setUseAscii(true)
+                              } catch (err) {
+                                console.error(err)
+                              }
+                            }
+                          }}
+                        />
+                        <FileImage className="w-6 h-6 text-muted mb-2" />
+                        <span className="text-xs text-muted">Click or drag image to upload</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {photoBase64 && generatedAscii && (
+                    <>
+                      <div className="flex items-center justify-between border border-border p-3 rounded-lg bg-surface-2/30 mt-4">
+                        <div>
+                          <div className="text-xs font-semibold">Use ASCII Art</div>
+                          <div className="text-[10px] text-muted">Convert profile photo to ASCII</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={useAscii} onChange={(e) => setUseAscii(e.target.checked)} />
+                          <div className="w-9 h-5 bg-border rounded-full peer peer-checked:bg-accent peer-focus:ring-2 peer-focus:ring-accent/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                        </label>
+                      </div>
+
+                      {useAscii && (
+                        <div className="mt-2">
+                          <Button onClick={() => setShowAsciiPreview(true)} variant="outline" className="w-full border-border text-xs font-semibold h-9">
+                            Try Out
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {showAsciiPreview && (
+                    <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm z-10 rounded-lg p-4 flex flex-col items-center justify-center animate-fade-in-blur">
+                      <button onClick={() => setShowAsciiPreview(false)} className="absolute top-2 right-2 p-1.5 text-muted hover:text-text bg-surface-2 rounded-full shadow-md z-20">
+                        <X className="w-4 h-4" />
+                      </button>
+                      <h4 className="text-xs font-bold mb-4">ASCII Preview</h4>
+                      <div className="bg-surface-2 p-4 rounded-lg overflow-auto max-w-full max-h-[250px] shadow-lg border border-border">
+                        <pre className="text-[6px] sm:text-[8px] font-mono leading-[1.1] text-text whitespace-pre">
+                          {generatedAscii}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             ) : (

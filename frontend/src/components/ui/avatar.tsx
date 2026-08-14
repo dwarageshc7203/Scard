@@ -8,10 +8,11 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   alt?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   isOnline?: boolean
+  asciiArt?: string
 }
 
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
-  ({ className, initials, color, src, alt, size = 'md', isOnline = false, ...props }, ref) => {
+  ({ className, initials, color, src, alt, size = 'md', isOnline = false, asciiArt, ...props }, ref) => {
     const sizeClasses = {
       sm: 'h-8 w-8 text-xs',
       md: 'h-10 w-10 text-sm',
@@ -26,12 +27,8 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       xl: 'h-4 w-4 border-2',
     }
 
-    return (
-      <div
-        ref={ref}
-        className={cn('relative inline-flex items-center justify-center rounded-full shrink-0 select-none bg-surface-2 border border-border overflow-hidden', sizeClasses[size], className)}
-        {...props}
-      >
+    const renderNormal = () => (
+      <>
         {src ? (
           <img src={src} alt={alt || 'Avatar'} className="h-full w-full object-cover" />
         ) : (
@@ -42,10 +39,64 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
             {initials || ''}
           </div>
         )}
+      </>
+    )
+
+    // Fallback cleanup in case stale HTML is passed
+    const cleanAsciiArt = asciiArt?.includes('<span') ? '' : asciiArt
+
+    const renderAscii = () => (
+      <div className="flex h-full w-full items-center justify-center bg-transparent overflow-hidden @container">
+        <pre 
+          className="font-mono font-bold leading-[0.9] text-center text-text whitespace-pre select-none drop-shadow-md"
+          style={{ fontSize: 'calc(100cqw / 49.5)' }} // 90 chars * ~0.55 width ratio = ~49.5
+        >
+          {cleanAsciiArt}
+        </pre>
+      </div>
+    )
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'group relative inline-flex items-center justify-center shrink-0 select-none rounded-full',
+          sizeClasses[size],
+          className
+        )}
+        style={{ perspective: '1000px' }}
+        {...props}
+      >
+        <div
+          className={cn(
+            'relative h-full w-full rounded-full transition-transform duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]',
+            cleanAsciiArt ? 'group-hover:[transform:rotateY(180deg)] [transform-style:preserve-3d]' : 'overflow-hidden border border-border bg-surface-2'
+          )}
+        >
+          {/* Front Face */}
+          <div
+            className={cn(
+              'absolute inset-0 h-full w-full rounded-full overflow-hidden',
+              cleanAsciiArt ? '[backface-visibility:hidden] border border-border bg-surface-2' : ''
+            )}
+          >
+            {cleanAsciiArt ? renderAscii() : renderNormal()}
+          </div>
+          
+          {/* Back Face (Only if ASCII exists) */}
+          {cleanAsciiArt && (
+            <div
+              className="absolute inset-0 h-full w-full rounded-full overflow-hidden border border-border bg-surface-2 [backface-visibility:hidden] [transform:rotateY(180deg)]"
+            >
+              {renderNormal()}
+            </div>
+          )}
+        </div>
+
         {isOnline && (
           <span
             className={cn(
-              'absolute bottom-0 right-0 rounded-full bg-green-500 border-bg ring-1 ring-bg',
+              'absolute bottom-0 right-0 rounded-full bg-green-500 border-bg ring-1 ring-bg z-10',
               dotSizeClasses[size]
             )}
           />

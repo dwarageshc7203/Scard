@@ -29,7 +29,19 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
   }, [users])
 
   const selectedUser = localUsers.find((u) => u.id === selectedUserId) ?? localUsers[0]
-  const activeUser = variant === 'standalone' ? (localUsers.find(u => u.id === initialUserId) || localUsers[0]) : selectedUser
+  const matchedUser = variant === 'standalone' ? localUsers.find(u => u.id === initialUserId) : selectedUser
+
+  if (!matchedUser && variant === 'standalone') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text space-y-4">
+        <h2 className="text-2xl font-bold">404 - Profile Not Found</h2>
+        <p className="text-muted">The profile you're looking for doesn't exist.</p>
+        <button onClick={() => window.location.href = '/'} className="text-accent underline font-semibold">Go Back Home</button>
+      </div>
+    )
+  }
+
+  const activeUser = matchedUser || selectedUser
 
   const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
   const [heatmapYear, setHeatmapYear] = useState<string>(new Date().getFullYear().toString())
@@ -52,27 +64,31 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
       contributionDate: c.date,
       count: c.count
     })) || []
-  const { heatmapData } = mapContributionsToHeatmap(backendContribs, 'All')
+  const countMap = new Map<string, number>()
+  backendContribs.forEach(c => {
+    countMap.set(c.contributionDate, (countMap.get(c.contributionDate) || 0) + c.count)
+  })
+  const heatmapData = Array.from(countMap.entries()).map(([date, count]) => ({ date, count }))
 
   return (
     <div className="flex bg-gray-50 dark:bg-[#202020] text-gray-900 dark:text-gray-200 relative overflow-hidden transition-colors duration-300" style={{ height: '100vh' }}>
 
       {/* Floating Icon Sidebar */}
-      <nav className="absolute left-6 top-1/2 -translate-y-1/2 w-[64px] py-8 bg-[#252525] border border-white/10 rounded-[32px] flex flex-col items-center gap-10 z-50 shadow-2xl">
+      <nav className="absolute left-6 top-1/2 -translate-y-1/2 w-[64px] py-8 bg-white dark:bg-[#252525] border border-gray-200 dark:border-white/10 rounded-[32px] flex flex-col items-center gap-10 z-50 shadow-lg dark:shadow-2xl transition-colors duration-300">
         <img src={scardLogo} className="w-8 h-8 rounded-[8px]" alt="Scard Logo" />
 
         <div className="flex flex-col gap-10 flex-1 mt-6">
-          <button className="text-gray-400 hover:text-white transition-colors" title="Activity">
+          <button className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Activity">
             <BarChart2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             title="Directory"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <button className="text-gray-400 hover:text-white transition-colors" title="Network">
+          <button className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Network">
             <Users className="w-5 h-5" />
           </button>
         </div>
@@ -80,7 +96,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         {currentUser && currentUser.userName === selectedUser.username && (
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="text-gray-400 hover:text-white transition-colors mt-8"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mt-8"
             title="Edit Profile"
           >
             <Pencil className="w-5 h-5" />
@@ -127,11 +143,13 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
               {/* Avatar overlapping the banner */}
               <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-2 shadow-2xl transition-colors duration-300">
                 <Avatar
-                  initials={selectedUser.initials}
-                  color={selectedUser.color}
+                  initials={activeUser.initials}
+                  color={activeUser.color}
+                  src={activeUser.imageURL}
+                  asciiArt={activeUser.asciiArt}
                   size="xl"
-                  isOnline={selectedUser.isOnline}
-                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full"
+                  isOnline={activeUser.isOnline}
+                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full shadow-2xl"
                 />
               </div>
 
@@ -220,9 +238,13 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
           user={selectedUser}
           onClose={() => setIsEditModalOpen(false)}
           onSave={(updatedUser) => {
-            setLocalUsers((prev) =>
-              prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-            )
+            if (selectedUser.username !== updatedUser.username) {
+              window.location.href = `/${updatedUser.username}`
+            } else {
+              setLocalUsers((prev) =>
+                prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+              )
+            }
           }}
         />
       )}

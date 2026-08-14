@@ -10,6 +10,9 @@ public record PatchProfileRequest(
 
         String designation,
         String profileURL,
+        String userName,
+        String email,
+        String asciiArt,
         List<Badge> badges,
         List<Contest> contests
 
