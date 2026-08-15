@@ -10,6 +10,7 @@ import java.util.Map;
 
 public record ProfileResponse(
         String userName,
+        String profileName,
         String designation,
         String profileURL,
         String asciiArt,
@@ -17,7 +18,7 @@ public record ProfileResponse(
         List<String> socials,
         List<Badge> badges,
         List<Contest> contests,
-        Map<String, Integer> problemsSolved,
+        Map<String, me.dwaragesh.backend.model.ProblemStats> problemStats,
         List<Project> projects,
         int anonymousViews,
 

@@ -14,6 +14,7 @@ public record PatchProfileRequest(
         String designation,
         String profileURL,
         String userName,
+        String profileName,
         String email,
         String asciiArt,
         Integer bannerId,

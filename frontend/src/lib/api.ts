@@ -24,14 +24,15 @@ export interface BackendContribution {
 
 export interface BackendProfile {
   userName: string
+  profileName?: string
   designation: string
   profileURL: string
   email?: string
   asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
-  projects?: { name: string; description: string; url: string }[]
-  problemsSolved?: Record<string, number>
+  projects?: { name: string; description: string; url?: string; projectImage?: string; projectUrl?: string; repoUrl?: string }[]
+  problemStats?: Record<string, { total: number, easy: number, medium: number, hard: number }>
   contributions?: BackendContribution[]
   bannerId?: number
   socials?: string[]
@@ -90,7 +91,8 @@ export function mapProfileToUser(profile: BackendProfile): User {
   return {
     id: profile.userName,
     username: profile.userName,
-    displayName: profile.userName.charAt(0).toUpperCase() + profile.userName.slice(1),
+    profileName: profile.profileName,
+    displayName: profile.profileName || (profile.userName.charAt(0).toUpperCase() + profile.userName.slice(1)),
     title: profile.designation || 'Full Stack Engineer',
     designation: profile.designation,
     email: profile.email,
@@ -117,7 +119,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
       date: c.contestDate
     })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     projects: profile.projects || [],
-    problemsSolved: profile.problemsSolved || {},
+    problemsSolved: profile.problemStats || {},
     anonymousViews: profile.anonymousViews || 0,
     socials: {
       github: savedSocials.githubUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'github')?.badgeURL || '',
@@ -160,25 +162,38 @@ export async function fetchBanners() {
   return res.json()
 }
 
-export async function createProfile(userName: string, designation: string) {
+function getCsrfToken() {
+  const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : ''
+}
+
+export async function checkUsername(username: string): Promise<boolean> {
+  const res = await fetch(`/api/profile/check-username?username=${encodeURIComponent(username)}`)
+  if (!res.ok) return false
+  return res.json()
+}
+
+export async function createProfile(userName: string, profileName: string, designation: string) {
   const res = await fetch('/api/profile', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
     },
-    body: JSON.stringify({ userName, designation }),
+    body: JSON.stringify({ userName, profileName, designation }),
   })
   if (!res.ok) throw new Error('Failed to create profile')
   return res.json()
 }
 
-export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
+export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, profileName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
     },
-    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName, bannerId, socials, projects, problemsSolved }),
+    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName, profileName, bannerId, socials, projects, problemsSolved }),
   })
   if (!res.ok) throw new Error('Failed to update profile')
   return res.json()
@@ -195,6 +210,7 @@ export async function syncPlatform(platform: 'GITHUB' | 'LEETCODE' | 'CODEFORCES
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
     },
     body: JSON.stringify({ platform, externalUsername }),
   })

@@ -22,7 +22,10 @@ export interface Contest {
 export interface Project {
   name: string
   description: string
-  url: string
+  url?: string
+  projectImage?: string
+  projectUrl?: string
+  repoUrl?: string
 }
 
 export interface SocialLinks {
@@ -34,6 +37,7 @@ export interface SocialLinks {
 export interface User {
   id: string
   username: string
+  profileName?: string
   displayName: string
   title: string
   designation?: string
@@ -51,7 +55,7 @@ export interface User {
   badges: Badge[]
   contests?: Contest[]
   projects?: Project[]
-  problemsSolved?: Record<string, number>
+  problemsSolved?: Record<string, { total: number, easy: number, medium: number, hard: number }>
   anonymousViews?: number
   socials?: SocialLinks
   customSocials?: { type: string; url: string }[]

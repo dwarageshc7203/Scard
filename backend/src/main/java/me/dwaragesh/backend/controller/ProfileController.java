@@ -23,6 +23,14 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private me.dwaragesh.backend.repository.ProfileRepository profileRepository;
+
+    @GetMapping("/check-username")
+    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
+        return ResponseEntity.ok(profileRepository.existsByUserName(username));
+    }
+
     @PostMapping
     public ResponseEntity<ProfileResponse> createProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody OnBoardingRequest request) {
         if (principal == null) {

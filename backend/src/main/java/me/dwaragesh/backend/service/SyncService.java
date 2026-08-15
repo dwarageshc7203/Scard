@@ -42,7 +42,10 @@ public class SyncService {
         this.contestRepository = contestRepository;
     }
 
-    public void syncPlatform(Profile profile, Platform platform, String externalUsername) {
+    @org.springframework.transaction.annotation.Transactional
+    public void syncPlatform(Profile detachedProfile, Platform platform, String externalUsername) {
+        Profile profile = profileRepository.findById(detachedProfile.getProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
         PlatformFetcher fetcher = fetchers.get(platform);
         if (fetcher == null) {
             throw new IllegalArgumentException("No fetcher registered for platform: " + platform);
@@ -54,47 +57,21 @@ public class SyncService {
         upsertContests(profile, platform, result);
         
         if (result.problemsSolved() != null) {
-            if (profile.getProblemsSolved() == null) {
-                profile.setProblemsSolved(new java.util.HashMap<>());
+            if (profile.getProblemStats() == null) {
+                profile.setProblemStats(new java.util.HashMap<>());
             }
-            profile.getProblemsSolved().put(platform.name().toUpperCase(), result.problemsSolved());
+            ProblemStats stats = new ProblemStats(
+                    result.problemsSolved().total(),
+                    result.problemsSolved().easy(),
+                    result.problemsSolved().medium(),
+                    result.problemsSolved().hard()
+            );
+            profile.getProblemStats().put(platform.name().toUpperCase(), stats);
         }
 
         profileRepository.save(profile);
     }
 
-    private PlatformSyncResult createMockResult(Platform platform, String externalUsername) {
-        List<ContributionData> contributions = new java.util.ArrayList<>();
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.util.Random random = new java.util.Random();
-        for (int i = 0; i < 365; i++) {
-            java.time.LocalDate date = today.minusDays(i);
-            int count = random.nextInt(8) == 0 ? random.nextInt(15) + 1 : 0;
-            contributions.add(new ContributionData(date, count));
-        }
-
-        List<BadgeData> badges = new java.util.ArrayList<>();
-        List<ContestData> contests = new java.util.ArrayList<>();
-
-        Integer problemsSolved = null;
-
-        if (platform == Platform.GITHUB) {
-            badges.add(new BadgeData("Pull Shark", "https://github.com", java.time.LocalDate.now()));
-            badges.add(new BadgeData("Arctic Code Vault", "https://github.com", java.time.LocalDate.now()));
-        } else if (platform == Platform.LEETCODE) {
-            badges.add(new BadgeData("Knight", "https://leetcode.com", java.time.LocalDate.now()));
-            badges.add(new BadgeData("50 Days Badge", "https://leetcode.com", java.time.LocalDate.now()));
-            contests.add(new ContestData("Weekly Contest 350", java.time.LocalDate.now().minusDays(5), 1850));
-            contests.add(new ContestData("Biweekly Contest 108", java.time.LocalDate.now().minusDays(12), 1790));
-            problemsSolved = 532;
-        } else if (platform == Platform.CODEFORCES) {
-            badges.add(new BadgeData("Specialist", "https://codeforces.com", java.time.LocalDate.now()));
-            contests.add(new ContestData("Codeforces Round 880", java.time.LocalDate.now().minusDays(8), 1540));
-            problemsSolved = 210;
-        }
-
-        return new PlatformSyncResult(contributions, badges, contests, problemsSolved);
-    }
 
     private void upsertContributions(Profile profile, Platform platform, PlatformSyncResult result) {
         try {

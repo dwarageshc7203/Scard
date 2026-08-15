@@ -22,7 +22,11 @@ public class Profile {
     @JoinColumn(name = "userId", unique = true)
     @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
+    
+    @Column(unique = true, nullable = false)
     private String userName;
+    
+    private String profileName;
 
     private String designation;
     private String profileUrl;
@@ -60,10 +64,19 @@ public class Profile {
         this.anonymousViews = anonymousViews;
     }
 
+    /**
+     * @deprecated Use problemStats instead. Retained for backwards compatibility with existing databases.
+     */
+    @Deprecated
     @ElementCollection
     @CollectionTable(name = "profile_problemjs_solved", joinColumns = @JoinColumn(name = "profile_id"))
     @MapKeyColumn(name = "platform")
     @Column(name = "count")
     private Map<String, Integer> problemsSolved;
+
+    @ElementCollection
+    @CollectionTable(name = "profile_problem_stats", joinColumns = @JoinColumn(name = "profile_id"))
+    @MapKeyColumn(name = "platform")
+    private Map<String, ProblemStats> problemStats;
 
 }

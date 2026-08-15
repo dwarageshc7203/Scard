@@ -26,6 +26,7 @@ interface ProfilePageProps {
 const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initialUserId, currentUser }) => {
   const [selectedUserId, setSelectedUserId] = useState(initialUserId || users[0]?.id)
   const [activeOverlay, setActiveOverlay] = useState<'analytics' | 'menu' | 'users' | null>(null)
+  const [expandedWidget, setExpandedWidget] = useState<'badges' | 'projects' | null>(null)
   const [isIconBarVisible, setIsIconBarVisible] = useState(true)
   const [localUsers, setLocalUsers] = useState<User[]>(users)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -231,22 +232,23 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
           {/* Action Row */}
           <div className="flex flex-col gap-1">
             {currentUser && currentUser.userName === activeUser.username && (
-              <button
-                onClick={() => { setIsEditModalOpen(true); setActiveOverlay(null) }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                Edit Profile
-              </button>
+              <>
+                <button
+                  onClick={() => { setIsEditModalOpen(true); setActiveOverlay(null) }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => { handleExport(); setActiveOverlay(null) }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export PNG
+                </button>
+              </>
             )}
-
-            <button
-              onClick={() => { handleExport(); setActiveOverlay(null) }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Export PNG
-            </button>
 
             {currentUser ? (
               <button
@@ -386,20 +388,61 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             {/* 2. Problems Solved Widget */}
             <ProblemsSolved problems={activeUser.problemsSolved || {}} />
 
-            {/* 3. Badges Widget */}
-            <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
-              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Badges</span>
-              <div className="mt-12 flex-1 relative">
-                {activeUser.badges && activeUser.badges.length > 0 ? (
-                  <BadgeContainer badges={activeUser.badges} />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
-                )}
+            {/* Row wrapper for Badges & Projects */}
+            <div className="md:col-span-2 flex flex-col md:flex-row gap-6 h-auto md:h-[350px]">
+              
+              {/* 3. Badges Widget */}
+              <div 
+                className={`transition-all duration-700 ease-in-out h-full overflow-hidden ${
+                  expandedWidget === 'badges' 
+                    ? 'md:w-[100%]' 
+                    : expandedWidget === 'projects' 
+                      ? 'md:w-[0%] opacity-0 md:p-0 border-transparent' 
+                      : 'md:w-[calc(50%-12px)]'
+                } bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0`}
+              >
+                <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
+                  <button 
+                    onClick={() => setExpandedWidget(expandedWidget === 'badges' ? null : 'badges')}
+                    className="text-[11px] font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                  >
+                    {expandedWidget === 'badges' ? 'Collapse' : 'Expand'}
+                  </button>
+                </div>
+                <div className="mt-12 flex-1 relative min-h-0">
+                  {activeUser.badges && activeUser.badges.length > 0 ? (
+                    <BadgeContainer badges={activeUser.badges} isExpanded={expandedWidget === 'badges'} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Project Showcase Widget */}
+              <div 
+                className={`transition-all duration-700 ease-in-out h-full overflow-hidden ${
+                  expandedWidget === 'projects' 
+                    ? 'md:w-[100%]' 
+                    : expandedWidget === 'badges' 
+                      ? 'md:w-[0%] opacity-0 md:p-0 border-transparent' 
+                      : 'md:w-[calc(50%-12px)]'
+                } bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0`}
+              >
+                <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
+                  <button 
+                    onClick={() => setExpandedWidget(expandedWidget === 'projects' ? null : 'projects')}
+                    className="text-[11px] font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                  >
+                    {expandedWidget === 'projects' ? 'Collapse' : 'Expand'}
+                  </button>
+                </div>
+                <div className="mt-12 flex-1 relative min-h-0">
+                  <ProjectShowcase projects={activeUser.projects || []} isExpanded={expandedWidget === 'projects'} />
+                </div>
               </div>
             </div>
-
-            {/* 4. Project Showcase Widget */}
-            <ProjectShowcase projects={activeUser.projects || []} />
 
             {/* 5. Heatmap Widget (Full Width) */}
             <div className="md:col-span-2 bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[250px] overflow-hidden shadow-sm dark:shadow-none">

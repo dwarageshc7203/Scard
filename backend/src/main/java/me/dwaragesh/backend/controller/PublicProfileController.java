@@ -27,6 +27,22 @@ public class PublicProfileController {
         return service.getAllProfiles();
     }
 
+    @GetMapping("/api/profile/test-sync/{username}/{platform}/{external}")
+    public String testSync(@PathVariable String username, @PathVariable String platform, @PathVariable String external) {
+        try {
+            me.dwaragesh.backend.model.Profile p = service.getRawProfile(username);
+            me.dwaragesh.backend.service.SyncService syncService = org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(
+                ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext()
+            ).getBean(me.dwaragesh.backend.service.SyncService.class);
+            syncService.syncPlatform(p, me.dwaragesh.backend.model.enums.Platform.valueOf(platform.toUpperCase()), external);
+            return "OK";
+        } catch (Exception e) {
+            java.io.StringWriter sw = new java.io.StringWriter();
+            e.printStackTrace(new java.io.PrintWriter(sw));
+            return sw.toString();
+        }
+    }
+
     @org.springframework.web.bind.annotation.ExceptionHandler(me.dwaragesh.backend.exception.ProfileNotFoundException.class)
     public org.springframework.http.ResponseEntity<String> handleProfileNotFound(me.dwaragesh.backend.exception.ProfileNotFoundException ex) {
         return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());

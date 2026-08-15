@@ -32,6 +32,7 @@ public class ProfileService {
     public ProfileResponse toResponse(Profile profile) {
         return new ProfileResponse(
                 profile.getUserName(),
+                profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
                 profile.getDesignation(),
                 profile.getProfileUrl(),
                 profile.getAsciiArt(),
@@ -39,7 +40,7 @@ public class ProfileService {
                 profile.getSocials(),
                 profile.getBadges(),
                 profile.getContest(),
-                profile.getProblemsSolved(),
+                profile.getProblemStats(),
                 profile.getProjects(),
                 profile.getAnonymousViews(),
                 profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]");
@@ -62,6 +63,7 @@ public class ProfileService {
             profile.setUser(user);
             profile.setDesignation(request.designation());
             profile.setUserName(request.userName());
+            profile.setProfileName(request.profileName() != null ? request.profileName() : request.userName());
             return toResponse(repository.save(profile));
         } catch (DataIntegrityViolationException e) {
             // Two concurrent requests raced; the other thread won — find and return theirs
@@ -106,6 +108,10 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    public Profile getRawProfile(String userName) {
+        return repository.findFirstByUserName(userName).orElseThrow();
+    }
+
     @Transactional
     public ProfileResponse patchProfile(User user, PatchProfileRequest request) {
         Profile profile = user.getProfile();
@@ -132,6 +138,9 @@ public class ProfileService {
                 profile.setUserName(request.userName());
                 user.setUserName(request.userName());
             }
+        }
+        if (request.profileName() != null) {
+            profile.setProfileName(request.profileName());
         }
         if (request.email() != null) {
             user.setEmail(request.email());

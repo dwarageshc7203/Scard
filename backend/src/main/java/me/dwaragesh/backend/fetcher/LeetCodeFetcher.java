@@ -5,6 +5,7 @@ import me.dwaragesh.backend.fetcher.dto.BadgeData;
 import me.dwaragesh.backend.fetcher.dto.ContestData;
 import me.dwaragesh.backend.fetcher.dto.ContributionData;
 import me.dwaragesh.backend.fetcher.dto.PlatformSyncResult;
+import me.dwaragesh.backend.fetcher.dto.ProblemStatsData;
 import me.dwaragesh.backend.model.enums.Platform;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
@@ -38,6 +39,7 @@ public class LeetCodeFetcher implements PlatformFetcher {
             submissionCalendar
             submitStatsGlobal {
               acSubmissionNum {
+                difficulty
                 count
               }
             }
@@ -161,11 +163,19 @@ public class LeetCodeFetcher implements PlatformFetcher {
             }
 
             // --- Problems Solved ---
-            Integer problemsSolved = null;
+            ProblemStatsData problemsSolved = null;
             JsonNode submitStats = matchedUser.path("submitStatsGlobal").path("acSubmissionNum");
             if (submitStats.isArray() && submitStats.size() > 0) {
-                // Usually the first element in acSubmissionNum is "All" difficulty, providing the total count.
-                problemsSolved = submitStats.get(0).path("count").asInt();
+                int total = 0, easy = 0, medium = 0, hard = 0;
+                for (JsonNode stat : submitStats) {
+                    String diff = stat.path("difficulty").asText("");
+                    int count = stat.path("count").asInt(0);
+                    if ("All".equalsIgnoreCase(diff)) total = count;
+                    else if ("Easy".equalsIgnoreCase(diff)) easy = count;
+                    else if ("Medium".equalsIgnoreCase(diff)) medium = count;
+                    else if ("Hard".equalsIgnoreCase(diff)) hard = count;
+                }
+                problemsSolved = new ProblemStatsData(total, easy, medium, hard);
             }
 
             return new PlatformSyncResult(contributions, badges, contests, problemsSolved);

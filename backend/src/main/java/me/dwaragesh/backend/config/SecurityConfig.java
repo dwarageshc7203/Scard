@@ -1,14 +1,20 @@
 package me.dwaragesh.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -21,11 +27,11 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("http://localhost:5173/?login=success", true) // wherever your React dev server runs
+                        .defaultSuccessUrl(frontendUrl + "/?login=success", true) // dynamic frontend success URL
                 )
                 .logout(logout -> logout
                         .logoutRequestMatcher(request -> request.getServletPath().equals("/logout") && request.getMethod().equals("GET"))
-                        .logoutSuccessUrl("http://localhost:5173/?logout=success")
+                        .logoutSuccessUrl(frontendUrl + "/?logout=success")
                         .permitAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
@@ -35,7 +41,10 @@ public class SecurityConfig {
                             response.getWriter().write("{\"error\": \"Unauthorized\"}");
                         })
                 )
-                .csrf(csrf -> csrf.disable()); // fine for a stateless-ish JSON API during dev; revisit before production
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                );
 
         return http.build();
     }

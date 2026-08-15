@@ -25,5 +25,8 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String url;
+    @Column(columnDefinition = "TEXT")
+    private String projectImageBase64;
+    private String projectUrl;
+    private String repoUrl;
 }
