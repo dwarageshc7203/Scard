@@ -48,7 +48,7 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
           </div>
           <div className="ml-6 pb-2 pb-6">
             <h1 className="text-3xl font-black text-gray-900 leading-tight flex items-center gap-2">
-              {user.name}
+              {user.displayName}
             </h1>
             <p className="text-gray-500 font-medium">@{user.username}</p>
             {user.designation && <p className="text-gray-700 mt-2 font-medium">{user.designation}</p>}

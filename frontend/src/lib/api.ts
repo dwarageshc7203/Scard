@@ -100,7 +100,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
     statusMessage: profile.asciiArt ? 'ASCII PFP Custom Art Loaded' : undefined,
     statusTime: 'Recently',
     asciiArt: profile.asciiArt,
-    imageURL: savedAvatar || profile.imageURL,
+    imageURL: savedAvatar || profile.profileURL,
     initials: profile.userName.substring(0, 2).toUpperCase(),
     color: stringToColor(profile.userName),
     joinedDaysAgo: 1,

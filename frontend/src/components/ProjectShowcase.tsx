@@ -27,9 +27,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
               {/* Header: Image + Title */}
               <div className={`flex items-center gap-3 ${isExpanded ? 'mb-4' : ''}`}>
                 {/* Image Rendering */}
-                {project.projectImageBase64 && (
+                {project.projectImage && (
                   <div className={`flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-surface-2 ${isExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
-                    <img src={project.projectImageBase64} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
+                    <img src={project.projectImage} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
                   </div>
                 )}
                 

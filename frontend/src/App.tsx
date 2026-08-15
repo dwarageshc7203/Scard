@@ -29,7 +29,8 @@ const PLACEHOLDER_USER: User = {
       count: Math.floor(Math.random() * 5)
     }
   }).reverse(),
-  isOnline: true
+  isOnline: true,
+  rawContributions: []
 }
 
 function AppContent() {
@@ -123,10 +124,7 @@ function AppContent() {
         <Route
           path="/"
           element={
-            <LandingPage
-              featuredUser={featuredUser}
-              onGetStarted={() => navigate('/explore')}
-            />
+            <LandingPage />
           }
         />
         <Route
