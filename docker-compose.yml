@@ -7,9 +7,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: scard_db
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: scard
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -42,8 +40,6 @@ services:
     container_name: scard_frontend
     depends_on:
       - backend
-    ports:
-      - "80:80"
     restart: unless-stopped
 
 volumes:
