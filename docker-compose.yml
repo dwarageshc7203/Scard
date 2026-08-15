@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     environment:
-      - DB_URL=jdbc:postgresql://db:5432/scard_db
+      - DB_URL=jdbc:postgresql://db:5432/scard
       - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
