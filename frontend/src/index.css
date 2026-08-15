@@ -42,7 +42,6 @@ html {
   background-color: var(--surface);
   color: var(--text);
   font-family: var(--font-sans);
-  transition: background-color 0.2s ease, color 0.2s ease;
   scroll-behavior: smooth;
 }
 

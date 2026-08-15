@@ -7,6 +7,7 @@ import me.dwaragesh.backend.model.dto.OnBoardingRequest;
 import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.repository.ProfileRepository;
+import me.dwaragesh.backend.repository.ProfileViewRepository;
 import me.dwaragesh.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,14 +26,22 @@ public class ProfileService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ProfileViewRepository profileViewRepository;
+
     public ProfileResponse toResponse(Profile profile) {
         return new ProfileResponse(
                 profile.getUserName(),
                 profile.getDesignation(),
                 profile.getProfileUrl(),
                 profile.getAsciiArt(),
+                profile.getBannerId(),
+                profile.getSocials(),
                 profile.getBadges(),
                 profile.getContest(),
+                profile.getProblemsSolved(),
+                profile.getProjects(),
+                profile.getAnonymousViews(),
                 profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]");
     }
 
@@ -69,6 +78,27 @@ public class ProfileService {
         return toResponse(profile);
     }
 
+    @Transactional
+    public ProfileResponse getProfileAndTrackView(String userName, String viewerGoogleId) {
+        Profile profile = repository.findFirstByUserName(userName)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
+        
+        if (viewerGoogleId == null) {
+            profile.setAnonymousViews(profile.getAnonymousViews() + 1);
+            repository.save(profile);
+        } else {
+            User viewer = userRepository.findByGoogleId(viewerGoogleId).orElse(null);
+            if (viewer != null && profile.getUser() != null && !viewer.getUserId().equals(profile.getUser().getUserId())) {
+                ProfileView view = new ProfileView();
+                view.setProfile(profile);
+                view.setViewer(viewer);
+                profileViewRepository.save(view);
+            }
+        }
+        
+        return toResponse(profile);
+    }
+
     @Transactional(readOnly = true)
     public List<ProfileResponse> getAllProfiles() {
         return repository.findAll().stream()
@@ -80,7 +110,9 @@ public class ProfileService {
     public ProfileResponse patchProfile(User user, PatchProfileRequest request) {
         Profile profile = user.getProfile();
         if (profile == null) {
-            throw new ProfileNotFoundException("Profile does not exist");
+            profile = new Profile();
+            profile.setUser(user);
+            profile.setAnonymousViews(0);
         }
 
         if (request.designation() != null) {
@@ -111,10 +143,61 @@ public class ProfileService {
         if (request.contests() != null) {
             profile.setContest(request.contests());
         }
+        
+        if (request.socials() != null) {
+            if (profile.getSocials() == null) {
+                profile.setSocials(new java.util.ArrayList<>());
+            } else {
+                profile.getSocials().clear();
+            }
+            profile.getSocials().addAll(request.socials());
+        }
+        if (request.projects() != null) {
+            if (profile.getProjects() == null) {
+                profile.setProjects(new java.util.ArrayList<>());
+            } else {
+                profile.getProjects().clear();
+            }
+            for (Project p : request.projects()) {
+                p.setProjectId(null);
+                p.setProfile(profile);
+                profile.getProjects().add(p);
+            }
+        }
+
+        if (request.problemsSolved() != null) {
+            profile.setProblemsSolved(request.problemsSolved());
+        }
+        
+        if (request.bannerId() != null) {
+            profile.setBannerId(request.bannerId());
+        }
+
+        if (request.socials() != null) {
+            profile.setSocials(request.socials());
+        }
 
         Profile saved = repository.save(profile);
         userRepository.save(user);
 
         return toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public me.dwaragesh.backend.model.dto.AnalyticsResponse getAnalytics(User user) {
+        Profile profile = user.getProfile();
+        if (profile == null) throw new ProfileNotFoundException("Profile does not exist");
+        
+        List<ProfileView> views = profileViewRepository.findByProfileOrderByViewedAtDesc(profile);
+        List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = views.stream()
+                .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
+                        v.getViewer().getUserName(),
+                        v.getViewer().getUserName(), 
+                        v.getViewer().getImageURL(),
+                        v.getViewedAt()
+                ))
+                .collect(Collectors.toList());
+                
+        return new me.dwaragesh.backend.model.dto.AnalyticsResponse(profile.getAnonymousViews(), recentViewers);
     }
 }

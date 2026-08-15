@@ -4,28 +4,26 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import me.dwaragesh.backend.model.enums.Platform;
-
-import java.time.LocalDate;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Badge {
+public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer badgeId;
+    private Integer projectId;
 
     @ManyToOne
+    @JoinColumn(name = "profile_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Profile profile;
 
-    @Enumerated(EnumType.STRING)
-    private Platform platform;
-    private String badgeName;
-    private String badgeURL;
-    private LocalDate badgeDate;
+    private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String url;
 }

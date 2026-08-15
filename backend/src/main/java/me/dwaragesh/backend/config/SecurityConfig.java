@@ -15,7 +15,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // public: anyone can view, create, or update profile pages
-                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles").permitAll()
+                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles", "/api/banners").permitAll()
                         // everything else under /api requires a logged-in session
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
@@ -24,6 +24,7 @@ public class SecurityConfig {
                         .defaultSuccessUrl("http://localhost:5173/?login=success", true) // wherever your React dev server runs
                 )
                 .logout(logout -> logout
+                        .logoutRequestMatcher(request -> request.getServletPath().equals("/logout") && request.getMethod().equals("GET"))
                         .logoutSuccessUrl("http://localhost:5173/?logout=success")
                         .permitAll()
                 )

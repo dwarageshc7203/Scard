@@ -68,7 +68,7 @@ const ContestGraph: FC<ContestGraphProps> = ({ contests }) => {
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
-            type="monotone"
+            type="linear"
             dataKey="rating"
             stroke="#3b82f6"
             strokeWidth={2}

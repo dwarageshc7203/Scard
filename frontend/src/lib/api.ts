@@ -30,7 +30,12 @@ export interface BackendProfile {
   asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
+  projects?: { name: string; description: string; url: string }[]
+  problemsSolved?: Record<string, number>
   contributions?: BackendContribution[]
+  bannerId?: number
+  socials?: string[]
+  anonymousViews?: number
 }
 
 function stringToColor(str: string): string {
@@ -99,6 +104,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
     joinedDaysAgo: 1,
     totalContributions: total,
     isOnline: true,
+    bannerId: profile.bannerId,
     badges: (profile.badges || []).map(b => ({
       platform: b.platform.toLowerCase() as Platform,
       label: `${b.platform} · ${b.badgeName}`,
@@ -110,13 +116,21 @@ export function mapProfileToUser(profile: BackendProfile): User {
       rank: 'Rank N/A',
       date: c.contestDate
     })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    projects: profile.projects || [],
+    problemsSolved: profile.problemsSolved || {},
+    anonymousViews: profile.anonymousViews || 0,
     socials: {
       github: savedSocials.githubUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'github')?.badgeURL || '',
       leetcode: savedSocials.leetcodeUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'leetcode')?.badgeURL || '',
       codeforces: savedSocials.codeforcesUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'codeforces')?.badgeURL || '',
     },
+    customSocials: (profile.socials || []).map(s => {
+      const idx = s.indexOf(':');
+      if (idx === -1) return { type: 'link', url: s };
+      return { type: s.substring(0, idx), url: s.substring(idx + 1) };
+    }),
     heatmapData,
-    rawContributions: (profile.contributions || []).map(c => ({ platform: c.platform, date: c.contributionDate, count: c.count }))
+    rawContributions: (profile.contributions || []).map(c => ({ platform: c.platform, date: c.contributionDate || (c as any).date, count: c.count }))
   }
 }
 
@@ -140,6 +154,12 @@ export async function fetchMe() {
   return res.json()
 }
 
+export async function fetchBanners() {
+  const res = await fetch('/api/banners')
+  if (!res.ok) throw new Error('Failed to fetch banners')
+  return res.json()
+}
+
 export async function createProfile(userName: string, designation: string) {
   const res = await fetch('/api/profile', {
     method: 'POST',
@@ -152,15 +172,21 @@ export async function createProfile(userName: string, designation: string) {
   return res.json()
 }
 
-export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string) {
+export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName }),
+    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName, bannerId, socials, projects, problemsSolved }),
   })
   if (!res.ok) throw new Error('Failed to update profile')
+  return res.json()
+}
+
+export async function fetchAnalytics() {
+  const res = await fetch('/api/profile/analytics')
+  if (!res.ok) throw new Error('Failed to fetch analytics')
   return res.json()
 }
 

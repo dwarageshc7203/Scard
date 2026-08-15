@@ -6,7 +6,7 @@ public record PlatformSyncResult(
 
         List<ContributionData> contributions,
         List<BadgeData> badges,
-        List<ContestData> contests
-
+        List<ContestData> contests,
+        Integer problemsSolved
 ) {
 }

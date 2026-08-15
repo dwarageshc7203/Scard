@@ -1,9 +1,10 @@
 import { useState, useEffect, type FC } from 'react'
 import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage } from 'lucide-react'
+import { toast } from 'sonner'
 import Button from './ui/button'
 import Input from './ui/input'
 import type { User } from '../types'
-import { updateProfile, syncPlatform, fetchProfile } from '../lib/api'
+import { updateProfile, syncPlatform, fetchProfile, fetchBanners } from '../lib/api'
 import { generateAsciiFromImage, generateAsciiFromBase64 } from '../lib/ascii'
 import { useTheme } from '../context/ThemeContext'
 
@@ -15,7 +16,7 @@ interface EditProfileModalProps {
 
 const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'account'>('profile')
-  const [activeSection, setActiveSection] = useState<'details' | 'connections' | 'photo'>('details')
+  const [activeSection, setActiveSection] = useState<'details' | 'connections' | 'socials' | 'projects' | 'photo' | 'banner'>('details')
 
   // Theme support
   const { theme, setTheme } = useTheme()
@@ -26,7 +27,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   // Form Fields
   const [username, setUsername] = useState(user.username || '')
   const [designation, setDesignation] = useState(user.designation || '')
-  const [email, setEmail] = useState(user.email || '')
   const [website, setWebsite] = useState(user.socials?.github || user.pdfUrl || '')
   
   // Helper to extract username from a URL or raw input
@@ -45,6 +45,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   const [leetcodeUser, setLeetcodeUser] = useState(extractUsername(savedSocials.leetcodeUrl || user.socials?.leetcode || ''))
   const [codeforcesUser, setCodeforcesUser] = useState(extractUsername(savedSocials.codeforcesUrl || user.socials?.codeforces || ''))
 
+  // Custom Socials (Dynamic)
+  const [customSocials, setCustomSocials] = useState<{ type: string; url: string }[]>(user.customSocials || [])
+
+  // Projects
+  const [projects, setProjects] = useState<any[]>(user.projects || [])
+
   // Photo / ASCII
   const [useAscii, setUseAscii] = useState(!!user.asciiArt && !user.asciiArt.includes('<span'))
   const [generatedAscii, setGeneratedAscii] = useState(() => {
@@ -55,7 +61,15 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   const [showAsciiPreview, setShowAsciiPreview] = useState(false)
   const [photoBase64, setPhotoBase64] = useState<string>(localStorage.getItem(`avatar_${user.username}`) || '')
 
+  // Banners
+  const [availableBanners, setAvailableBanners] = useState<any[]>([])
+  const [selectedBannerId, setSelectedBannerId] = useState<number>(user.bannerId || 0)
+
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchBanners().then(setAvailableBanners).catch(console.error)
+  }, [])
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -103,37 +117,37 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
       // 2. Patch details to backend
       try {
-        await updateProfile(designation, website, email, useAscii ? generatedAscii : '', username)
-      } catch (e) {
+        const mappedSocials = customSocials.map(s => `${s.type}:${s.url}`)
+        await updateProfile(designation, website, undefined, useAscii ? generatedAscii : '', username, selectedBannerId, mappedSocials, projects, undefined)
+        toast.success('Profile saved successfully!')
+      } catch (e: any) {
         console.error('Failed to update details in backend:', e)
+        toast.error(`Save unsuccessful: ${e.message || 'Unknown error'}`)
       }
       
       const ghUser = githubUser
       const lcUser = leetcodeUser
       const cfUser = codeforcesUser
 
-      // 3. Sync platforms with backend
+      // 3. Sync platforms with backend in parallel
+      const syncPromises = []
       if (ghUser) {
-        try {
-          await syncPlatform('GITHUB', ghUser)
-        } catch (e) {
-          console.error('GitHub sync failed:', e)
-        }
+        syncPromises.push(
+          syncPlatform('GITHUB', ghUser).catch(e => console.error('GitHub sync failed:', e))
+        )
       }
       if (lcUser) {
-        try {
-          await syncPlatform('LEETCODE', lcUser)
-        } catch (e) {
-          console.error('LeetCode sync failed:', e)
-        }
+        syncPromises.push(
+          syncPlatform('LEETCODE', lcUser).catch(e => console.error('LeetCode sync failed:', e))
+        )
       }
       if (cfUser) {
-        try {
-          await syncPlatform('CODEFORCES', cfUser)
-        } catch (e) {
-          console.error('Codeforces sync failed:', e)
-        }
+        syncPromises.push(
+          syncPlatform('CODEFORCES', cfUser).catch(e => console.error('Codeforces sync failed:', e))
+        )
       }
+      
+      await Promise.allSettled(syncPromises)
 
       // 4. Fetch updated profile from backend if possible, else create local update
       let updatedUser: User
@@ -146,6 +160,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
           username,
           designation,
           title: designation,
+          bannerId: selectedBannerId,
         }
       }
 
@@ -155,6 +170,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
         leetcode: leetcodeUrl || updatedUser.socials?.leetcode,
         codeforces: codeforcesUrl || updatedUser.socials?.codeforces
       }
+      updatedUser.customSocials = customSocials
+      updatedUser.projects = projects
 
       onSave(updatedUser)
       onClose()
@@ -241,6 +258,26 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     Connections
                   </button>
                   <button
+                    onClick={() => setActiveSection('socials')}
+                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${
+                      activeSection === 'socials'
+                        ? 'bg-surface-2 text-text border border-border'
+                        : 'text-muted hover:text-text hover:bg-surface/50'
+                    }`}
+                  >
+                    Socials
+                  </button>
+                  <button
+                    onClick={() => setActiveSection('projects')}
+                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${
+                      activeSection === 'projects'
+                        ? 'bg-surface-2 text-text border border-border'
+                        : 'text-muted hover:text-text hover:bg-surface/50'
+                    }`}
+                  >
+                    Projects
+                  </button>
+                  <button
                     onClick={() => setActiveSection('photo')}
                     className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${
                       activeSection === 'photo'
@@ -249,6 +286,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     }`}
                   >
                     Photo
+                  </button>
+                  <button
+                    onClick={() => setActiveSection('banner')}
+                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${
+                      activeSection === 'banner'
+                        ? 'bg-surface-2 text-text border border-border'
+                        : 'text-muted hover:text-text hover:bg-surface/50'
+                    }`}
+                  >
+                    Banner
                   </button>
                 </>
               ) : (
@@ -285,17 +332,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       placeholder="e.g. Software Engineer"
-                      className="bg-surface border-border"
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Email</label>
-                    <Input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. johndoe@example.com"
                       className="bg-surface border-border"
                     />
                   </div>
@@ -352,7 +388,92 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     />
                   </div>
                 </div>
-              ) : (
+              ) : activeSection === 'socials' ? (
+                <div className="space-y-5 flex-1">
+                  <div className="flex items-center justify-between mb-4 pr-8">
+                    <h3 className="text-sm font-bold text-text">Socials</h3>
+                    <Button 
+                      onClick={() => setCustomSocials([...customSocials, { type: 'linkedin', url: '' }])}
+                      variant="outline" 
+                      className="border-border text-xs h-7 px-2"
+                    >
+                      + Add Social
+                    </Button>
+                  </div>
+                  
+                  {customSocials.length === 0 ? (
+                    <div className="text-center text-xs text-muted py-8 border border-dashed border-border rounded-lg">
+                      No custom socials added yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {customSocials.map((social, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <select 
+                            className="bg-surface border border-border rounded-md text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent/50 w-28 text-text"
+                            value={social.type}
+                            onChange={(e) => {
+                              const newSocials = [...customSocials]
+                              newSocials[idx].type = e.target.value
+                              setCustomSocials(newSocials)
+                            }}
+                          >
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter / X</option>
+                            <option value="mail">Email</option>
+                            <option value="website">Website</option>
+                          </select>
+                          <Input
+                            value={social.url}
+                            onChange={(e) => {
+                              const newSocials = [...customSocials]
+                              newSocials[idx].url = e.target.value
+                              setCustomSocials(newSocials)
+                            }}
+                            placeholder={social.type === 'mail' ? 'johndoe@example.com' : 'https://...'}
+                            className="bg-surface border-border flex-1"
+                          />
+                          <button 
+                            onClick={() => {
+                              const newSocials = [...customSocials]
+                              newSocials.splice(idx, 1)
+                              setCustomSocials(newSocials)
+                            }}
+                            className="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeSection === 'projects' ? (
+                <div className="space-y-5 flex-1">
+                  <div className="flex items-center justify-between mb-4 pr-8">
+                    <h3 className="text-sm font-bold text-text">Projects</h3>
+                    <Button onClick={() => setProjects([...projects, { name: '', description: '', url: '' }])} variant="outline" className="border-border text-xs h-7 px-2">
+                      + Add Project
+                    </Button>
+                  </div>
+                  {projects.length === 0 ? (
+                    <div className="text-center text-xs text-muted py-8 border border-dashed border-border rounded-lg">No projects added yet.</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {projects.map((proj, idx) => (
+                        <div key={idx} className="border border-border p-3 rounded-lg relative space-y-2">
+                          <button onClick={() => { const p = [...projects]; p.splice(idx,1); setProjects(p); }} className="absolute top-2 right-2 text-muted hover:text-red-500">
+                            <X className="w-4 h-4" />
+                          </button>
+                          <Input value={proj.name} onChange={e => { const p=[...projects]; p[idx].name=e.target.value; setProjects(p); }} placeholder="Project Name" className="h-8 text-xs bg-surface border-border w-[90%]" />
+                          <Input value={proj.url} onChange={e => { const p=[...projects]; p[idx].url=e.target.value; setProjects(p); }} placeholder="Project URL" className="h-8 text-xs bg-surface border-border" />
+                          <textarea value={proj.description} onChange={e => { const p=[...projects]; p[idx].description=e.target.value; setProjects(p); }} placeholder="Description" className="w-full h-16 bg-surface border border-border rounded-md text-xs p-2 focus:outline-none focus:ring-1 focus:ring-accent/50 text-text resize-none" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeSection === 'photo' ? (
                 <div className="space-y-5 flex-1 relative">
                   <h3 className="text-sm font-bold text-text mb-4">Profile Photo</h3>
                   
@@ -443,7 +564,32 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     </div>
                   )}
                 </div>
-              )
+              ) : activeSection === 'banner' ? (
+                <div className="space-y-5 flex-1">
+                  <h3 className="text-sm font-bold text-text mb-4">Profile Banner</h3>
+                  <div className="text-xs text-muted mb-4">Select a banner to display at the top of your profile.</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div 
+                      onClick={() => setSelectedBannerId(0)}
+                      className={`h-24 rounded-lg border-2 cursor-pointer flex items-center justify-center transition-all bg-surface-2 ${selectedBannerId === 0 ? 'border-accent ring-2 ring-accent/30' : 'border-border hover:border-muted'}`}
+                    >
+                      <span className="text-xs text-muted font-medium">Default Solid Color</span>
+                    </div>
+                    {availableBanners.map(banner => (
+                      <div 
+                        key={banner.id}
+                        onClick={() => setSelectedBannerId(banner.id)}
+                        className={`h-24 rounded-lg border-2 cursor-pointer transition-all relative overflow-hidden ${selectedBannerId === banner.id ? 'border-accent ring-2 ring-accent/30' : 'border-border hover:border-muted'}`}
+                        style={{ background: banner.cssBackground, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                      >
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <span className="text-white text-xs font-bold drop-shadow-md">{banner.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null
             ) : (
               <div className="space-y-6 flex-1">
                 <h3 className="text-sm font-bold text-text mb-4">Account Settings</h3>

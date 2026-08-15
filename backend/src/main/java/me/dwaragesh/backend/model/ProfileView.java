@@ -4,28 +4,29 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import me.dwaragesh.backend.model.enums.Platform;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Badge {
+public class ProfileView {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer badgeId;
+    private int viewId;
 
     @ManyToOne
+    @JoinColumn(name = "profile_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Profile profile;
 
-    @Enumerated(EnumType.STRING)
-    private Platform platform;
-    private String badgeName;
-    private String badgeURL;
-    private LocalDate badgeDate;
+    @ManyToOne
+    @JoinColumn(name = "viewer_id")
+    private User viewer;
 
+    @CreationTimestamp
+    private Instant viewedAt;
 }

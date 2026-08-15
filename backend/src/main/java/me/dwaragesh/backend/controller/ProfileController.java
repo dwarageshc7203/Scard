@@ -32,13 +32,22 @@ public class ProfileController {
         return new ResponseEntity<>(service.createProfile(user, request), HttpStatus.CREATED);
     }
 
-    @PatchMapping()
+    @PatchMapping
     public ResponseEntity<ProfileResponse> patchProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody PatchProfileRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        return ResponseEntity.ok(service.patchProfile(user, request));
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<me.dwaragesh.backend.model.dto.AnalyticsResponse> getAnalytics(@AuthenticationPrincipal OidcUser principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getName(), principal.getPicture());
-        return ResponseEntity.ok(service.patchProfile(user, request));
+        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        return ResponseEntity.ok(service.getAnalytics(user));
     }
 
 }

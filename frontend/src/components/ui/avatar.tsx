@@ -47,7 +47,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
 
     const renderAscii = () => (
       <div className="flex h-full w-full items-center justify-center bg-transparent overflow-hidden @container">
-        <pre 
+        <pre
           className="font-mono font-bold leading-[0.9] text-center text-text whitespace-pre select-none drop-shadow-md"
           style={{ fontSize: 'calc(100cqw / 49.5)' }} // 90 chars * ~0.55 width ratio = ~49.5
         >
@@ -82,7 +82,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           >
             {cleanAsciiArt ? renderAscii() : renderNormal()}
           </div>
-          
+
           {/* Back Face (Only if ASCII exists) */}
           {cleanAsciiArt && (
             <div
@@ -92,15 +92,6 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
             </div>
           )}
         </div>
-
-        {isOnline && (
-          <span
-            className={cn(
-              'absolute bottom-0 right-0 rounded-full bg-green-500 border-bg ring-1 ring-bg z-10',
-              dotSizeClasses[size]
-            )}
-          />
-        )}
       </div>
     )
   }

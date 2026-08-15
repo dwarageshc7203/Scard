@@ -87,7 +87,7 @@ public class GitHubFetcher implements PlatformFetcher{
             List<BadgeData> badges = List.of();
             List<ContestData> contests = List.of();
 
-            return new PlatformSyncResult(contributions, badges, contests);
+            return new PlatformSyncResult(contributions, badges, contests, null);
 
         } catch (Exception e) {
             e.printStackTrace();

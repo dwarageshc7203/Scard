@@ -17,12 +17,18 @@ public class PublicProfileController {
     private ProfileService service;
 
     @GetMapping("/api/profile/{userName}")
-    public ProfileResponse getPublicProfile(@PathVariable String userName) {
-        return service.getProfile(userName);
+    public ProfileResponse getPublicProfile(@PathVariable String userName, @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
+        String googleId = principal != null ? principal.getSubject() : null;
+        return service.getProfileAndTrackView(userName, googleId);
     }
 
     @GetMapping("/api/profiles")
     public List<ProfileResponse> getAllProfiles() {
         return service.getAllProfiles();
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(me.dwaragesh.backend.exception.ProfileNotFoundException.class)
+    public org.springframework.http.ResponseEntity<String> handleProfileNotFound(me.dwaragesh.backend.exception.ProfileNotFoundException ex) {
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

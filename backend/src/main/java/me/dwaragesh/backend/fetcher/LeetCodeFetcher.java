@@ -36,6 +36,11 @@ public class LeetCodeFetcher implements PlatformFetcher {
         query userProfile($username: String!) {
           matchedUser(username: $username) {
             submissionCalendar
+            submitStatsGlobal {
+              acSubmissionNum {
+                count
+              }
+            }
             badges {
               displayName
               icon
@@ -155,7 +160,15 @@ public class LeetCodeFetcher implements PlatformFetcher {
                 }
             }
 
-            return new PlatformSyncResult(contributions, badges, contests);
+            // --- Problems Solved ---
+            Integer problemsSolved = null;
+            JsonNode submitStats = matchedUser.path("submitStatsGlobal").path("acSubmissionNum");
+            if (submitStats.isArray() && submitStats.size() > 0) {
+                // Usually the first element in acSubmissionNum is "All" difficulty, providing the total count.
+                problemsSolved = submitStats.get(0).path("count").asInt();
+            }
+
+            return new PlatformSyncResult(contributions, badges, contests, problemsSolved);
 
         } catch (PlatformFetchException e) {
             throw e;

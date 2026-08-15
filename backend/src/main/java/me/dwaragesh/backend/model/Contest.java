@@ -16,7 +16,7 @@ public class Contest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int contestId;
+    private Integer contestId;
 
     @ManyToOne
     @com.fasterxml.jackson.annotation.JsonIgnore

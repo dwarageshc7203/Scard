@@ -53,6 +53,13 @@ public class SyncService {
         upsertBadges(profile, platform, result);
         upsertContests(profile, platform, result);
         
+        if (result.problemsSolved() != null) {
+            if (profile.getProblemsSolved() == null) {
+                profile.setProblemsSolved(new java.util.HashMap<>());
+            }
+            profile.getProblemsSolved().put(platform.name().toUpperCase(), result.problemsSolved());
+        }
+
         profileRepository.save(profile);
     }
 
@@ -69,6 +76,8 @@ public class SyncService {
         List<BadgeData> badges = new java.util.ArrayList<>();
         List<ContestData> contests = new java.util.ArrayList<>();
 
+        Integer problemsSolved = null;
+
         if (platform == Platform.GITHUB) {
             badges.add(new BadgeData("Pull Shark", "https://github.com", java.time.LocalDate.now()));
             badges.add(new BadgeData("Arctic Code Vault", "https://github.com", java.time.LocalDate.now()));
@@ -77,12 +86,14 @@ public class SyncService {
             badges.add(new BadgeData("50 Days Badge", "https://leetcode.com", java.time.LocalDate.now()));
             contests.add(new ContestData("Weekly Contest 350", java.time.LocalDate.now().minusDays(5), 1850));
             contests.add(new ContestData("Biweekly Contest 108", java.time.LocalDate.now().minusDays(12), 1790));
+            problemsSolved = 532;
         } else if (platform == Platform.CODEFORCES) {
             badges.add(new BadgeData("Specialist", "https://codeforces.com", java.time.LocalDate.now()));
             contests.add(new ContestData("Codeforces Round 880", java.time.LocalDate.now().minusDays(8), 1540));
+            problemsSolved = 210;
         }
 
-        return new PlatformSyncResult(contributions, badges, contests);
+        return new PlatformSyncResult(contributions, badges, contests, problemsSolved);
     }
 
     private void upsertContributions(Profile profile, Platform platform, PlatformSyncResult result) {

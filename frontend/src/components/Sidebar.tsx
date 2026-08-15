@@ -16,7 +16,7 @@ const Sidebar: FC<SidebarProps> = ({
   currentUser
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState<'activity' | 'new' | 'az'>('new')
+  const [activeTab, setActiveTab] = useState<'new' | 'all'>('new')
 
   // Filter & Sort logic
   const filteredUsers = users
@@ -30,9 +30,7 @@ const Sidebar: FC<SidebarProps> = ({
       )
     })
     .sort((a, b) => {
-      if (activeTab === 'activity') {
-        return b.totalContributions - a.totalContributions
-      } else if (activeTab === 'new') {
+      if (activeTab === 'new') {
         return a.joinedDaysAgo - b.joinedDaysAgo
       } else {
         return a.displayName.localeCompare(b.displayName)
@@ -40,16 +38,16 @@ const Sidebar: FC<SidebarProps> = ({
     })
 
   return (
-    <div className="w-64 flex-shrink-0 flex flex-col h-full bg-surface text-text border-r border-border/40 select-none">
+    <div className="w-72 flex-shrink-0 flex flex-col h-full bg-surface text-text border-r border-border/40 select-none">
       {/* Search Input Section */}
       <div className="p-4 pb-2 space-y-4">
-        <div className="flex items-center justify-between text-xs text-muted">
+        <div className="flex items-center justify-between text-xs text-muted relative">
           <input
             type="text"
             placeholder="Explore people..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-transparent text-text placeholder-muted/60 text-xs py-1.5 focus:outline-none border-b border-border/40"
+            className="w-full bg-surface-2/60 dark:bg-black/20 border border-border/40 rounded-lg text-text placeholder-muted/60 text-xs px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-accent/50"
           />
           {searchTerm && (
             <button
@@ -62,15 +60,7 @@ const Sidebar: FC<SidebarProps> = ({
         </div>
 
         {/* Tab Group */}
-        <div className="flex gap-4 border-b border-border/25 pb-2 text-[11px] font-semibold text-muted">
-          <button
-            onClick={() => setActiveTab('activity')}
-            className={`cursor-pointer hover:text-text transition-colors capitalize ${
-              activeTab === 'activity' ? 'text-text border-b border-text -mb-[9px] pb-[7px]' : ''
-            }`}
-          >
-            Activity
-          </button>
+        <div className="flex justify-center gap-6 border-b border-border/25 pb-2 text-[11px] font-semibold text-muted">
           <button
             onClick={() => setActiveTab('new')}
             className={`cursor-pointer hover:text-text transition-colors capitalize ${
@@ -80,12 +70,12 @@ const Sidebar: FC<SidebarProps> = ({
             New
           </button>
           <button
-            onClick={() => setActiveTab('az')}
+            onClick={() => setActiveTab('all')}
             className={`cursor-pointer hover:text-text transition-colors capitalize ${
-              activeTab === 'az' ? 'text-text border-b border-text -mb-[9px] pb-[7px]' : ''
+              activeTab === 'all' ? 'text-text border-b border-text -mb-[9px] pb-[7px]' : ''
             }`}
           >
-            A-Z
+            All
           </button>
         </div>
       </div>
@@ -125,47 +115,6 @@ const Sidebar: FC<SidebarProps> = ({
         })}
       </div>
 
-      {/* Authenticated user footer */}
-      <div className="border-t border-border/40 p-4 bg-surface-2/20 flex flex-col items-center gap-2 mt-auto">
-        {currentUser ? (
-          <div className="flex items-center gap-3 w-full px-2">
-            {currentUser.imageURL ? (
-              <img
-                src={currentUser.imageURL}
-                className="w-8 h-8 rounded-full border border-border/60 object-cover"
-                alt="Profile"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full border border-border/60 bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
-                {currentUser.userName?.substring(0, 2).toUpperCase() || 'U'}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold truncate text-text">
-                {currentUser.userName}
-              </div>
-              <div className="text-[10px] text-muted truncate">
-                {currentUser.email}
-              </div>
-            </div>
-          </div>
-        ) : null}
-        {!currentUser ? (
-          <button
-            onClick={() => window.location.href = '/oauth2/authorization/google'}
-            className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors mt-1 hover:underline cursor-pointer"
-          >
-            Log in with Google
-          </button>
-        ) : (
-          <button
-            onClick={() => window.location.href = '/logout'}
-            className="text-[10px] text-muted hover:text-red-400 font-medium transition-colors mt-1 hover:underline cursor-pointer"
-          >
-            not you? Log out
-          </button>
-        )}
-      </div>
     </div>
   )
 }

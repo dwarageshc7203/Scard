@@ -4,7 +4,10 @@ import me.dwaragesh.backend.model.Badge;
 import me.dwaragesh.backend.model.Contest;
 
 
+import me.dwaragesh.backend.model.Project;
+
 import java.util.List;
+import java.util.Map;
 
 public record PatchProfileRequest(
 
@@ -13,8 +16,12 @@ public record PatchProfileRequest(
         String userName,
         String email,
         String asciiArt,
+        Integer bannerId,
+        List<String> socials,
         List<Badge> badges,
-        List<Contest> contests
+        List<Contest> contests,
+        Map<String, Integer> problemsSolved,
+        List<Project> projects
 
 ) {
 }
