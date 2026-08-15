@@ -16,23 +16,41 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       {projects && projects.length > 0 ? (
-        <div className={`w-full flex-1 ${isExpanded ? 'grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[500px]' : 'flex flex-col justify-center gap-4'}`}>
+        <div className={`w-full flex-1 ${isExpanded ? 'grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[500px] max-w-4xl mx-auto p-4' : 'flex flex-col justify-center gap-4'}`}>
           {displayProjects.map((project, idx) => (
-            <div key={idx} className={`bg-surface rounded-xl border border-border/40 hover:border-border transition-colors ${isExpanded ? 'p-6 flex flex-col h-full' : 'p-4 flex flex-col justify-center'}`}>
+            <div 
+              key={idx} 
+              onClick={() => { if (!isExpanded && onToggleExpand) onToggleExpand(); }}
+              className={`bg-surface rounded-xl border border-transparent hover:border-border transition-colors cursor-pointer ${isExpanded ? 'p-6 flex flex-col h-full' : 'p-3 flex flex-row items-center justify-start gap-4'}`}
+            >
               
               {/* Header: Image + Title */}
-              <div className={`flex items-center gap-3 ${isExpanded ? 'mb-4' : 'justify-center'}`}>
+              <div className={`flex items-center gap-3 ${isExpanded ? 'mb-4' : ''}`}>
                 {/* Image Rendering */}
                 {project.projectImageBase64 && (
-                  <div className={`flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-surface-2 ${isExpanded ? 'w-16 h-16' : 'w-10 h-10'}`}>
+                  <div className={`flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-surface-2 ${isExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
                     <img src={project.projectImageBase64} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
                   </div>
                 )}
                 
-                {/* Title */}
-                <span className={`font-bold text-text block ${isExpanded ? 'text-lg text-left' : 'text-sm'}`}>
-                  {project.name}
-                </span>
+                {/* Title and Description in normal view */}
+                {!isExpanded && (
+                  <div className="flex flex-col flex-1 text-left">
+                    <span className="text-text block text-sm">
+                      {project.name}
+                    </span>
+                    <span className="text-muted text-xs line-clamp-1 mt-0.5">
+                      {project.description || 'No description provided.'}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Title only in expanded view (it has its own description area below) */}
+                {isExpanded && (
+                  <span className="text-text block text-lg text-left">
+                    {project.name}
+                  </span>
+                )}
               </div>
 
               {/* Expanded Description & Links */}
@@ -43,12 +61,12 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
                   </p>
                   <div className="flex gap-3 mt-auto">
                     {(project.url || project.projectUrl) && (
-                      <a href={project.url || project.projectUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-bold bg-accent/10 text-accent hover:bg-accent/20 px-3 py-1.5 rounded-lg transition-colors">
+                      <a href={project.url || project.projectUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs bg-accent/10 text-accent hover:bg-accent/20 px-3 py-1.5 rounded-lg transition-colors">
                         <ExternalLink className="w-3.5 h-3.5" /> Live
                       </a>
                     )}
                     {project.repoUrl && (
-                      <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-bold bg-surface-2 text-text hover:bg-border px-3 py-1.5 rounded-lg transition-colors">
+                      <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs bg-surface-2 text-text hover:bg-border px-3 py-1.5 rounded-lg transition-colors">
                         <Code className="w-3.5 h-3.5" /> Repo
                       </a>
                     )}
@@ -60,7 +78,7 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
           {hasMore && (
             <button
               onClick={() => setShowAll(true)}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface border border-border/40 hover:border-muted hover:shadow-lg transition-all duration-300 text-xs font-bold text-muted hover:text-text"
+              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface border border-border/40 hover:border-muted hover:shadow-lg transition-all duration-300 text-xs text-muted hover:text-text"
             >
               Show {projects.length - 2} More <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -78,7 +96,7 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
             <button onClick={() => setShowAll(false)} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-surface-2 text-muted hover:text-text transition-colors">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="font-bold text-text text-xl w-full text-center">All Projects</h3>
+            <h3 className="text-text text-xl w-full text-center">All Projects</h3>
             <div className="flex flex-col gap-4 overflow-y-auto p-2 custom-scrollbar">
               {projects.map((project, idx) => (
                 <div key={idx} className="bg-surface-2 rounded-xl p-4 border border-border/40 hover:border-border transition-colors text-center">
@@ -88,11 +106,11 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
                     </div>
                   )}
                   {project.url || project.projectUrl ? (
-                    <a href={project.url || project.projectUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-accent hover:underline block mb-1">
+                    <a href={project.url || project.projectUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline block mb-1">
                       {project.name}
                     </a>
                   ) : (
-                    <span className="text-sm font-bold text-text block mb-1">
+                    <span className="text-sm text-text block mb-1">
                       {project.name}
                     </span>
                   )}

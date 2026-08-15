@@ -143,7 +143,7 @@ function AppContent() {
           path="*"
           element={
             <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-              <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
+              <h2 className="text-2xl ">404 - Page Not Found</h2>
               <button
                 onClick={() => navigate('/')}
                 className="text-accent underline font-semibold cursor-pointer"

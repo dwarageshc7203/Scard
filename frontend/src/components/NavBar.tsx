@@ -31,7 +31,7 @@ const NavBar: FC<NavBarProps> = ({ currentPage, onNavigate }) => {
       <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
         <button
           onClick={() => onNavigate('landing')}
-          className="text-lg font-bold tracking-tight text-text hover:opacity-90 flex items-center gap-2 cursor-pointer select-none transition-all duration-200"
+          className="text-lg tracking-tight text-text hover:opacity-90 flex items-center gap-2 cursor-pointer select-none transition-all duration-200"
         >
           <img src={scardLogo} alt="Scard Logo" className="w-8 h-8 object-contain rounded-[8px] drop-shadow-md" />
           <span className="bg-gradient-to-r from-text via-text to-muted bg-clip-text text-transparent">Scard</span>

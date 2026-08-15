@@ -69,7 +69,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
   if (!matchedUser && variant === 'standalone' && !liveUser) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text space-y-4">
-        <h2 className="text-2xl font-bold">404 - Profile Not Found</h2>
+        <h2 className="text-2xl ">404 - Profile Not Found</h2>
         <p className="text-muted">The profile you're looking for doesn't exist.</p>
         <button onClick={() => window.location.href = '/'} className="text-accent underline font-semibold">Go Back Home</button>
       </div>
@@ -172,23 +172,23 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         className={`absolute top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${activeOverlay === 'analytics' ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
       >
         <div className="h-full bg-surface border-r border-border/40 w-72 p-6 pt-12 flex flex-col">
-          <h2 className="text-xl font-bold mb-6">Analytics</h2>
+          <h2 className="text-xl mb-6">Analytics</h2>
           {currentUser && currentUser.userName === activeUser.username ? (
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6">
               <div className="bg-surface-2 rounded-xl p-4 border border-border/40 text-center">
                 <span className="block text-3xl font-black text-text mb-1">{(analytics?.anonymousViews || 0) + (analytics?.recentViewers?.length || 0)}</span>
-                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Total Views</span>
+                <span className="text-[11px] text-muted uppercase tracking-wider">Total Views</span>
               </div>
               
               <div>
-                <h3 className="text-sm font-bold text-text mb-3">Recent Viewers</h3>
+                <h3 className="text-sm text-text mb-3">Recent Viewers</h3>
                 <div className="space-y-3">
                   {analytics?.recentViewers && analytics.recentViewers.length > 0 ? (
                     analytics.recentViewers.map((viewer: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-3">
                         <img src={viewer.imageURL} alt={viewer.displayName} className="w-8 h-8 rounded-full bg-surface-2" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-text truncate">{viewer.displayName}</p>
+                          <p className="text-xs text-text truncate">{viewer.displayName}</p>
                           <p className="text-[10px] text-muted">{new Date(viewer.viewedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
@@ -372,7 +372,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
               <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
               {activeUser.contests && activeUser.contests.length > 0 && (
-                <span className="absolute top-5 left-1/2 -translate-x-1/2 text-xl font-bold text-gray-900 dark:text-white z-10">
+                <span className="absolute top-5 left-1/2 -translate-x-1/2 text-xl text-gray-900 dark:text-white z-10">
                   {activeUser.contests[activeUser.contests.length - 1].rating}
                 </span>
               )}
@@ -405,7 +405,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                   <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
                   <button 
                     onClick={() => setExpandedWidget(expandedWidget === 'badges' ? null : 'badges')}
-                    className="text-[11px] font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
                   >
                     {expandedWidget === 'badges' ? 'Collapse' : 'Expand'}
                   </button>
@@ -433,13 +433,17 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                   <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
                   <button 
                     onClick={() => setExpandedWidget(expandedWidget === 'projects' ? null : 'projects')}
-                    className="text-[11px] font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
                   >
                     {expandedWidget === 'projects' ? 'Collapse' : 'Expand'}
                   </button>
                 </div>
                 <div className="mt-12 flex-1 relative min-h-0">
-                  <ProjectShowcase projects={activeUser.projects || []} isExpanded={expandedWidget === 'projects'} />
+                  <ProjectShowcase 
+                    projects={activeUser.projects || []} 
+                    isExpanded={expandedWidget === 'projects'} 
+                    onToggleExpand={() => setExpandedWidget('projects')}
+                  />
                 </div>
               </div>
             </div>
@@ -451,7 +455,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                 <select
                   value={heatmapPlatform}
                   onChange={togglePlatform}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
+                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
                   style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 >
                   <option value="all">Current (All)</option>
@@ -462,7 +466,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                 <select
                   value={heatmapYear}
                   onChange={toggleYear}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
+                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
                   style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 >
                   <option value="2026">2026</option>

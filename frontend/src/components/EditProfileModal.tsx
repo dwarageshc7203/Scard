@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from 'react'
-import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage } from 'lucide-react'
+import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from './ui/button'
 import Input from './ui/input'
@@ -54,8 +54,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   // Projects
   const [projects, setProjects] = useState<any[]>(user.projects || [])
 
-  // New Project Creation State
+  // New Project Creation/Edit State
   const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [editingProjectIndex, setEditingProjectIndex] = useState<number>(-1)
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -73,6 +74,13 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
     }
     setIsCreatingProject(false);
     setNewProject({ name: '', description: '', projectImageBase64: '', projectUrl: '', repoUrl: '' });
+    setEditingProjectIndex(-1);
+  };
+
+  const handleEditProject = (idx: number) => {
+    setEditingProjectIndex(idx);
+    setNewProject({...projects[idx]});
+    setIsCreatingProject(true);
   };
 
   const handleAddProject = () => {
@@ -80,8 +88,28 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       toast.error('Project name is required');
       return;
     }
-    setProjects([...projects, newProject]);
+    
+    
+    const projectToSave = {
+      name: newProject.name,
+      description: newProject.description,
+      projectImageBase64: newProject.projectImageBase64,
+      projectUrl: newProject.projectUrl,
+      repoUrl: newProject.repoUrl
+    };
+
+    if (editingProjectIndex >= 0) {
+      // Editing existing project
+      const updatedProjects = [...projects];
+      updatedProjects[editingProjectIndex] = projectToSave;
+      setProjects(updatedProjects);
+    } else {
+      // Adding new project
+      setProjects([...projects, projectToSave]);
+    }
+    
     setIsCreatingProject(false);
+    setEditingProjectIndex(-1);
     setNewProject({ name: '', description: '', projectImageBase64: '', projectUrl: '', repoUrl: '' });
   };
 
@@ -361,11 +389,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
             {activeTab === 'profile' ? (
               activeSection === 'details' ? (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-sm font-bold text-text mb-4">Profile Details</h3>
+                  <h3 className="text-sm text-text mb-4">Profile Details</h3>
 
                   {/* Username */}
                   <div>
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider mb-2 block">Username (Unique Route)</label>
+                    <label className="text-xs text-muted uppercase tracking-wider mb-2 block">Username (Unique Route)</label>
                     <Input
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
@@ -377,14 +405,14 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     ) : username && username !== user.username && !isUsernameTaken ? (
                       <p className="text-[10px] text-green-500 mt-1">Username is good to proceed!</p>
                     ) : isUsernameTaken ? (
-                      <p className="text-[10px] text-red-500 mt-1 font-bold">This username is already taken.</p>
+                      <p className="text-[10px] text-red-500 mt-1 ">This username is already taken.</p>
                     ) : (
                       <p className="text-[10px] text-muted mt-1">Rules: alphanumeric and no symbols or spaces.</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider mb-2 block">Display Name</label>
+                    <label className="text-xs text-muted uppercase tracking-wider mb-2 block">Display Name</label>
                     <Input
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
@@ -419,7 +447,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                 </div>
               ) : activeSection === 'connections' ? (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-sm font-bold text-text mb-4">Connections</h3>
+                  <h3 className="text-sm text-text mb-4">Connections</h3>
 
                   {/* GitHub URL */}
                   <div className="space-y-1.5">
@@ -460,7 +488,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
               ) : activeSection === 'socials' ? (
                 <div className="space-y-5 flex-1">
                   <div className="flex items-center justify-between mb-4 pr-8">
-                    <h3 className="text-sm font-bold text-text">Socials</h3>
+                    <h3 className="text-sm text-text">Socials</h3>
                     <Button
                       onClick={() => setCustomSocials([...customSocials, { type: 'linkedin', url: '' }])}
                       variant="outline"
@@ -522,7 +550,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   {!isCreatingProject ? (
                     <>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-text">Projects</h3>
+                        <h3 className="text-sm text-text">Projects</h3>
                         <Button onClick={() => setIsCreatingProject(true)} variant="outline" className="border-border text-xs h-7 px-3 bg-surface-2 hover:bg-border transition-colors mr-10">
                           + Add Project
                         </Button>
@@ -537,16 +565,21 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                                 {proj.projectImageBase64 ? (
                                   <img src={proj.projectImageBase64} alt={proj.name} className="w-12 h-12 object-cover rounded-lg border border-border/50 bg-surface" />
                                 ) : (
-                                  <div className="w-12 h-12 rounded-lg border border-border/50 bg-surface flex items-center justify-center text-muted text-[10px] font-bold">Img</div>
+                                  <div className="w-12 h-12 rounded-lg border border-border/50 bg-surface flex items-center justify-center text-muted text-[10px] ">Img</div>
                                 )}
                                 <div className="flex flex-col gap-1">
-                                  <div className="text-sm font-bold text-text">{proj.name}</div>
+                                  <div className="text-sm text-text">{proj.name}</div>
                                   <div className="text-xs text-muted line-clamp-1 max-w-[250px]">{proj.description || 'No description provided.'}</div>
                                 </div>
                               </div>
-                              <button onClick={() => { const p = [...projects]; p.splice(idx, 1); setProjects(p); }} className="text-muted hover:text-red-500 bg-surface p-2 rounded-md transition-colors border border-border hover:border-red-500/30">
-                                <X className="w-4 h-4" />
-                              </button>
+                              <div className="flex gap-2">
+                                <button onClick={() => handleEditProject(idx)} className="text-muted hover:text-accent bg-surface p-2 rounded-md transition-colors border border-border hover:border-accent/30">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => { const p = [...projects]; p.splice(idx, 1); setProjects(p); }} className="text-muted hover:text-red-500 bg-surface p-2 rounded-md transition-colors border border-border hover:border-red-500/30">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -555,7 +588,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   ) : (
                     <div className="flex flex-col space-y-4 pb-8 h-full animate-fade-in">
                       <div className="flex items-center justify-between mb-2 mt-1">
-                        <h3 className="text-sm text-text">Create New Project</h3>
+                        <h3 className="text-sm text-text">{editingProjectIndex >= 0 ? 'Edit Project' : 'Create New Project'}</h3>
                         <button onClick={handleCloseCreateProject} className="text-muted hover:text-text p-1 bg-surface-2 rounded-md mr-10">
                           <X className="w-4 h-4" />
                         </button>
@@ -571,16 +604,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                           <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Project Image</label>
                           <div className="mt-1">
                             {newProject.projectImageBase64 ? (
-                              <div className="relative w-24 h-24 rounded-lg border-2 border-accent overflow-hidden group">
+                              <div className="relative w-full h-32 rounded-lg border-2 border-accent overflow-hidden group">
                                 <img src={newProject.projectImageBase64} alt="Preview" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => setNewProject({...newProject, projectImageBase64: ''})} className="text-white bg-red-500/80 p-1.5 rounded-full hover:bg-red-500">
-                                    <Trash2 className="w-4 h-4" />
+                                  <button onClick={() => setNewProject({...newProject, projectImageBase64: ''})} className="text-white bg-red-500/80 p-2 rounded-full hover:bg-red-500">
+                                    <Trash2 className="w-5 h-5" />
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <div className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center bg-surface-2/30 hover:bg-surface-2/50 transition-colors cursor-pointer relative overflow-hidden">
+                              <div className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center bg-surface-2/30 hover:bg-surface-2/50 transition-colors cursor-pointer relative overflow-hidden">
                                 <input 
                                   type="file" 
                                   accept="image/*"
@@ -594,8 +627,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                                     }
                                   }}
                                 />
-                                <FileImage className="w-6 h-6 text-muted mb-1" />
-                                <span className="text-[9px] text-muted uppercase tracking-wider">Upload</span>
+                                <FileImage className="w-6 h-6 text-muted mb-2" />
+                                <span className="text-xs text-muted">Click or drag image to upload</span>
                               </div>
                             )}
                           </div>
@@ -624,7 +657,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                       <div className="pt-2 mt-auto">
                         <Button onClick={handleAddProject} className="w-full bg-accent text-white hover:bg-accent/90">
-                          Add Project
+                          {editingProjectIndex >= 0 ? 'Save Project' : 'Add Project'}
                         </Button>
                       </div>
                     </div>
@@ -632,7 +665,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                 </div>
               ) : activeSection === 'photo' ? (
                 <div className="space-y-5 flex-1 relative">
-                  <h3 className="text-sm font-bold text-text mb-4">Profile Photo</h3>
+                  <h3 className="text-sm text-text mb-4">Profile Photo</h3>
 
                   <div className="space-y-4">
                     <label className="text-[11px] font-medium text-muted block">Upload Photo</label>
@@ -712,7 +745,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                       <button onClick={() => setShowAsciiPreview(false)} className="absolute top-2 right-2 p-1.5 text-muted hover:text-text bg-surface-2 rounded-full shadow-md z-20">
                         <X className="w-4 h-4" />
                       </button>
-                      <h4 className="text-xs font-bold mb-4">ASCII Preview</h4>
+                      <h4 className="text-xs mb-4">ASCII Preview</h4>
                       <div className="bg-surface-2 p-4 rounded-lg overflow-auto max-w-full max-h-[250px] shadow-lg border border-border">
                         <pre className="text-[6px] sm:text-[8px] font-mono leading-[1.1] text-text whitespace-pre">
                           {generatedAscii}
@@ -723,7 +756,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                 </div>
               ) : activeSection === 'banner' ? (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-sm font-bold text-text mb-4">Profile Banner</h3>
+                  <h3 className="text-sm text-text mb-4">Profile Banner</h3>
                   <div className="text-xs text-muted mb-4">Select a banner to display at the top of your profile.</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div
@@ -740,7 +773,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                         style={{ background: banner.cssBackground }}
                       >
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                          <span className="text-white text-xs font-bold drop-shadow-md">{banner.name}</span>
+                          <span className="text-white text-xs drop-shadow-md">{banner.name}</span>
                         </div>
                       </div>
                     ))}
@@ -749,7 +782,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
               ) : null
             ) : (
               <div className="space-y-6 flex-1">
-                <h3 className="text-sm font-bold text-text mb-4">Account Settings</h3>
+                <h3 className="text-sm text-text mb-4">Account Settings</h3>
 
                 {/* Theme Settings selector mimicking a shadcn tab/select */}
                 <div className="space-y-2">
@@ -790,7 +823,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                 {/* Danger Zone / Delete Account */}
                 <div className="pt-6 border-t border-border space-y-3">
-                  <div className="text-xs font-bold text-red-500">Danger Zone</div>
+                  <div className="text-xs text-red-500">Danger Zone</div>
                   <p className="text-[11px] text-muted leading-relaxed">
                     Permanently delete your Scard account and all related developer profiles, badge data, and contribution consolidations.
                   </p>

@@ -23,7 +23,7 @@ const ASCII_FACE = `  .---------.
 
 const SectionLabel: FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
-    className="text-[10px] text-muted uppercase tracking-widest mb-4 font-bold flex items-center gap-1.5"
+    className="text-[10px] text-muted uppercase tracking-widest mb-4 flex items-center gap-1.5"
     style={{ letterSpacing: '0.14em' }}
   >
     <div className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -79,7 +79,7 @@ const ProfileMainPanel: FC<ProfileMainPanelProps> = ({ user }) => {
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text">
+                  <h1 className="text-xl sm:text-2xl tracking-tight text-text">
                     {user.displayName}
                   </h1>
                   {user.isOnline && (

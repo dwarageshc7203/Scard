@@ -17,7 +17,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       sm: 'h-8 w-8 text-xs',
       md: 'h-10 w-10 text-sm',
       lg: 'h-16 w-16 text-lg',
-      xl: 'h-20 w-20 text-xl font-bold',
+      xl: 'h-20 w-20 text-xl ',
     }
 
     const dotSizeClasses = {
@@ -48,7 +48,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     const renderAscii = () => (
       <div className="flex h-full w-full items-center justify-center bg-transparent overflow-hidden @container">
         <pre
-          className="font-mono font-bold leading-[0.9] text-center text-text whitespace-pre select-none drop-shadow-md"
+          className="font-mono leading-[0.9] text-center text-text whitespace-pre select-none drop-shadow-md"
           style={{ fontSize: 'calc(100cqw / 49.5)' }} // 90 chars * ~0.55 width ratio = ~49.5
         >
           {cleanAsciiArt}

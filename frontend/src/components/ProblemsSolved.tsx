@@ -60,7 +60,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
                   {config.logo ? (
                     <img src={config.logo} alt={config.label} className="w-20 h-20 mb-3 object-contain" />
                   ) : (
-                    <div className="w-10 h-10 mb-3 rounded-full bg-border flex items-center justify-center font-bold text-muted">
+                    <div className="w-10 h-10 mb-3 rounded-full bg-border flex items-center justify-center text-muted">
                       {platform.charAt(0)}
                     </div>
                   )}
@@ -100,7 +100,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
               className="flex flex-col items-center justify-center w-[130px] h-[130px] rounded-xl bg-surface border border-border/40 hover:border-muted hover:shadow-lg transition-all duration-300 group"
             >
               <span className="text-2xl font-black text-text mb-1">+{platforms.length - 4}</span>
-              <span className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-1 group-hover:text-text transition-colors">
+              <span className="text-[10px] text-muted uppercase tracking-wider flex items-center gap-1 group-hover:text-text transition-colors">
                 More <ArrowRight className="w-3 h-3" />
               </span>
             </button>
@@ -118,7 +118,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
             <button onClick={() => setShowAll(false)} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-surface-2 text-muted hover:text-text transition-colors">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="font-bold text-text text-xl w-full">All Problem Stats</h3>
+            <h3 className="text-text text-xl w-full">All Problem Stats</h3>
             <div className="flex flex-wrap justify-center gap-6 overflow-y-auto p-2 custom-scrollbar">
               {platforms.map(([platform, stats], idx) => {
                 const config = platformConfig[platform.toUpperCase()] || { logo: '', color: '#ffffff', label: platform };
@@ -128,17 +128,17 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
                       {config.logo ? (
                         <img src={config.logo} alt={config.label} className="w-12 h-12 mb-3 object-contain" />
                       ) : (
-                        <div className="w-12 h-12 mb-3 rounded-full bg-border flex items-center justify-center font-bold text-muted text-lg">{platform.charAt(0)}</div>
+                        <div className="w-12 h-12 mb-3 rounded-full bg-border flex items-center justify-center text-muted text-lg">{platform.charAt(0)}</div>
                       )}
                       <span className="text-2xl font-black text-text mb-1">{stats.total}</span>
-                      <span className="text-[10px] font-bold text-muted uppercase tracking-wider">{config.label}</span>
+                      <span className="text-[10px] text-muted uppercase tracking-wider">{config.label}</span>
                     </div>
                     <div className="absolute inset-0 bg-surface-2/95 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 scale-105 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 p-3">
-                      <span className="text-[10px] font-bold mb-3 tracking-wider" style={{ color: config.color }}>{config.label} STATS</span>
+                      <span className="text-[10px] mb-3 tracking-wider" style={{ color: config.color }}>{config.label} STATS</span>
                       <div className="w-full flex flex-col gap-2 px-2">
-                        <div className="flex justify-between items-center w-full text-xs"><span className="text-red-400 font-medium">Hard</span><span className="font-bold text-text">{stats.hard}</span></div>
-                        <div className="flex justify-between items-center w-full text-xs"><span className="text-yellow-400 font-medium">Medium</span><span className="font-bold text-text">{stats.medium}</span></div>
-                        <div className="flex justify-between items-center w-full text-xs"><span className="text-green-400 font-medium">Easy</span><span className="font-bold text-text">{stats.easy}</span></div>
+                        <div className="flex justify-between items-center w-full text-xs"><span className="text-red-400 font-medium">Hard</span><span className="text-text">{stats.hard}</span></div>
+                        <div className="flex justify-between items-center w-full text-xs"><span className="text-yellow-400 font-medium">Medium</span><span className="text-text">{stats.medium}</span></div>
+                        <div className="flex justify-between items-center w-full text-xs"><span className="text-green-400 font-medium">Easy</span><span className="text-text">{stats.easy}</span></div>
                       </div>
                     </div>
                   </div>

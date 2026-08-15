@@ -12,7 +12,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-surface-2/90 backdrop-blur-sm border border-border/60 p-3 rounded-lg shadow-xl shadow-black/20">
         <p className="text-xs text-muted mb-1 font-mono">{label}</p>
-        <p className="text-sm font-bold text-text mb-0.5">{payload[0].payload.name}</p>
+        <p className="text-sm text-text mb-0.5">{payload[0].payload.name}</p>
         <p className="text-xs text-accent font-semibold">Rating: {payload[0].value}</p>
       </div>
     )

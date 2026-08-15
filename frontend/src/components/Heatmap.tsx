@@ -114,7 +114,7 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
                             />
                           </TooltipTrigger>
                           <TooltipContent side="top" className={`py-2 px-3 shadow-lg border ${resolvedTheme === 'dark' ? 'bg-[#2A2A2A] border-white/10' : 'bg-white border-gray-200'}`}>
-                            <span className={`font-bold ${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{count}</span> submissions on <span className={`font-mono ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{dateStr}</span>
+                            <span className={`${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{count}</span> submissions on <span className={`font-mono ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{dateStr}</span>
                           </TooltipContent>
                         </Tooltip>
                       )
