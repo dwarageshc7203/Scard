@@ -66,9 +66,11 @@ function AppContent() {
               creatingProfile.current = true
               const suggestedUsername = me.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
               try {
-                await createProfile(suggestedUsername, 'Software Engineer')
+                await createProfile(suggestedUsername, me.displayName || suggestedUsername, 'Software Engineer')
                 const updatedUsers = await fetchProfiles()
                 setUsers(updatedUsers)
+                const updatedMe = await fetchMe()
+                setCurrentUser(updatedMe)
                 navigate(`/${suggestedUsername}`, { replace: true })
               } catch (err) {
                 console.error('Error creating profile:', err)
