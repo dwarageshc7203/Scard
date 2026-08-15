@@ -47,7 +47,7 @@ const LandingPage: FC = () => {
         {/* Sign Up */}
         <div className="flex-1 flex justify-end">
           <button 
-            onClick={() => navigate('/dwarageshc')}
+            onClick={() => window.location.href = '/oauth2/authorization/google'}
             className="bg-transparent text-white border border-white/20 hover:bg-white hover:text-black transition-all px-6 py-2.5 rounded-full text-sm font-medium tracking-wide"
           >
             Sign up
