@@ -203,8 +203,6 @@ export async function createProfile(userName: string, profileName: string, desig
 }
 
 export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, profileName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
-  if (!isAuthenticated()) return false
-
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
