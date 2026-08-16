@@ -13,6 +13,7 @@ public record ProfileResponse(
         String profileName,
         String designation,
         String profileURL,
+        String imageURL,
         String asciiArt,
         Integer bannerId,
         List<String> socials,
@@ -21,6 +22,7 @@ public record ProfileResponse(
         Map<String, me.dwaragesh.backend.model.ProblemStats> problemStats,
         List<Project> projects,
         int anonymousViews,
+        java.time.Instant createdAt,
 
         @com.fasterxml.jackson.annotation.JsonRawValue
         String contributions

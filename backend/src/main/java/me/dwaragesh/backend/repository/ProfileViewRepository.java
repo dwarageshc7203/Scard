@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface ProfileViewRepository extends JpaRepository<ProfileView, Integer> {
     List<ProfileView> findByProfileOrderByViewedAtDesc(Profile profile);
+    void deleteByViewer(me.dwaragesh.backend.model.User viewer);
 }

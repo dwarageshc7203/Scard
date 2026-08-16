@@ -38,7 +38,7 @@ const Sidebar: FC<SidebarProps> = ({
     })
 
   return (
-    <div className="w-72 flex-shrink-0 flex flex-col h-full bg-surface text-text border-r border-border/40 select-none">
+    <div className="w-full md:w-72 flex-shrink-0 flex flex-col h-full bg-surface text-text border-r border-border/40 select-none">
       {/* Search Input Section */}
       <div className="p-4 pb-2 space-y-4">
         <div className="flex items-center justify-between text-xs text-muted relative">
@@ -107,7 +107,7 @@ const Sidebar: FC<SidebarProps> = ({
                   {user.displayName}
                 </div>
                 <div className="text-[10px] text-muted truncate">
-                  Joined {user.joinedDaysAgo} days ago
+                  Joined {user.joinedText || 'today'}
                 </div>
               </div>
             </button>

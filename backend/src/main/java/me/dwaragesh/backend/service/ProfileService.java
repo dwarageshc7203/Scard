@@ -35,6 +35,7 @@ public class ProfileService {
                 profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
                 profile.getDesignation(),
                 profile.getProfileUrl(),
+                (profile.getCustomImageUrl() != null && !profile.getCustomImageUrl().trim().isEmpty()) ? profile.getCustomImageUrl() : (profile.getUser() != null ? profile.getUser().getImageURL() : null),
                 profile.getAsciiArt(),
                 profile.getBannerId(),
                 profile.getSocials(),
@@ -43,6 +44,7 @@ public class ProfileService {
                 profile.getProblemStats(),
                 profile.getProjects(),
                 profile.getAnonymousViews(),
+                profile.getUser() != null ? profile.getUser().getCreatedDateTime() : null,
                 profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]");
     }
 
@@ -91,10 +93,13 @@ public class ProfileService {
         } else {
             User viewer = userRepository.findByGoogleId(viewerGoogleId).orElse(null);
             if (viewer != null && profile.getUser() != null && !viewer.getUserId().equals(profile.getUser().getUserId())) {
-                ProfileView view = new ProfileView();
-                view.setProfile(profile);
-                view.setViewer(viewer);
-                profileViewRepository.save(view);
+                List<ProfileView> recentViews = profileViewRepository.findByProfileOrderByViewedAtDesc(profile);
+                if (recentViews.isEmpty() || !recentViews.get(0).getViewer().getUserId().equals(viewer.getUserId())) {
+                    ProfileView view = new ProfileView();
+                    view.setProfile(profile);
+                    view.setViewer(viewer);
+                    profileViewRepository.save(view);
+                }
             }
         }
         
@@ -202,7 +207,7 @@ public class ProfileService {
                 .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
                         v.getViewer().getUserName(),
                         v.getViewer().getUserName(), 
-                        v.getViewer().getImageURL(),
+                        (v.getViewer().getProfile() != null && v.getViewer().getProfile().getCustomImageUrl() != null && !v.getViewer().getProfile().getCustomImageUrl().isEmpty()) ? v.getViewer().getProfile().getCustomImageUrl() : v.getViewer().getImageURL(),
                         v.getViewedAt()
                 ))
                 .collect(Collectors.toList());

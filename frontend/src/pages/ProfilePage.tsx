@@ -1,4 +1,5 @@
 import React, { useState, useEffect, type FC } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { User } from '../types'
 import Sidebar from '../components/Sidebar'
 import Avatar from '../components/ui/avatar'
@@ -33,7 +34,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
   const { theme, setTheme } = useTheme()
   const [heatmapPlatforms, setHeatmapPlatforms] = useState<string[]>(['github', 'leetcode', 'codeforces'])
   const [analytics, setAnalytics] = useState<any>(null)
-  
+
   const [availableBanners, setAvailableBanners] = useState<any[]>([])
   const [liveUser, setLiveUser] = useState<User | null>(null)
 
@@ -71,13 +72,23 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text space-y-4">
         <h2 className="text-2xl ">404 - Profile Not Found</h2>
         <p className="text-muted">The profile you're looking for doesn't exist.</p>
-        <button onClick={() => window.location.href = '/'} className="text-accent underline font-semibold">Go Back Home</button>
+        <button onClick={() => window.location.href = '/'} className="text-accent underline ">Go Back Home</button>
       </div>
     )
   }
 
+  const availableYears = Array.from(new Set((activeUser?.rawContributions || []).map(c => c.date.substring(0, 4)))).sort().reverse()
+  if (availableYears.length === 0) availableYears.push(new Date().getFullYear().toString())
+  const availablePlatforms = Array.from(new Set((activeUser?.rawContributions || []).map(c => c.platform.toLowerCase()))).sort()
+
   const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
-  const [heatmapYear, setHeatmapYear] = useState<string>(new Date().getFullYear().toString())
+  const [heatmapYear, setHeatmapYear] = useState<string>(availableYears[0])
+
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(heatmapYear)) {
+      setHeatmapYear(availableYears[0])
+    }
+  }, [availableYears.join(','), heatmapYear])
 
   const togglePlatform = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHeatmapPlatform(e.target.value)
@@ -127,9 +138,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         />
       )}
 
-      {/* Floating Icon Sidebar */}
+      {/* Floating Icon Sidebar (Desktop) */}
       <nav
-        className={`absolute left-6 top-1/2 -translate-y-1/2 w-[64px] py-8 bg-white dark:bg-[#252525] border border-gray-200 dark:border-white/10 rounded-[32px] flex flex-col items-center gap-10 z-[60] shadow-lg dark:shadow-2xl transition-transform duration-300 ease-in-out ${isIconBarVisible ? 'translate-x-0' : '-translate-x-[150%]'}`}
+        className={`hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 w-[64px] py-8 bg-white dark:bg-[#252525] border border-gray-200 dark:border-white/10 rounded-[32px] flex-col items-center gap-10 z-[60] shadow-lg dark:shadow-2xl transition-transform duration-300 ease-in-out ${isIconBarVisible ? 'translate-x-0' : '-translate-x-[150%]'}`}
         onMouseLeave={() => {
           if (activeOverlay !== null && activeOverlay !== 'menu') {
             setIsIconBarVisible(false)
@@ -165,28 +176,68 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         </div>
       </nav>
 
+      {/* Fixed Bottom Navigation Bar (Mobile) */}
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 h-[72px] bg-white dark:bg-[#252525] border border-gray-200 dark:border-white/10 rounded-[32px] flex items-center justify-around z-[60] shadow-2xl px-4">
+        <img onClick={() => window.location.href = '/'} src={scardLogo} className="w-8 h-8 rounded-[8px] cursor-pointer hover:opacity-80 transition-opacity" alt="Scard Logo" />
+        {currentUser && activeUser && currentUser.userName === activeUser.username && (
+          <button
+            onClick={() => { setActiveOverlay(activeOverlay === 'analytics' ? null : 'analytics') }}
+            className={`transition-colors p-3 rounded-full ${activeOverlay === 'analytics' ? 'bg-accent/10 text-accent' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            <BarChart2 className="w-6 h-6" />
+          </button>
+        )}
+        <button
+          onClick={() => { setActiveOverlay(activeOverlay === 'menu' ? null : 'menu') }}
+          className={`transition-colors p-3 rounded-full ${activeOverlay === 'menu' ? 'bg-accent/10 text-accent' : 'text-gray-500 dark:text-gray-400'}`}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <button
+          onClick={() => { setActiveOverlay(activeOverlay === 'users' ? null : 'users') }}
+          className={`transition-colors p-3 rounded-full ${activeOverlay === 'users' ? 'bg-accent/10 text-accent' : 'text-gray-500 dark:text-gray-400'}`}
+        >
+          <Users className="w-6 h-6" />
+        </button>
+      </nav>
+
       {/* Sliding Overlays Container */}
 
       {/* 1. Analytics Overlay */}
       <div
-        className={`absolute top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${activeOverlay === 'analytics' ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
+        className={`fixed md:absolute inset-x-0 bottom-0 md:inset-auto md:top-0 md:left-0 h-[85vh] md:h-full w-full md:w-auto z-50 md:z-40 transition-transform duration-300 ease-in-out ${activeOverlay === 'analytics' ? 'translate-y-0 md:translate-x-0 shadow-2xl' : 'translate-y-full translate-x-0 md:translate-y-0 md:-translate-x-full'}`}
       >
-        <div className="h-full bg-surface border-r border-border/40 w-72 p-6 pt-12 flex flex-col">
-          <h2 className="text-xl mb-6">Analytics</h2>
+        <div className="h-full bg-surface border-r border-border/40 w-full md:w-72 p-6 pt-8 md:pt-12 flex flex-col pb-[110px] md:pb-6 rounded-t-[32px] md:rounded-none">
+          {(() => {
+            const totalViews = (analytics?.anonymousViews || 0) + (analytics?.recentViewers?.length || 0);
+            let heading = "Analytics";
+            if (analytics != null) {
+              if (totalViews === 0) heading = "Seems you are boring...";
+              else if (totalViews <= 10) heading = "Guess someone is getting popular?";
+              else heading = "That one popular kid..";
+            }
+            return <h2 className="text-lg font-medium mb-6 leading-tight">{heading}</h2>;
+          })()}
           {currentUser && currentUser.userName === activeUser.username ? (
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6">
               <div className="bg-surface-2 rounded-xl p-4 border border-border/40 text-center">
                 <span className="block text-3xl font-black text-text mb-1">{(analytics?.anonymousViews || 0) + (analytics?.recentViewers?.length || 0)}</span>
-                <span className="text-[11px] text-muted uppercase tracking-wider">Total Views</span>
+                <span className="text-[11px] text-muted  tracking-wider">Total Views</span>
               </div>
-              
+
               <div>
                 <h3 className="text-sm text-text mb-3">Recent Viewers</h3>
                 <div className="space-y-3">
                   {analytics?.recentViewers && analytics.recentViewers.length > 0 ? (
                     analytics.recentViewers.map((viewer: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-3">
-                        <img src={viewer.imageURL} alt={viewer.displayName} className="w-8 h-8 rounded-full bg-surface-2" />
+                        {viewer.imageUrl || viewer.imageURL ? (
+                          <img src={viewer.imageUrl || viewer.imageURL} referrerPolicy="no-referrer" alt={viewer.displayName} className="w-8 h-8 rounded-full bg-surface-2 object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#2A2A2A] border border-white/10 flex items-center justify-center text-xs font-bold text-white uppercase">
+                            {viewer.displayName?.charAt(0) || '?'}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-text truncate">{viewer.displayName}</p>
                           <p className="text-[10px] text-muted">{new Date(viewer.viewedAt).toLocaleDateString()}</p>
@@ -201,19 +252,19 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-               <BarChart2 className="w-12 h-12 text-muted mb-4 opacity-50" />
-               <p className="text-sm text-text font-medium mb-1">Access Denied</p>
-               <p className="text-xs text-muted">You can only view analytics for your own profile.</p>
+              <BarChart2 className="w-12 h-12 text-muted mb-4 opacity-50" />
+              <p className="text-sm text-text  mb-1">Access Denied</p>
+              <p className="text-xs text-muted">You can only view analytics for your own profile.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 2. Menu Overlay (Compact Rectangle) */}
+      {/* 2. Menu Overlay */}
       <div
-        className={`absolute left-28 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ease-in-out ${activeOverlay === 'menu' ? 'translate-x-0 opacity-100 shadow-2xl' : '-translate-x-12 opacity-0 pointer-events-none'}`}
+        className={`fixed md:absolute bottom-[96px] md:bottom-auto left-4 right-4 md:left-28 md:right-auto md:top-1/2 md:-translate-y-1/2 z-50 md:z-40 w-auto md:w-[140px] transition-all duration-300 ease-in-out ${activeOverlay === 'menu' ? 'translate-y-0 md:translate-x-0 md:translate-y-[-50%] opacity-100 shadow-2xl' : 'translate-y-12 md:translate-y-[-50%] md:-translate-x-12 opacity-0 pointer-events-none'}`}
       >
-        <div className="bg-surface border border-border/40 rounded-xl p-3 w-[140px] flex flex-col gap-2">
+        <div className="bg-surface border md:border border-border/40 md:rounded-xl p-4 md:p-3 w-full flex flex-col gap-3 md:gap-2 rounded-[24px] shadow-[0_10px_40px_rgba(0,0,0,0.2)] md:shadow-none">
           {/* Theme Row */}
           <div className="flex border border-border rounded-lg bg-surface/30 p-1 w-full">
             <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'light' ? 'bg-surface-2 text-text shadow-sm' : 'text-muted hover:text-text'}`}>
@@ -235,14 +286,14 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
               <>
                 <button
                   onClick={() => { setIsEditModalOpen(true); setActiveOverlay(null) }}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs  rounded-lg text-text hover:bg-surface-2 transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   Edit Profile
                 </button>
                 <button
                   onClick={() => { handleExport(); setActiveOverlay(null) }}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-text hover:bg-surface-2 transition-colors"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs  rounded-lg text-text hover:bg-surface-2 transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export PNG
@@ -253,7 +304,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             {currentUser ? (
               <button
                 onClick={() => window.location.href = '/logout'}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-red-500/80 hover:bg-red-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs  rounded-lg text-red-500/80 hover:bg-red-500/10 transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Log out
@@ -261,7 +312,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             ) : (
               <button
                 onClick={() => window.location.href = '/oauth2/authorization/google'}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs font-medium rounded-lg text-accent hover:bg-accent/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs  rounded-lg text-accent hover:bg-accent/10 transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Log in
@@ -273,9 +324,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
       {/* 3. Users Directory Overlay */}
       <div
-        className={`absolute top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${activeOverlay === 'users' ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
+        className={`fixed md:absolute inset-x-0 bottom-0 md:inset-auto md:top-0 md:left-0 h-[85vh] md:h-full w-full md:w-auto z-50 md:z-40 transition-transform duration-300 ease-in-out ${activeOverlay === 'users' ? 'translate-y-0 md:translate-x-0 shadow-2xl' : 'translate-y-full translate-x-0 md:translate-y-0 md:-translate-x-full'}`}
       >
-        <div className="h-full bg-surface border-r border-border/40 w-72">
+        <div className="h-full bg-surface border-r border-border/40 w-full md:w-72 pb-[110px] md:pb-0 rounded-t-[32px] md:rounded-none overflow-hidden flex flex-col">
           <Sidebar
             users={localUsers}
             selectedUserId={selectedUserId}
@@ -303,8 +354,8 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
       )}
 
       {/* Main Layout Area */}
-      <main className="flex-1 overflow-y-auto pl-28 pr-6 md:pl-36 md:pr-12 py-12">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-28 md:pl-36 md:pr-12 md:py-12 w-full">
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 w-full">
 
           {/* Hero Banner & Overlapping Avatar */}
           <div className="relative pt-[40px]">
@@ -341,7 +392,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
             <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-end -mt-16 sm:mt-[120px]">
               {/* Avatar overlapping the banner */}
-              <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-2">
+              <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-0 sm:-ml-2 mt-4 sm:mt-0">
                 <Avatar
                   initials={activeUser.initials}
                   color={activeUser.color}
@@ -349,16 +400,16 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                   asciiArt={activeUser.asciiArt}
                   size="xl"
                   isOnline={activeUser.isOnline}
-                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full shadow-2xl"
+                  className="w-28 h-28 sm:w-40 sm:h-40 rounded-full shadow-2xl"
                 />
               </div>
 
               {/* Name & Title */}
-              <div className="flex flex-col mt-4 sm:mt-0 pb-4 sm:pb-6 z-10 w-full sm:w-auto">
+              <div className="flex flex-col mt-2 sm:mt-0 pb-4 sm:pb-6 z-10 w-full sm:w-auto items-center sm:items-start text-center sm:text-left">
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
                   {activeUser.displayName}
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 font-medium text-lg mt-1">
+                <p className="text-gray-600 dark:text-gray-400  text-lg mt-1">
                   {activeUser.title}
                 </p>
               </div>
@@ -367,12 +418,12 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
           {/* 2-Column Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            
+
             {/* 1. Contest Rating Widget */}
             <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
               <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
               {activeUser.contests && activeUser.contests.length > 0 && (
-                <span className="absolute top-5 left-1/2 -translate-x-1/2 text-xl text-gray-900 dark:text-white z-10">
+                <span className="absolute top-5 left-1/2 -translate-x-1/2 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white z-10" style={{ fontFamily: 'Graphic, sans-serif' }}>
                   {activeUser.contests[activeUser.contests.length - 1].rating}
                 </span>
               )}
@@ -389,63 +440,104 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
             <ProblemsSolved problems={activeUser.problemsSolved || {}} />
 
             {/* Row wrapper for Badges & Projects */}
-            <div className="md:col-span-2 flex flex-col md:flex-row gap-6 h-auto md:h-[350px]">
-              
-              {/* 3. Badges Widget */}
-              <div 
-                className={`transition-all duration-700 ease-in-out h-full overflow-hidden ${
-                  expandedWidget === 'badges' 
-                    ? 'md:w-[100%]' 
-                    : expandedWidget === 'projects' 
-                      ? 'md:w-[0%] opacity-0 md:p-0 border-transparent' 
-                      : 'md:w-[calc(50%-12px)]'
-                } bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0`}
+            <div className="md:col-span-2 flex flex-col md:flex-row gap-6 h-auto md:h-[350px] relative">
+
+              {/* 3. Badges Widget Base */}
+              <motion.div
+                layoutId="badges-widget"
+                className="w-full md:w-[calc(50%-12px)] bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
               >
                 <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
                   <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
-                  <button 
-                    onClick={() => setExpandedWidget(expandedWidget === 'badges' ? null : 'badges')}
-                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                  <button
+                    onClick={() => setExpandedWidget('badges')}
+                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
                   >
-                    {expandedWidget === 'badges' ? 'Collapse' : 'Expand'}
+                    Expand
                   </button>
                 </div>
                 <div className="mt-12 flex-1 relative min-h-0">
                   {activeUser.badges && activeUser.badges.length > 0 ? (
-                    <BadgeContainer badges={activeUser.badges} isExpanded={expandedWidget === 'badges'} />
+                    <BadgeContainer badges={activeUser.badges} isExpanded={false} />
                   ) : (
                     <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* 4. Project Showcase Widget */}
-              <div 
-                className={`transition-all duration-700 ease-in-out h-full overflow-hidden ${
-                  expandedWidget === 'projects' 
-                    ? 'md:w-[100%]' 
-                    : expandedWidget === 'badges' 
-                      ? 'md:w-[0%] opacity-0 md:p-0 border-transparent' 
-                      : 'md:w-[calc(50%-12px)]'
-                } bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0`}
+              {/* 4. Project Showcase Widget Base */}
+              <motion.div
+                layoutId="projects-widget"
+                className="w-full md:w-[calc(50%-12px)] bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
               >
                 <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
                   <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
-                  <button 
-                    onClick={() => setExpandedWidget(expandedWidget === 'projects' ? null : 'projects')}
-                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                  <button
+                    onClick={() => setExpandedWidget('projects')}
+                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
                   >
-                    {expandedWidget === 'projects' ? 'Collapse' : 'Expand'}
+                    Expand
                   </button>
                 </div>
                 <div className="mt-12 flex-1 relative min-h-0">
-                  <ProjectShowcase 
-                    projects={activeUser.projects || []} 
-                    isExpanded={expandedWidget === 'projects'} 
+                  <ProjectShowcase
+                    projects={activeUser.projects || []}
+                    isExpanded={false}
                     onToggleExpand={() => setExpandedWidget('projects')}
                   />
                 </div>
-              </div>
+              </motion.div>
+
+              {/* Expanded Overlays */}
+              <AnimatePresence>
+                {expandedWidget === 'badges' && (
+                  <motion.div
+                    layoutId="badges-widget"
+                    className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
+                  >
+                    <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
+                      <button
+                        onClick={() => setExpandedWidget(null)}
+                        className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                      >
+                        Collapse
+                      </button>
+                    </div>
+                    <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto">
+                      {activeUser.badges && activeUser.badges.length > 0 ? (
+                        <BadgeContainer badges={activeUser.badges} isExpanded={true} />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
+                {expandedWidget === 'projects' && (
+                  <motion.div
+                    layoutId="projects-widget"
+                    className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
+                  >
+                    <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
+                      <button
+                        onClick={() => setExpandedWidget(null)}
+                        className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                      >
+                        Collapse
+                      </button>
+                    </div>
+                    <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto custom-scrollbar">
+                      <ProjectShowcase
+                        projects={activeUser.projects || []}
+                        isExpanded={true}
+                        onToggleExpand={() => setExpandedWidget(null)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* 5. Heatmap Widget (Full Width) */}
@@ -455,24 +547,23 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                 <select
                   value={heatmapPlatform}
                   onChange={togglePlatform}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
-                  style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
+                  style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 >
-                  <option value="all">Current (All)</option>
-                  <option value="github">GitHub</option>
-                  <option value="leetcode">LeetCode</option>
-                  <option value="codeforces">Codeforces</option>
+                  <option value="all">All</option>
+                  {availablePlatforms.map(p => (
+                    <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                  ))}
                 </select>
                 <select
                   value={heatmapYear}
                   onChange={toggleYear}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
-                  style={{ paddingRight: '2rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer min-w-[100px]"
+                  style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 >
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
+                  {availableYears.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
                 </select>
               </div>
               <div className="mt-14 overflow-x-auto pt-2">

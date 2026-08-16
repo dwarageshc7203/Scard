@@ -5,6 +5,7 @@ import me.dwaragesh.backend.model.dto.MeResponse;
 import me.dwaragesh.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -37,6 +38,15 @@ public class UserService {
                 user.getImageURL(),
                 hasProfile
         );
+    }
+
+    @Autowired
+    private me.dwaragesh.backend.repository.ProfileViewRepository profileViewRepository;
+
+    @Transactional
+    public void deleteUser(User user) {
+        profileViewRepository.deleteByViewer(user);
+        repository.delete(user);
     }
 
 }

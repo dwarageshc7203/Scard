@@ -29,16 +29,32 @@ public class PfpController {
     @PostMapping
     public String uploadPfp(
             @AuthenticationPrincipal OidcUser principal,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "ascii", required = false, defaultValue = "false") boolean ascii
     ) throws IOException {
         User user = userService.findOrCreateFromGoogle(
                 principal.getSubject(), principal.getEmail(), principal.getPicture());
         Profile profile = user.getProfile();
 
-        String asciiArtUrl = asciiArtService.processUpload(file, "pfp-" + profile.getProfileId());
-        profile.setAsciiArt(asciiArtUrl);
-        profileRepository.save(profile);
+        if (ascii) {
+            String asciiArtUrl = asciiArtService.processUpload(file, "pfp-" + profile.getProfileId());
+            profile.setAsciiArt(asciiArtUrl);
+            profileRepository.save(profile);
+            return asciiArtUrl;
+        } else {
+            String imageUrl = asciiArtService.saveRawImage(file, "pfp-" + profile.getProfileId());
+            profile.setCustomImageUrl(imageUrl);
+            profileRepository.save(profile);
+            return imageUrl;
+        }
+    }
 
-        return asciiArtUrl;
+    @DeleteMapping
+    public void deletePfp(@AuthenticationPrincipal OidcUser principal) {
+        User user = userService.findOrCreateFromGoogle(
+                principal.getSubject(), principal.getEmail(), principal.getPicture());
+        Profile profile = user.getProfile();
+        profile.setCustomImageUrl(null);
+        profileRepository.save(profile);
     }
 }

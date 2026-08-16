@@ -112,22 +112,14 @@ body {
   transform: translateX(-50%);
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Linear sweep transition from right top to left bottom using View Transitions API */

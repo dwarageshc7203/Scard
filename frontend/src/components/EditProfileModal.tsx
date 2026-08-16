@@ -1,10 +1,11 @@
 import { useState, useEffect, type FC } from 'react'
-import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage, Pencil } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { X, Globe, Link as LinkIcon, Trash2, Sun, Moon, Monitor, FileImage, Pencil, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from './ui/button'
 import Input from './ui/input'
 import type { User } from '../types'
-import { updateProfile, syncPlatform, fetchProfile, fetchBanners, checkUsername } from '../lib/api'
+import { getCsrfToken, fetchProfile, updateProfile, syncPlatform, checkUsername, deleteAccount, fetchBanners } from '../lib/api'
 import { generateAsciiFromImage, generateAsciiFromBase64 } from '../lib/ascii'
 import { useTheme } from '../context/ThemeContext'
 
@@ -30,7 +31,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [profileName, setProfileName] = useState(user.profileName || user.displayName || '')
   const [designation, setDesignation] = useState(user.designation || '')
-  const [website, setWebsite] = useState(user.socials?.github || user.pdfUrl || '')
 
   // Helper to extract username from a URL or raw input
   const extractUsername = (val: string) => {
@@ -64,7 +64,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
     projectUrl: '',
     repoUrl: ''
   })
-  
+
   const handleCloseCreateProject = () => {
     const hasInput = newProject.name || newProject.description || newProject.projectImageBase64 || newProject.projectUrl || newProject.repoUrl;
     if (hasInput) {
@@ -79,7 +79,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
   const handleEditProject = (idx: number) => {
     setEditingProjectIndex(idx);
-    setNewProject({...projects[idx]});
+    setNewProject({ ...projects[idx] });
     setIsCreatingProject(true);
   };
 
@@ -88,8 +88,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       toast.error('Project name is required');
       return;
     }
-    
-    
+
+
     const projectToSave = {
       name: newProject.name,
       description: newProject.description,
@@ -107,7 +107,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       // Adding new project
       setProjects([...projects, projectToSave]);
     }
-    
+
     setIsCreatingProject(false);
     setEditingProjectIndex(-1);
     setNewProject({ name: '', description: '', projectImageBase64: '', projectUrl: '', repoUrl: '' });
@@ -121,7 +121,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
     return initial.includes('<span') ? '' : initial
   })
   const [showAsciiPreview, setShowAsciiPreview] = useState(false)
-  const [photoBase64, setPhotoBase64] = useState<string>(localStorage.getItem(`avatar_${user.username}`) || '')
+  const [photoBase64, setPhotoBase64] = useState<string>('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+
+  useEffect(() => {
+    if (user.imageURL && user.imageURL.startsWith('data:image')) {
+      setPhotoBase64(user.imageURL)
+    } else if (user.imageURL && user.imageURL.startsWith('/uploads')) {
+      setPhotoBase64(user.imageURL)
+    }
+  }, [user.imageURL])
 
   // Banners
   const [availableBanners, setAvailableBanners] = useState<any[]>([])
@@ -192,16 +201,51 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
         `socials_${user.username}`,
         JSON.stringify({ githubUrl, leetcodeUrl, codeforcesUrl })
       )
-      if (photoBase64) {
-        localStorage.setItem(`avatar_${username}`, photoBase64)
-      } else {
-        localStorage.removeItem(`avatar_${username}`)
+      let uploadFile = photoFile
+      if (!uploadFile && photoBase64 && photoBase64.startsWith('data:image')) {
+        try {
+          const arr = photoBase64.split(',')
+          const mime = arr[0].match(/:(.*?);/)?.[1]
+          const bstr = atob(arr[1])
+          let n = bstr.length
+          const u8arr = new Uint8Array(n)
+          while(n--){
+              u8arr[n] = bstr.charCodeAt(n)
+          }
+          uploadFile = new File([u8arr], 'avatar.png', {type:mime})
+        } catch (e) {
+          console.error('Failed to convert base64 to file', e)
+        }
+      }
+
+      if (uploadFile && !useAscii) {
+        const formData = new FormData()
+        formData.append('file', uploadFile)
+        formData.append('ascii', 'false')
+        try {
+          await fetch('/api/profile/pfp', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+          })
+        } catch (e) {
+          console.error('Failed to upload custom image:', e)
+        }
+      } else if (!photoBase64 && !useAscii) {
+        try {
+          await fetch('/api/profile/pfp', { 
+            method: 'DELETE',
+            headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+          })
+        } catch (e) {
+          console.error('Failed to delete custom image:', e)
+        }
       }
 
       // 2. Patch details to backend
       try {
         const mappedSocials = customSocials.map(s => `${s.type}:${s.url}`)
-        await updateProfile(designation, website, undefined, useAscii ? generatedAscii : '', username, profileName, selectedBannerId, mappedSocials, projects, undefined)
+        await updateProfile(designation, undefined, undefined, useAscii ? generatedAscii : '', username, profileName, selectedBannerId, mappedSocials, projects, undefined)
         toast.success('Profile saved successfully!')
       } catch (e: any) {
         console.error('Failed to update details in backend:', e)
@@ -216,17 +260,26 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       const syncPromises = []
       if (ghUser) {
         syncPromises.push(
-          syncPlatform('GITHUB', ghUser).catch(e => console.error('GitHub sync failed:', e))
+          syncPlatform('GITHUB', ghUser).catch(e => {
+            console.error('GitHub sync failed:', e)
+            toast.error(e.message)
+          })
         )
       }
       if (lcUser) {
         syncPromises.push(
-          syncPlatform('LEETCODE', lcUser).catch(e => console.error('LeetCode sync failed:', e))
+          syncPlatform('LEETCODE', lcUser).catch(e => {
+            console.error('LeetCode sync failed:', e)
+            toast.error(e.message)
+          })
         )
       }
       if (cfUser) {
         syncPromises.push(
-          syncPlatform('CODEFORCES', cfUser).catch(e => console.error('Codeforces sync failed:', e))
+          syncPlatform('CODEFORCES', cfUser).catch(e => {
+            console.error('Codeforces sync failed:', e)
+            toast.error(e.message)
+          })
         )
       }
 
@@ -260,6 +313,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
       onSave(updatedUser)
       onClose()
+
+      if (username && user.username && username !== user.username) {
+        window.location.href = '/' + username
+      }
     } catch (err) {
       console.error('Failed to save profile:', err)
       alert('Failed to save profile changes. Please try again.')
@@ -268,9 +325,17 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
     }
   }
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action is permanent.')) {
-      alert('Account deletion requested.')
+  const handleDeleteAccount = async () => {
+    if (confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
+      try {
+        await deleteAccount()
+        toast.success('Account successfully deleted.')
+        // Redirect to logout endpoint to clear session cookie
+        window.location.href = '/logout'
+      } catch (err) {
+        console.error('Failed to delete account:', err)
+        toast.error('Failed to delete account. Please try again.')
+      }
     }
   }
 
@@ -287,96 +352,62 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
         </button>
 
         {/* Modal Main Grid */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
-          {/* Sidebar */}
-          <div className="w-[220px] border-r border-border bg-surface/30 flex flex-col overflow-y-auto">
+          {/* Sidebar -> Topbar on mobile */}
+          <div className="w-full md:w-[220px] border-b md:border-b-0 md:border-r border-border bg-surface/30 flex flex-col overflow-y-hidden md:overflow-y-auto shrink-0">
             {/* Main Tabs */}
-            <div className="flex border-b border-border p-3 gap-2">
-              <button
-                onClick={() => {
-                  setActiveTab('profile')
-                  setActiveSection('details')
-                }}
-                className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-colors ${activeTab === 'profile'
-                    ? 'bg-surface-2 text-text border border-border'
-                    : 'text-muted hover:text-text'
-                  }`}
-              >
-                Profile
-              </button>
-              <button
-                onClick={() => setActiveTab('account')}
-                className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-colors ${activeTab === 'account'
-                    ? 'bg-surface-2 text-text border border-border'
-                    : 'text-muted hover:text-text'
-                  }`}
-              >
-                Account
-              </button>
+            <div className="flex border-b border-border p-2 md:p-3 gap-2 shrink-0">
+              {['profile', 'account'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab as any)
+                    if (tab === 'profile') setActiveSection('details')
+                  }}
+                  className={`relative flex-1 text-center py-1.5 text-xs rounded-md transition-colors z-10 ${activeTab === tab
+                      ? 'text-text'
+                      : 'text-muted hover:text-text'
+                    }`}
+                >
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="editModalMainTabs"
+                      className="absolute inset-0 bg-surface-2 border border-border rounded-md -z-10"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  {tab === 'profile' ? 'Profile' : 'Account'}
+                </button>
+              ))}
             </div>
 
             {/* Section Options based on Tab */}
-            <div className="p-2 space-y-1">
+            <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible p-2 gap-2 md:gap-0 md:space-y-1 custom-scrollbar shrink-0">
               {activeTab === 'profile' ? (
                 <>
-                  <button
-                    onClick={() => setActiveSection('details')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'details'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Details
-                  </button>
-                  <button
-                    onClick={() => setActiveSection('connections')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'connections'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Connections
-                  </button>
-                  <button
-                    onClick={() => setActiveSection('socials')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'socials'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Socials
-                  </button>
-                  <button
-                    onClick={() => setActiveSection('projects')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'projects'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Projects
-                  </button>
-                  <button
-                    onClick={() => setActiveSection('photo')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'photo'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Photo
-                  </button>
-                  <button
-                    onClick={() => setActiveSection('banner')}
-                    className={`w-full flex items-center px-3 py-2 text-left text-xs font-medium rounded-md transition-all ${activeSection === 'banner'
-                        ? 'bg-surface-2 text-text border border-border'
-                        : 'text-muted hover:text-text hover:bg-surface/50'
-                      }`}
-                  >
-                    Banner
-                  </button>
+                  {['details', 'connections', 'socials', 'projects', 'photo', 'banner'].map(section => (
+                    <button
+                      key={section}
+                      onClick={() => setActiveSection(section as any)}
+                      className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${activeSection === section
+                          ? 'text-text'
+                          : 'text-muted hover:text-text hover:bg-surface/50'
+                        }`}
+                    >
+                      {activeSection === section && (
+                        <motion.div
+                          layoutId="editModalSectionTabs"
+                          className="absolute inset-0 bg-surface-2 border border-border rounded-md -z-10"
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      {section.charAt(0).toUpperCase() + section.slice(1)}
+                    </button>
+                  ))}
                 </>
               ) : (
-                <div className="px-3 py-2 text-[10px] uppercase font-mono tracking-widest text-muted">
+                <div className="px-3 py-2 text-[10px]  font-mono  text-muted">
                   Settings
                 </div>
               )}
@@ -393,7 +424,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* Username */}
                   <div>
-                    <label className="text-xs text-muted uppercase tracking-wider mb-2 block">Username (Unique Route)</label>
+                    <label className="text-[11px] text-muted  tracking-wider mb-2 block">Username</label>
                     <Input
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
@@ -412,7 +443,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   </div>
 
                   <div>
-                    <label className="text-xs text-muted uppercase tracking-wider mb-2 block">Display Name</label>
+                    <label className="text-[11px] text-muted  tracking-wider mb-2 block">Display Name</label>
                     <Input
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
@@ -424,24 +455,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* Designation */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Designation</label>
+                    <label className="text-[11px]  text-muted">Designation</label>
                     <Input
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       placeholder="e.g. Software Engineer"
                       className="bg-surface border-border"
-                    />
-                  </div>
-
-                  {/* Website */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Website</label>
-                    <Input
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                      placeholder="e.g. https://dwaragesh.me"
-                      className="bg-surface border-border"
-                      icon={<Globe className="w-3.5 h-3.5 text-muted" />}
                     />
                   </div>
                 </div>
@@ -451,11 +470,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* GitHub URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">GitHub Username</label>
+                    <label className="text-[11px]  text-muted">GitHub Username</label>
                     <Input
                       value={githubUser}
                       onChange={(e) => setGithubUser(e.target.value)}
-                      placeholder="e.g. johndoe"
+                      // placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -463,11 +482,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* LeetCode URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">LeetCode Username</label>
+                    <label className="text-[11px]  text-muted">LeetCode Username</label>
                     <Input
                       value={leetcodeUser}
                       onChange={(e) => setLeetcodeUser(e.target.value)}
-                      placeholder="e.g. johndoe"
+                      // placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -475,11 +494,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                   {/* Codeforces URL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Codeforces Username</label>
+                    <label className="text-[11px]  text-muted">Codeforces Username</label>
                     <Input
                       value={codeforcesUser}
                       onChange={(e) => setCodeforcesUser(e.target.value)}
-                      placeholder="e.g. johndoe"
+                      // placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -593,36 +612,52 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      
-                      <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-4">
+
+                      <div className="space-y-4 overflow-y-auto px-1 pr-3 custom-scrollbar flex-1 pb-4">
                         <div>
-                          <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Project Name</label>
-                          <Input value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} placeholder="e.g. Scard" className="w-full text-xs bg-surface-2/50" />
+                          <label className="text-[11px] text-muted  tracking-wider mb-1.5 block">Project Name</label>
+                          <Input value={newProject.name} onChange={e => setNewProject({ ...newProject, name: e.target.value })} placeholder="e.g. Scard" className="w-full text-xs bg-surface-2/50" />
                         </div>
-                        
+
                         <div>
-                          <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Project Image</label>
-                          <div className="mt-1">
+                          <label className="text-[11px] text-muted  tracking-wider mb-1.5 block">Project Image</label>
+                          <div className="mt-1 flex items-center gap-4">
                             {newProject.projectImageBase64 ? (
-                              <div className="relative w-full h-32 rounded-lg border-2 border-accent overflow-hidden group">
-                                <img src={newProject.projectImageBase64} alt="Preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => setNewProject({...newProject, projectImageBase64: ''})} className="text-white bg-red-500/80 p-2 rounded-full hover:bg-red-500">
-                                    <Trash2 className="w-5 h-5" />
-                                  </button>
+                              <>
+                                <div className="relative w-20 h-20 rounded-lg border-2 border-border overflow-hidden group shrink-0">
+                                  <img src={newProject.projectImageBase64} alt="Preview" className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="absolute inset-0 opacity-0 cursor-pointer"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0]
+                                        if (file) {
+                                          const reader = new FileReader()
+                                          reader.onload = (re) => setNewProject({ ...newProject, projectImageBase64: re.target?.result as string })
+                                          reader.readAsDataURL(file)
+                                        }
+                                      }}
+                                    />
+                                    <Upload className="w-5 h-5 text-white" />
+                                  </div>
                                 </div>
-                              </div>
+                                <button onClick={() => setNewProject({ ...newProject, projectImageBase64: '' })} className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs border border-red-500/20">
+                                  <Trash2 className="w-4 h-4" /> Remove Image
+                                </button>
+                              </>
                             ) : (
                               <div className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center bg-surface-2/30 hover:bg-surface-2/50 transition-colors cursor-pointer relative overflow-hidden">
-                                <input 
-                                  type="file" 
+                                <input
+                                  type="file"
                                   accept="image/*"
                                   className="absolute inset-0 opacity-0 cursor-pointer"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0]
                                     if (file) {
                                       const reader = new FileReader()
-                                      reader.onload = (re) => setNewProject({...newProject, projectImageBase64: re.target?.result as string})
+                                      reader.onload = (re) => setNewProject({ ...newProject, projectImageBase64: re.target?.result as string })
                                       reader.readAsDataURL(file)
                                     }
                                   }}
@@ -635,23 +670,23 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                         </div>
 
                         <div>
-                          <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Description</label>
-                          <textarea 
-                            value={newProject.description} 
-                            onChange={e => setNewProject({...newProject, description: e.target.value})} 
-                            placeholder="Briefly describe what this project does..." 
-                            className="w-full h-20 bg-surface-2/50 border border-border rounded-md text-xs p-2.5 focus:outline-none focus:ring-1 focus:ring-accent/50 text-text resize-none" 
+                          <label className="text-[11px] text-muted  tracking-wider mb-1.5 block">Description</label>
+                          <textarea
+                            value={newProject.description}
+                            onChange={e => setNewProject({ ...newProject, description: e.target.value })}
+                            placeholder="Briefly describe what this project does..."
+                            className="w-full h-20 bg-surface-2/50 border border-border rounded-md text-xs p-2.5 focus:outline-none focus:ring-1 focus:ring-accent/50 text-text resize-none"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Live URL</label>
-                          <Input value={newProject.projectUrl} onChange={e => setNewProject({...newProject, projectUrl: e.target.value})} placeholder="https://..." className="w-full text-xs bg-surface-2/50" />
+                          <label className="text-[11px] text-muted  tracking-wider mb-1.5 block">Live URL</label>
+                          <Input value={newProject.projectUrl} onChange={e => setNewProject({ ...newProject, projectUrl: e.target.value })} placeholder="https://..." className="w-full text-xs bg-surface-2/50" />
                         </div>
 
                         <div>
-                          <label className="text-[11px] text-muted uppercase tracking-wider mb-1.5 block">Repository URL</label>
-                          <Input value={newProject.repoUrl} onChange={e => setNewProject({...newProject, repoUrl: e.target.value})} placeholder="https://github.com/..." className="w-full text-xs bg-surface-2/50" />
+                          <label className="text-[11px] text-muted  tracking-wider mb-1.5 block">Repository URL</label>
+                          <Input value={newProject.repoUrl} onChange={e => setNewProject({ ...newProject, repoUrl: e.target.value })} placeholder="https://github.com/..." className="w-full text-xs bg-surface-2/50" />
                         </div>
                       </div>
 
@@ -668,19 +703,45 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   <h3 className="text-sm text-text mb-4">Profile Photo</h3>
 
                   <div className="space-y-4">
-                    <label className="text-[11px] font-medium text-muted block">Upload Photo</label>
+                    <label className="text-[11px]  text-muted block">Upload Photo</label>
                     {photoBase64 ? (
                       <div className="flex items-center gap-6">
-                        <div className="relative rounded-full overflow-hidden border border-border bg-surface-2/30 h-28 w-28 shrink-0 shadow-md">
+                        <div className="relative group rounded-full overflow-hidden border border-border bg-surface-2/30 h-28 w-28 shrink-0 shadow-md">
                           <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                  if (file) {
+                                    try {
+                                      const ascii = await generateAsciiFromImage(file)
+                                      setGeneratedAscii(ascii)
+                                      setPhotoFile(file)
+                                      const reader = new FileReader()
+                                      reader.onload = (re) => setPhotoBase64(re.target?.result as string)
+                                      reader.readAsDataURL(file)
+                                      // Don't auto-check ASCII, let the user decide
+                                      setUseAscii(false)
+                                    } catch (err) {
+                                      console.error(err)
+                                    }
+                                  }
+                              }}
+                            />
+                            <Upload className="w-6 h-6 text-white" />
+                          </div>
                         </div>
                         <button
                           onClick={() => {
+                            setPhotoFile(null)
                             setPhotoBase64('')
                             setGeneratedAscii('')
                             setUseAscii(false)
                           }}
-                          className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs font-semibold border border-red-500/20"
+                          className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs  border border-red-500/20"
                           title="Remove Photo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -699,12 +760,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                               try {
                                 const ascii = await generateAsciiFromImage(file)
                                 setGeneratedAscii(ascii)
-
+                                setPhotoFile(file)
                                 const reader = new FileReader()
                                 reader.onload = (re) => setPhotoBase64(re.target?.result as string)
                                 reader.readAsDataURL(file)
-
-                                setUseAscii(true)
+                                setUseAscii(false)
                               } catch (err) {
                                 console.error(err)
                               }
@@ -721,7 +781,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     <>
                       <div className="flex items-center justify-between border border-border p-3 rounded-lg bg-surface-2/30 mt-4">
                         <div>
-                          <div className="text-xs font-semibold">Use ASCII Art</div>
+                          <div className="text-xs ">Use ASCII Art</div>
                           <div className="text-[10px] text-muted">Convert profile photo to ASCII</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -732,7 +792,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                       {useAscii && (
                         <div className="mt-2">
-                          <Button onClick={() => setShowAsciiPreview(true)} variant="outline" className="w-full border-border text-xs font-semibold h-9">
+                          <Button onClick={() => setShowAsciiPreview(true)} variant="outline" className="w-full border-border text-xs  h-9">
                             Try Out
                           </Button>
                         </div>
@@ -763,17 +823,17 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                       onClick={() => setSelectedBannerId(0)}
                       className={`h-24 rounded-lg border-2 cursor-pointer flex items-center justify-center transition-all bg-surface-2 ${selectedBannerId === 0 ? 'border-accent ring-2 ring-accent/30' : 'border-border hover:border-muted'}`}
                     >
-                      <span className="text-xs text-muted font-medium">Default Solid Color</span>
+                      <span className="text-xs text-muted ">Default Solid Color</span>
                     </div>
                     {availableBanners.map(banner => (
                       <div
                         key={banner.id}
                         onClick={() => setSelectedBannerId(banner.id)}
                         className={`h-24 rounded-lg border-2 cursor-pointer transition-all relative overflow-hidden bg-cover bg-center ${selectedBannerId === banner.id ? 'border-accent ring-2 ring-accent/30' : 'border-border hover:border-muted'}`}
-                        style={{ background: banner.cssBackground }}
+                        style={{ backgroundImage: banner.cssBackground }}
                       >
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                          <span className="text-white text-xs drop-shadow-md">{banner.name}</span>
+                          <span className="text-white text-xs drop-shadow-md capitalize">{banner.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")}</span>
                         </div>
                       </div>
                     ))}
@@ -786,13 +846,13 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
 
                 {/* Theme Settings selector mimicking a shadcn tab/select */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-medium text-muted block">System Theme</label>
+                  <label className="text-[11px]  text-muted block">System Theme</label>
                   <div className="flex border border-border rounded-lg bg-surface/30 p-1 max-w-sm">
                     <button
                       onClick={() => setTheme('light')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all ${theme === 'light'
-                          ? 'bg-surface text-text border border-border shadow-sm'
-                          : 'text-muted hover:text-text'
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === 'light'
+                        ? 'bg-surface text-text border border-border shadow-sm'
+                        : 'text-muted hover:text-text'
                         }`}
                     >
                       <Sun className="w-3.5 h-3.5" />
@@ -800,9 +860,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     </button>
                     <button
                       onClick={() => setTheme('dark')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all ${theme === 'dark'
-                          ? 'bg-surface text-text border border-border shadow-sm'
-                          : 'text-muted hover:text-text'
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === 'dark'
+                        ? 'bg-surface text-text border border-border shadow-sm'
+                        : 'text-muted hover:text-text'
                         }`}
                     >
                       <Moon className="w-3.5 h-3.5" />
@@ -810,9 +870,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                     </button>
                     <button
                       onClick={() => setTheme('system')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all ${theme === 'system'
-                          ? 'bg-surface text-text border border-border shadow-sm'
-                          : 'text-muted hover:text-text'
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === 'system'
+                        ? 'bg-surface text-text border border-border shadow-sm'
+                        : 'text-muted hover:text-text'
                         }`}
                     >
                       <Monitor className="w-3.5 h-3.5" />
@@ -830,7 +890,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
                   <Button
                     onClick={handleDeleteAccount}
                     variant="outline"
-                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 font-semibold text-xs flex items-center gap-1.5 h-9 px-4"
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60  text-xs flex items-center gap-1.5 h-9 px-4"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Delete Account</span>
@@ -840,12 +900,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
             )}
 
             {/* Bottom Actions (Only for Profile saving) */}
-            {activeTab === 'profile' && (
+            {activeTab === 'profile' && !isCreatingProject && (
               <div className="flex justify-end pt-4 border-t border-border mt-6">
                 <Button
                   onClick={handleSave}
                   disabled={saving || isUsernameTaken || isCheckingUsername}
-                  className={`bg-accent hover:bg-accent/90 text-white font-semibold text-xs py-1.5 px-4 rounded ${isUsernameTaken ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`bg-accent hover:bg-accent/90 text-white  text-xs py-1.5 px-4 rounded ${isUsernameTaken ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </Button>

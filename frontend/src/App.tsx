@@ -108,11 +108,13 @@ function AppContent() {
 
   const featuredUser = (currentUser && users.find(u => u.username === currentUser.userName)) || users[0] || PLACEHOLDER_USER
 
-  if (loading) {
+  if (loading || (location.pathname === '/' && location.search.includes('login=success'))) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-white">
-        <div className="w-8 h-8 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-        <p className="mt-4 text-xs text-zinc-400">Loading Scard profiles...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text">
+        <div className="w-8 h-8 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
+        <p className="mt-4 text-xs text-muted text-center">
+          {location.search.includes('login=success') ? 'Authenticating...' : 'Loading Scard profiles...'}
+        </p>
       </div>
     )
   }

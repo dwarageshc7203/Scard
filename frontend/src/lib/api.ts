@@ -27,16 +27,30 @@ export interface BackendProfile {
   profileName?: string
   designation: string
   profileURL: string
+  imageURL?: string
   email?: string
   asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
-  projects?: { name: string; description: string; url?: string; projectImage?: string; projectUrl?: string; repoUrl?: string }[]
+  projects?: { name: string; description: string; url?: string; projectImageBase64?: string; projectUrl?: string; repoUrl?: string }[]
   problemStats?: Record<string, { total: number, easy: number, medium: number, hard: number }>
   contributions?: BackendContribution[]
   bannerId?: number
   socials?: string[]
   anonymousViews?: number
+  createdAt?: string
+}
+
+function getJoinedText(createdAt?: string): string {
+  if (!createdAt) return 'today';
+  const diffDays = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return 'this week';
+  if (diffDays < 30) return 'a few weeks ago';
+  if (diffDays < 60) return 'this month';
+  if (diffDays < 365) return 'few months ago';
+  return 'few years ago';
 }
 
 function stringToColor(str: string): string {
@@ -86,7 +100,6 @@ export function mapContributionsToHeatmap(contributions?: BackendContribution[],
 export function mapProfileToUser(profile: BackendProfile): User {
   const { heatmapData, total } = mapContributionsToHeatmap(profile.contributions || [])
   const savedSocials = JSON.parse(localStorage.getItem(`socials_${profile.userName}`) || '{}')
-  const savedAvatar = localStorage.getItem(`avatar_${profile.userName}`)
 
   return {
     id: profile.userName,
@@ -100,10 +113,11 @@ export function mapProfileToUser(profile: BackendProfile): User {
     statusMessage: profile.asciiArt ? 'ASCII PFP Custom Art Loaded' : undefined,
     statusTime: 'Recently',
     asciiArt: profile.asciiArt,
-    imageURL: savedAvatar || profile.profileURL,
+    imageURL: profile.imageURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.profileName || profile.userName)}&background=random`,
     initials: profile.userName.substring(0, 2).toUpperCase(),
     color: stringToColor(profile.userName),
-    joinedDaysAgo: 1,
+    joinedDaysAgo: profile.createdAt ? Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0,
+    joinedText: getJoinedText(profile.createdAt),
     totalContributions: total,
     isOnline: true,
     bannerId: profile.bannerId,
@@ -162,7 +176,7 @@ export async function fetchBanners() {
   return res.json()
 }
 
-function getCsrfToken() {
+export function getCsrfToken() {
   const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'))
   return match ? decodeURIComponent(match[2]) : ''
 }
@@ -219,4 +233,14 @@ export async function syncPlatform(platform: 'GITHUB' | 'LEETCODE' | 'CODEFORCES
     throw new Error(`Sync failed for ${platform}: ${body}`)
   }
   return res.text()
+}
+
+export async function deleteAccount() {
+  const res = await fetch('/api/me', {
+    method: 'DELETE',
+    headers: {
+      'X-XSRF-TOKEN': getCsrfToken()
+    }
+  })
+  if (!res.ok) throw new Error('Failed to delete account')
 }
