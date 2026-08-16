@@ -29,6 +29,7 @@ public class Profile {
     private String profileName;
 
     private String designation;
+    private String pin;
     private String profileUrl;
     private String customImageUrl;
 

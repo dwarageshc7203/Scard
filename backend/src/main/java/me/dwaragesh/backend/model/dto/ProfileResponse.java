@@ -12,6 +12,7 @@ public record ProfileResponse(
         String userName,
         String profileName,
         String designation,
+        String pin,
         String profileURL,
         String imageURL,
         String asciiArt,

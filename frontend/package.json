@@ -13,6 +13,7 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@uiw/react-heat-map": "^2.3.4",
     "@uiw/react-tooltip": "^4.22.3",
+    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^13.1.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

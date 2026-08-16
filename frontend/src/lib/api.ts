@@ -25,7 +25,8 @@ export interface BackendContribution {
 export interface BackendProfile {
   userName: string
   profileName?: string
-  designation: string
+  designation?: string
+  pin?: string
   profileURL: string
   imageURL?: string
   email?: string
@@ -108,6 +109,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
     displayName: profile.profileName || (profile.userName.charAt(0).toUpperCase() + profile.userName.slice(1)),
     title: profile.designation || 'Full Stack Engineer',
     designation: profile.designation,
+    pin: profile.pin,
     email: profile.email,
     pdfUrl: `/api/profile/${profile.userName}/export`,
     statusMessage: profile.asciiArt ? 'ASCII PFP Custom Art Loaded' : undefined,
@@ -201,13 +203,14 @@ export async function createProfile(userName: string, profileName: string, desig
 }
 
 export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, profileName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
+  if (!isAuthenticated()) return false
+
   const res = await fetch('/api/profile', {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-XSRF-TOKEN': getCsrfToken()
-    },
-    body: JSON.stringify({ designation, profileURL, email, asciiArt, userName, profileName, bannerId, socials, projects, problemsSolved }),
+    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+    body: JSON.stringify({
+      designation, profileURL, email, asciiArt, userName, profileName, bannerId, socials, projects, problemsSolved
+    })
   })
   if (!res.ok) throw new Error('Failed to update profile')
   return res.json()

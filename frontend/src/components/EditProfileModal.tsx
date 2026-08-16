@@ -247,6 +247,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
         const mappedSocials = customSocials.map(s => `${s.type}:${s.url}`)
         await updateProfile(designation, undefined, undefined, useAscii ? generatedAscii : '', username, profileName, selectedBannerId, mappedSocials, projects, undefined)
         toast.success('Profile saved successfully!')
+        
+        // 3. Re-fetch user to get latest state
       } catch (e: any) {
         console.error('Failed to update details in backend:', e)
         toast.error(`Save unsuccessful: ${e.message || 'Unknown error'}`)
