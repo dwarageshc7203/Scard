@@ -138,15 +138,17 @@ export function mapProfileToUser(profile: BackendProfile): User {
     problemsSolved: profile.problemStats || {},
     anonymousViews: profile.anonymousViews || 0,
     socials: {
-      github: savedSocials.githubUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'github')?.badgeURL || '',
-      leetcode: savedSocials.leetcodeUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'leetcode')?.badgeURL || '',
-      codeforces: savedSocials.codeforcesUrl || (profile.badges || []).find(b => b.platform.toLowerCase() === 'codeforces')?.badgeURL || '',
+      github: (() => { const s = (profile.socials || []).find(s => s.toLowerCase().startsWith('github:')); return s ? `https://github.com/${s.split(':', 2)[1]}` : ''; })(),
+      leetcode: (() => { const s = (profile.socials || []).find(s => s.toLowerCase().startsWith('leetcode:')); return s ? `https://leetcode.com/${s.split(':', 2)[1]}` : ''; })(),
+      codeforces: (() => { const s = (profile.socials || []).find(s => s.toLowerCase().startsWith('codeforces:')); return s ? `https://codeforces.com/profile/${s.split(':', 2)[1]}` : ''; })(),
     },
-    customSocials: (profile.socials || []).map(s => {
-      const idx = s.indexOf(':');
-      if (idx === -1) return { type: 'link', url: s };
-      return { type: s.substring(0, idx), url: s.substring(idx + 1) };
-    }),
+    customSocials: (profile.socials || [])
+      .filter(s => !['github', 'leetcode', 'codeforces'].includes(s.split(':', 1)[0].toLowerCase()))
+      .map(s => {
+        const idx = s.indexOf(':');
+        if (idx === -1) return { type: 'link', url: s };
+        return { type: s.substring(0, idx), url: s.substring(idx + 1) };
+      }),
     heatmapData,
     rawContributions: (profile.contributions || []).map(c => ({ platform: c.platform, date: c.contributionDate || (c as any).date, count: c.count }))
   }
