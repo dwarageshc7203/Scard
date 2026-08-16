@@ -245,6 +245,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({ user, onClose, onSave }) 
       // 2. Patch details to backend
       try {
         const mappedSocials = customSocials.map(s => `${s.type}:${s.url}`)
+        if (githubUser) mappedSocials.push(`GITHUB:${githubUser}`)
+        if (leetcodeUser) mappedSocials.push(`LEETCODE:${leetcodeUser}`)
+        if (codeforcesUser) mappedSocials.push(`CODEFORCES:${codeforcesUser}`)
         await updateProfile(designation, undefined, undefined, useAscii ? generatedAscii : '', username, profileName, selectedBannerId, mappedSocials, projects, undefined)
         toast.success('Profile saved successfully!')
         
