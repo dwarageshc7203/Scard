@@ -41,6 +41,7 @@ export interface User {
   displayName: string
   title: string
   designation?: string
+  pin?: string
   pdfUrl?: string
   statusMessage?: string
   statusTime?: string

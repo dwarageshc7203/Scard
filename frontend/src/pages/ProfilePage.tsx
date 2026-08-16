@@ -12,6 +12,7 @@ import ProjectShowcase from '../components/ProjectShowcase'
 import ProblemsSolved from '../components/ProblemsSolved'
 import ExportCard from '../components/ExportCard'
 import { Menu, Pencil, BarChart2, Users, Sun, Moon, Monitor, LogOut, Mail, Globe, Download } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import scardLogo from '../images/scard.png'
 import { useTheme } from '../context/ThemeContext'
 import * as htmlToImage from 'html-to-image'
@@ -406,9 +407,29 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
               {/* Name & Title */}
               <div className="flex flex-col mt-2 sm:mt-0 pb-4 sm:pb-6 z-10 w-full sm:w-auto items-center sm:items-start text-center sm:text-left">
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                  {activeUser.displayName}
-                </h1>
+                <div className="flex items-center flex-wrap gap-3">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                    {activeUser.displayName}
+                  </h1>
+                  {activeUser.pin && (
+                    <button
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        const x = (rect.left + rect.width / 2) / window.innerWidth
+                        const y = (rect.top + rect.height / 2) / window.innerHeight
+                        confetti({
+                          origin: { x, y },
+                          particleCount: 100,
+                          spread: 70,
+                          colors: ['#a855f7', '#d8b4fe', '#c084fc', '#f3e8ff']
+                        })
+                      }}
+                      className="inline-flex items-center justify-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md border border-purple-500 bg-gradient-to-r from-transparent to-purple-500/20 text-purple-600 dark:text-purple-400 shadow-sm self-center translate-y-[1px] cursor-pointer hover:to-purple-500/30 transition-colors"
+                    >
+                      {activeUser.pin}
+                    </button>
+                  )}
+                </div>
                 <p className="text-gray-600 dark:text-gray-400  text-lg mt-1">
                   {activeUser.title}
                 </p>

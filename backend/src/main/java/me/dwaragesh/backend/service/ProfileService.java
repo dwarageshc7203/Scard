@@ -34,6 +34,7 @@ public class ProfileService {
                 profile.getUserName(),
                 profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
                 profile.getDesignation(),
+                profile.getPin(),
                 profile.getProfileUrl(),
                 (profile.getCustomImageUrl() != null && !profile.getCustomImageUrl().trim().isEmpty()) ? profile.getCustomImageUrl() : (profile.getUser() != null ? profile.getUser().getImageURL() : null),
                 profile.getAsciiArt(),

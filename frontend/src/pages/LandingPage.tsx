@@ -148,7 +148,7 @@ const LandingPage: FC = () => {
           <div className="flex flex-col gap-4">
             <a href="mailto:dwarageshc7203@gmail.com" className="flex items-center gap-3 text-muted hover:text-text transition-colors">
               <Mail size={22} />
-              <span className="text-lg">hello@scard.app</span>
+              <span className="text-lg">dwarageshc7203@gmail.com</span>
             </a>
             <a href="https://linkedin.com/in/dwarageshc" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-muted hover:text-text transition-colors">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-[22px] h-[22px]">
