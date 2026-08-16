@@ -10,6 +10,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
@@ -75,6 +77,23 @@ public class AsciiArtService {
     public String processUpload(MultipartFile file, String filenamePrefix) throws IOException {
         String asciiText = generateAsciiText(file.getInputStream());
         return renderAndSave(asciiText, filenamePrefix);
+    }
+
+    /** Saves a raw image directly to disk for normal profile pictures */
+    public String saveRawImage(MultipartFile file, String filenamePrefix) throws IOException {
+        File dir = new File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        String extension = ".png";
+        if (file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")) {
+            extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        }
+
+        String filename = filenamePrefix + "-" + UUID.randomUUID() + extension;
+        File outFile = new File(dir, filename);
+        Files.copy(file.getInputStream(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        return "/uploads/" + filename;
     }
 
     private BufferedImage resize(BufferedImage original, int width, int height) {

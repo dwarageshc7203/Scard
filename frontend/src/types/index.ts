@@ -23,7 +23,7 @@ export interface Project {
   name: string
   description: string
   url?: string
-  projectImage?: string
+  projectImageBase64?: string
   projectUrl?: string
   repoUrl?: string
 }
@@ -51,6 +51,7 @@ export interface User {
   initials: string
   color: string
   joinedDaysAgo: number
+  joinedText?: string
   totalContributions: number
   badges: Badge[]
   contests?: Contest[]

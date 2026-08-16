@@ -21,7 +21,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // public: anyone can view, create, or update profile pages
-                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles", "/api/banners").permitAll()
+                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles", "/api/banners", "/api/images/**").permitAll()
                         // everything else under /api requires a logged-in session
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()

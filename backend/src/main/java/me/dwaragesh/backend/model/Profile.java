@@ -30,6 +30,7 @@ public class Profile {
 
     private String designation;
     private String profileUrl;
+    private String customImageUrl;
 
     @Column(columnDefinition = "TEXT")
     private String asciiArt;

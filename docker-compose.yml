@@ -30,7 +30,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - uploads:/app/pfp_image_uploads
+      - uploads:/app/uploads
     restart: unless-stopped
 
   frontend:

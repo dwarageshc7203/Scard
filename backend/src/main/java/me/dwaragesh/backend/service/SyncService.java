@@ -23,6 +23,26 @@ import java.util.stream.Collectors;
 @Service
 public class SyncService {
 
+    @org.springframework.scheduling.annotation.Async
+    public void syncAllPlatformsAsync(Profile profile) {
+        if (profile == null || profile.getSocials() == null) return;
+        for (String social : profile.getSocials()) {
+            if (social.contains(":")) {
+                String[] parts = social.split(":", 2);
+                try {
+                    Platform platform = Platform.valueOf(parts[0].toUpperCase());
+                    String externalUsername = parts[1];
+                    syncPlatform(profile, platform, externalUsername);
+                } catch (IllegalArgumentException e) {
+                    // Ignore socials that are not valid Sync Platforms (like linkedin, mail, twitter)
+                } catch (Exception e) {
+                    // Log fetch errors during background sync
+                    System.err.println("Failed to sync platform for " + parts[0] + ": " + e.getMessage());
+                }
+            }
+        }
+    }
+
     private final Map<Platform, PlatformFetcher> fetchers;
     private final ProfileRepository profileRepository;
     private final BadgeRepository badgeRepository;

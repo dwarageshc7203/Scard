@@ -27,9 +27,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
               {/* Header: Image + Title */}
               <div className={`flex items-center gap-3 ${isExpanded ? 'mb-4' : ''}`}>
                 {/* Image Rendering */}
-                {project.projectImage && (
+                {project.projectImageBase64 && (
                   <div className={`flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-surface-2 ${isExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
-                    <img src={project.projectImage} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
+                    <img src={project.projectImageBase64} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
                   </div>
                 )}
                 
@@ -100,9 +100,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ projects, isExpanded,
             <div className="flex flex-col gap-4 overflow-y-auto p-2 custom-scrollbar">
               {projects.map((project, idx) => (
                 <div key={idx} className="bg-surface-2 rounded-xl p-4 border border-border/40 hover:border-border transition-colors text-center">
-                  {project.projectImage && (
-                    <div className="w-full overflow-hidden rounded-lg bg-surface h-24 mb-3">
-                      <img src={project.projectImage} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
+                  {project.projectImageBase64 && (
+                    <div className="flex-shrink-0 w-full h-48 overflow-hidden rounded-t-xl bg-surface-2">
+                      <img src={project.projectImageBase64} alt={project.name} className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
                     </div>
                   )}
                   {project.url || project.projectUrl ? (
