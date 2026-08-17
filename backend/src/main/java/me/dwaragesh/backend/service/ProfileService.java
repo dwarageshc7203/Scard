@@ -33,8 +33,7 @@ public class ProfileService {
     @Autowired
     private ContributionRepository contributionRepository;
 
-    @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper mapper;
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public ProfileResponse toResponse(Profile profile) {
         String contribJson = profile.getHeatmapJson();
