@@ -8,40 +8,41 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
 @RestController
+@RequestMapping("/api")
 public class UserController {
 
-   @Autowired
+    @Autowired
     private UserService service;
 
-   @Autowired
-   private me.dwaragesh.backend.service.SyncService syncService;
+    @Autowired
+    private me.dwaragesh.backend.service.SyncService syncService;
 
-   @GetMapping("/api/me")
+    @GetMapping("/me")
     public MeResponse getMe(@AuthenticationPrincipal OidcUser principal) {
-       User user = service.findOrCreateFromGoogle(
-               principal.getSubject(),
-               principal.getEmail(),
-               principal.getPicture()
-       );
-       if (user.getProfile() != null) {
-           syncService.syncAllPlatformsAsync(user.getProfile());
-       }
-       return service.toMeResponse(user);
-   }
+        User user = service.findOrCreateFromGoogle(
+                principal.getSubject(),
+                principal.getEmail(),
+                principal.getPicture()
+        );
+        if (user.getProfile() != null) {
+            syncService.syncAllPlatformsAsync(user.getProfile());
+        }
+        return service.toMeResponse(user);
+    }
 
-   @DeleteMapping("/api/me")
-   public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal OidcUser principal) {
-       User user = service.findOrCreateFromGoogle(
-               principal.getSubject(),
-               principal.getEmail(),
-               principal.getPicture()
-       );
-       service.deleteUser(user);
-       return ResponseEntity.ok().build();
-   }
-
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal OidcUser principal) {
+        User user = service.findOrCreateFromGoogle(
+                principal.getSubject(),
+                principal.getEmail(),
+                principal.getPicture()
+        );
+        service.deleteUser(user);
+        return ResponseEntity.ok().build();
+    }
 }

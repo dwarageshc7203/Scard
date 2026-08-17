@@ -23,12 +23,9 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private me.dwaragesh.backend.repository.ProfileRepository profileRepository;
-
     @GetMapping("/check-username")
     public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        return ResponseEntity.ok(profileRepository.existsByUserName(username));
+        return ResponseEntity.ok(service.isUsernameTaken(username));
     }
 
     @PostMapping

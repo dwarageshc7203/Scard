@@ -20,8 +20,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // public: anyone can view, create, or update profile pages
-                        .requestMatchers("/api/profile", "/api/profile/**", "/api/profiles", "/api/banners", "/api/images/**").permitAll()
+                        // public: anyone can view profile pages, banners, or images
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/profile/{userName}").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/profile/{userName}/export").permitAll()
+                        .requestMatchers("/api/banners", "/api/images/**").permitAll()
                         // everything else under /api requires a logged-in session
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()

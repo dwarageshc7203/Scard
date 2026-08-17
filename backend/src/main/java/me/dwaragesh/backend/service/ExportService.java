@@ -63,8 +63,11 @@ public class ExportService {
         StringBuilder badgesHtml = new StringBuilder();
         for (Badge b : badges) {
             badgesHtml.append("<div style='display:inline-block;margin:4px;padding:8px;border:1px solid #ccc;'>")
-                    .append(b.getBadgeName()).append("</div>");
+                    .append(org.springframework.web.util.HtmlUtils.htmlEscape(b.getBadgeName())).append("</div>");
         }
+
+        String safeUsername = org.springframework.web.util.HtmlUtils.htmlEscape(profile.getUserName());
+        String safeDesignation = profile.getDesignation() != null ? org.springframework.web.util.HtmlUtils.htmlEscape(profile.getDesignation()) : "";
 
         return """
             <html>
@@ -77,6 +80,6 @@ public class ExportService {
                 <div>%s</div>
             </body>
             </html>
-            """.formatted(profile.getUserName(), profile.getDesignation(), heatmapHtml, badgesHtml);
+            """.formatted(safeUsername, safeDesignation, heatmapHtml, badgesHtml);
     }
 }
