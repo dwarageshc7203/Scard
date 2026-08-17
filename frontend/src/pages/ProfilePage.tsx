@@ -192,10 +192,6 @@ const ProfilePage: FC<ProfilePageProps> = ({
     }
   }
 
-  // Filter out Codeforces contests
-  const activeContests = (activeUser.contests || []).filter(
-    (c) => c.platform.toLowerCase() !== "codeforces",
-  )
 
   return (
     <div

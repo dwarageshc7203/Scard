@@ -175,6 +175,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
     })),
     contests: (profile.contests || [])
       .map((c) => ({
+        platform: c.platform,
         name: c.contestName,
         rating: c.contestRating,
         rank: "Rank N/A",
