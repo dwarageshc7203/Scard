@@ -1,4 +1,4 @@
-export type Platform = 'github' | 'leetcode' | 'codeforces' | 'hackerrank'
+export type Platform = "github" | "leetcode" | "codeforces" | "hackerrank"
 
 export interface Badge {
   platform: Platform
@@ -57,11 +57,16 @@ export interface User {
   badges: Badge[]
   contests?: Contest[]
   projects?: Project[]
-  problemsSolved?: Record<string, { total: number, easy: number, medium: number, hard: number }>
+  problemsSolved?: Record<string, {
+    total: number
+    easy: number
+    medium: number
+    hard: number
+  }>
   anonymousViews?: number
   socials?: SocialLinks
-  customSocials?: { type: string; url: string }[]
-  heatmapData: Array<{ date: string; count: number }>
-  rawContributions: Array<{ platform: string; date: string; count: number }>
+  customSocials?: { type: string url: string }[]
+  heatmapData: Array<{ date: string count: number }>
+  rawContributions: Array<{ platform: string date: string count: number }>
   isOnline: boolean
 }

@@ -1,48 +1,57 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react"
 
-export type Theme = 'light' | 'dark' | 'system'
+export type Theme = "light" | "dark" | "system"
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
-  resolvedTheme: 'light' | 'dark'
+  resolvedTheme: "light" | "dark"
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem('theme') as Theme) || 'system'
+    return localStorage.getItem("theme") as Theme || "system"
   })
-  
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark')
+
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark")
 
   const applyTheme = (currentTheme: Theme) => {
     const root = window.document.documentElement
-    let computedTheme: 'light' | 'dark' = 'dark'
+    let computedTheme: "light" | "dark" = "dark"
 
-    if (currentTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    if (currentTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light"
       computedTheme = systemTheme
     } else {
       computedTheme = currentTheme
     }
 
-    if (computedTheme === 'dark') {
-      root.classList.remove('light')
-      root.classList.add('dark')
+    if (computedTheme === "dark") {
+      root.classList.remove("light")
+      root.classList.add("dark")
     } else {
-      root.classList.remove('dark')
-      root.classList.add('light')
+      root.classList.remove("dark")
+      root.classList.add("light")
     }
-    
+
     setResolvedTheme(computedTheme)
   }
 
   // Wrapped transition helper
   const setTheme = (newTheme: Theme) => {
-    localStorage.setItem('theme', newTheme)
-    
+    localStorage.setItem("theme", newTheme)
+
     // Check if view transitions are supported
     // @ts-ignore
     if (document.startViewTransition) {
@@ -61,23 +70,23 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     applyTheme(theme)
 
     // Listen to real-time system/browser theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
     const handleSystemChange = () => {
-      if (theme === 'system') {
+      if (theme === "system") {
         // @ts-ignore
         if (document.startViewTransition) {
           // @ts-ignore
           document.startViewTransition(() => {
-            applyTheme('system')
+            applyTheme("system")
           })
         } else {
-          applyTheme('system')
+          applyTheme("system")
         }
       }
     }
 
-    mediaQuery.addEventListener('change', handleSystemChange)
-    return () => mediaQuery.removeEventListener('change', handleSystemChange)
+    mediaQuery.addEventListener("change", handleSystemChange)
+    return () => mediaQuery.removeEventListener("change", handleSystemChange)
   }, [theme])
 
   return (
@@ -90,7 +99,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext)
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
+    throw new Error("useTheme must be used within a ThemeProvider")
   }
   return context
 }
