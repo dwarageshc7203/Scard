@@ -2,7 +2,7 @@ import type { FC } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { Mail } from "lucide-react"
 
-import { useNavigate } from "react"
+import { useNavigate } from "react-router-dom"
 
 interface LandingPageProps {
   currentUser?: any
