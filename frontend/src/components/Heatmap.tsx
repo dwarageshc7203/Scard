@@ -1,9 +1,14 @@
-import { FC, useMemo } from 'react'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useTheme } from '@/context/ThemeContext'
+import { FC, useMemo } from "react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useTheme } from "@/context/ThemeContext"
 
 interface HeatmapProps {
-  data: Array<{ date: string; count: number }>
+  data: Array<{ date: string count: number }>
   year?: string | number
 }
 
@@ -22,7 +27,7 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
   // Map data by date string for O(1) lookup
   const dataMap = useMemo(() => {
     const map = new Map<string, number>()
-    data.forEach(d => map.set(d.date, d.count))
+    data.forEach((d) => map.set(d.date, d.count))
     return map
   }, [data])
 
@@ -39,13 +44,26 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
 
   // Group by month
   const months = useMemo(() => {
-    const monthGroups: { name: string; columns: (Date | null)[][] }[] = []
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const monthGroups: { name: string columns: (Date | null)[][] }[] = []
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ]
 
     let currentMonth = -1
     let currentColumn: (Date | null)[] = []
 
-    allDays.forEach(day => {
+    allDays.forEach((day) => {
       const monthIdx = day.getMonth()
       const dayOfWeek = day.getDay() // 0 = Sun, 6 = Sat
 
@@ -55,7 +73,7 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
         currentColumn = Array(7).fill(null)
         monthGroups.push({
           name: monthNames[monthIdx],
-          columns: [currentColumn]
+          columns: [currentColumn],
         })
       }
 
@@ -69,8 +87,11 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
     })
 
     // Prune trailing empty columns
-    monthGroups.forEach(m => {
-      if (m.columns.length > 0 && m.columns[m.columns.length - 1].every(d => d === null)) {
+    monthGroups.forEach((m) => {
+      if (
+        m.columns.length > 0 &&
+        m.columns[m.columns.length - 1].every((d) => d === null)
+      ) {
         m.columns.pop()
       }
     })
@@ -79,19 +100,22 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
   }, [allDays])
 
   const getColor = (count: number) => {
-    if (count === 0) return resolvedTheme === 'dark' ? '#3f3f3fff' : '#ebedf0'
-    if (count <= 3) return resolvedTheme === 'dark' ? '#0e4429' : '#9be9a8'
-    if (count <= 7) return resolvedTheme === 'dark' ? '#006d32' : '#40c463'
-    if (count <= 11) return resolvedTheme === 'dark' ? '#26a641' : '#30a14e'
-    return resolvedTheme === 'dark' ? '#39d353' : '#216e39'
+    if (count === 0) return resolvedTheme === "dark" ? "#3f3f3fff" : "#ebedf0"
+    if (count <= 3) return resolvedTheme === "dark" ? "#0e4429" : "#9be9a8"
+    if (count <= 7) return resolvedTheme === "dark" ? "#006d32" : "#40c463"
+    if (count <= 11) return resolvedTheme === "dark" ? "#26a641" : "#30a14e"
+    return resolvedTheme === "dark" ? "#39d353" : "#216e39"
   }
 
   const formatDate = (date: Date) => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
   }
 
   return (
-    <div className="w-full overflow-x-auto pb-4 flex items-center justify-start min-h-[160px] relative" style={{ scrollbarWidth: 'thin' }}>
+    <div
+      className="w-full overflow-x-auto pb-4 flex items-center justify-start min-h-[160px] relative"
+      style={{ scrollbarWidth: "thin" }}
+    >
       <TooltipProvider delayDuration={300}>
         <div className="flex gap-5 px-2 pt-4 min-w-max">
           {months.map((month, mIdx) => (
@@ -113,8 +137,33 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
                               style={{ backgroundColor: getColor(count) }}
                             />
                           </TooltipTrigger>
-                          <TooltipContent side="top" className={`py-2 px-3 shadow-lg border ${resolvedTheme === 'dark' ? 'bg-[#2A2A2A] border-white/10' : 'bg-white border-gray-200'}`}>
-                            <span className={`${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{count}</span> submissions on <span className={`font-mono ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{dateStr}</span>
+                          <TooltipContent
+                            side="top"
+                            className={`py-2 px-3 shadow-lg border ${
+                              resolvedTheme === "dark"
+                                ? "bg-[#2A2A2A] border-white/10"
+                                : "bg-white border-gray-200"
+                            }`}
+                          >
+                            <span
+                              className={`${
+                                resolvedTheme === "dark"
+                                  ? "text-white"
+                                  : "text-gray-800"
+                              }`}
+                            >
+                              {count}
+                            </span>{" "}
+                            submissions on{" "}
+                            <span
+                              className={`font-mono ${
+                                resolvedTheme === "dark"
+                                  ? "text-gray-400"
+                                  : "text-gray-500"
+                              }`}
+                            >
+                              {dateStr}
+                            </span>
                           </TooltipContent>
                         </Tooltip>
                       )
@@ -122,7 +171,9 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
                   </div>
                 ))}
               </div>
-              <span className="text-[11px] text-gray-500 font-medium">{month.name}</span>
+              <span className="text-[11px] text-gray-500 font-medium">
+                {month.name}
+              </span>
             </div>
           ))}
         </div>
