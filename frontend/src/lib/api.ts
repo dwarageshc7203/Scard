@@ -27,7 +27,7 @@ export interface BackendProfile {
   profileName?: string
   designation?: string
   pin?: string
-  profileURL: string
+  profileUrl: string
   imageURL?: string
   email?: string
   asciiArt?: string
@@ -204,12 +204,12 @@ export async function createProfile(userName: string, profileName: string, desig
   return res.json()
 }
 
-export async function updateProfile(designation?: string, profileURL?: string, email?: string, asciiArt?: string, userName?: string, profileName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
+export async function updateProfile(designation?: string, profileUrl?: string, email?: string, asciiArt?: string, userName?: string, profileName?: string, bannerId?: number, socials?: string[], projects?: any[], problemsSolved?: Record<string, number>) {
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
     body: JSON.stringify({
-      designation, profileURL, email, asciiArt, userName, profileName, bannerId, socials, projects, problemsSolved
+      designation, profileUrl, email, asciiArt, userName, profileName, bannerId, socials, projects, problemsSolved
     })
   })
   if (!res.ok) throw new Error('Failed to update profile')

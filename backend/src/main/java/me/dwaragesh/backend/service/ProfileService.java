@@ -41,7 +41,7 @@ public class ProfileService {
                 profile.getBannerId(),
                 profile.getSocials(),
                 profile.getBadges(),
-                profile.getContest(),
+                profile.getContests(),
                 profile.getProblemStats(),
                 profile.getProjects(),
                 profile.getAnonymousViews(),
@@ -108,10 +108,20 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProfileResponse> getAllProfiles() {
+    public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
         return repository.findAll().stream()
-                .map(this::toResponse)
+                .map(p -> new me.dwaragesh.backend.model.dto.ProfileSummary(
+                        p.getUserName(),
+                        p.getProfileName() != null ? p.getProfileName() : p.getUserName(),
+                        p.getDesignation(),
+                        (p.getCustomImageUrl() != null && !p.getCustomImageUrl().trim().isEmpty()) ? p.getCustomImageUrl() : (p.getUser() != null ? p.getUser().getImageURL() : null)
+                ))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isUsernameTaken(String username) {
+        return repository.existsByUserName(username);
     }
 
     public Profile getRawProfile(String userName) {
@@ -130,8 +140,8 @@ public class ProfileService {
         if (request.designation() != null) {
             profile.setDesignation(request.designation());
         }
-        if (request.profileURL() != null) {
-            profile.setProfileUrl(request.profileURL());
+        if (request.profileUrl() != null) {
+            profile.setProfileUrl(request.profileUrl());
         }
         if (request.asciiArt() != null) {
             profile.setAsciiArt(request.asciiArt());
@@ -151,14 +161,6 @@ public class ProfileService {
         if (request.email() != null) {
             user.setEmail(request.email());
         }
-        if (request.badges() != null) {
-            profile.setBadges(request.badges());
-        }
-
-        if (request.contests() != null) {
-            profile.setContest(request.contests());
-        }
-        
         if (request.socials() != null) {
             if (profile.getSocials() == null) {
                 profile.setSocials(new java.util.ArrayList<>());
@@ -179,17 +181,10 @@ public class ProfileService {
                 profile.getProjects().add(p);
             }
         }
-
-        if (request.problemsSolved() != null) {
-            profile.setProblemsSolved(request.problemsSolved());
-        }
         
+
         if (request.bannerId() != null) {
             profile.setBannerId(request.bannerId());
-        }
-
-        if (request.socials() != null) {
-            profile.setSocials(request.socials());
         }
 
         Profile saved = repository.save(profile);
@@ -207,7 +202,7 @@ public class ProfileService {
         List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = views.stream()
                 .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
                         v.getViewer().getUserName(),
-                        v.getViewer().getUserName(), 
+                        (v.getViewer().getProfile() != null && v.getViewer().getProfile().getProfileName() != null) ? v.getViewer().getProfile().getProfileName() : v.getViewer().getUserName(), 
                         (v.getViewer().getProfile() != null && v.getViewer().getProfile().getCustomImageUrl() != null && !v.getViewer().getProfile().getCustomImageUrl().isEmpty()) ? v.getViewer().getProfile().getCustomImageUrl() : v.getViewer().getImageURL(),
                         v.getViewedAt()
                 ))

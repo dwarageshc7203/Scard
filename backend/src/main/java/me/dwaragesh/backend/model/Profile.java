@@ -47,7 +47,7 @@ public class Profile {
     private List<Badge> badges;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Contest> contest;
+    private List<Contest> contests;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects;
@@ -66,15 +66,6 @@ public class Profile {
         this.anonymousViews = anonymousViews;
     }
 
-    /**
-     * @deprecated Use problemStats instead. Retained for backwards compatibility with existing databases.
-     */
-    @Deprecated
-    @ElementCollection
-    @CollectionTable(name = "profile_problemjs_solved", joinColumns = @JoinColumn(name = "profile_id"))
-    @MapKeyColumn(name = "platform")
-    @Column(name = "count")
-    private Map<String, Integer> problemsSolved;
 
     @ElementCollection
     @CollectionTable(name = "profile_problem_stats", joinColumns = @JoinColumn(name = "profile_id"))

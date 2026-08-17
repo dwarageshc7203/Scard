@@ -26,7 +26,13 @@ public class ImageController {
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
-            Path file = Paths.get(uploadDir).resolve(filename).normalize();
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path file = uploadPath.resolve(filename).toAbsolutePath().normalize();
+
+            if (!file.startsWith(uploadPath)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {
