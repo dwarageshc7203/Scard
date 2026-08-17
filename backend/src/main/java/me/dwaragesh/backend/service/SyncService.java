@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,13 @@ public class SyncService {
     @org.springframework.scheduling.annotation.Async
     public void syncAllPlatformsAsync(Profile profile) {
         if (profile == null || profile.getSocials() == null) return;
+
+        // Rate-limit: only sync if last sync was more than 1 hour ago
+        if (profile.getLastSyncedAt() != null &&
+                Duration.between(profile.getLastSyncedAt(), Instant.now()).toHours() < 1) {
+            return;
+        }
+
         for (String social : profile.getSocials()) {
             if (social.contains(":")) {
                 String[] parts = social.split(":", 2);
@@ -89,6 +97,10 @@ public class SyncService {
             profile.getProblemStats().put(platform.name().toUpperCase(), stats);
         }
 
+        profileRepository.save(profile);
+
+        // Update the last-synced timestamp after a successful sync
+        profile.setLastSyncedAt(Instant.now());
         profileRepository.save(profile);
     }
 
