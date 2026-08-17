@@ -9,6 +9,7 @@ import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import me.dwaragesh.backend.repository.ProfileViewRepository;
 import me.dwaragesh.backend.repository.UserRepository;
+import me.dwaragesh.backend.repository.ContributionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,35 @@ public class ProfileService {
     @Autowired
     private ProfileViewRepository profileViewRepository;
 
+    @Autowired
+    private ContributionRepository contributionRepository;
+
+    @Autowired
+    private com.fasterxml.jackson.databind.ObjectMapper mapper;
+
     public ProfileResponse toResponse(Profile profile) {
+        String contribJson = profile.getHeatmapJson();
+        if (contribJson == null || contribJson.trim().isEmpty() || contribJson.equals("[]")) {
+            // Fallback to the new normalized table if migration happened or for new users
+            java.time.LocalDate oneYearAgo = java.time.LocalDate.now().minusDays(365);
+            List<Contribution> recent = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, java.time.LocalDate.now());
+            
+            // Map back to the legacy JSON structure expected by the frontend
+            List<java.util.Map<String, Object>> mapped = recent.stream().map(c -> {
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("platform", c.getPlatform().name());
+                map.put("contributionDate", c.getDate().toString());
+                map.put("count", c.getCount());
+                return map;
+            }).collect(Collectors.toList());
+            
+            try {
+                contribJson = mapper.writeValueAsString(mapped);
+            } catch (Exception e) {
+                contribJson = "[]";
+            }
+        }
+
         return new ProfileResponse(
                 profile.getUserName(),
                 profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
@@ -46,7 +75,7 @@ public class ProfileService {
                 profile.getProjects(),
                 profile.getAnonymousViews(),
                 profile.getUser() != null ? profile.getUser().getCreatedDateTime() : null,
-                profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]");
+                contribJson);
     }
 
     @Transactional
@@ -209,5 +238,12 @@ public class ProfileService {
                 .collect(Collectors.toList());
                 
         return new me.dwaragesh.backend.model.dto.AnalyticsResponse(profile.getAnonymousViews(), recentViewers);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Contribution> getPaginatedContributions(String userName, org.springframework.data.domain.Pageable pageable) {
+        Profile profile = repository.findFirstByUserName(userName)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
+        return contributionRepository.findByProfileOrderByDateDesc(profile, pageable);
     }
 }
