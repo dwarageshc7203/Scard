@@ -72,8 +72,12 @@ public class Profile {
     private Instant lastSyncedAt;
 
     /** Set to true once the user completes the onboarding questionnaire. */
-    @Column(name = "onboarding_completed")
-    private boolean onboardingCompleted = false;
+    @Column(name = "onboarding_completed", columnDefinition = "boolean default false")
+    private Boolean onboardingCompleted = false;
+
+    public Boolean getOnboardingCompleted() {
+        return onboardingCompleted != null ? onboardingCompleted : false;
+    }
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
