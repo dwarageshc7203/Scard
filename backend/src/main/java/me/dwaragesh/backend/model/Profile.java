@@ -87,6 +87,9 @@ public class Profile {
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfileView> views;
 
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Contribution> contributions;
+
     @Column(name = "anonymous_views")
     private Integer anonymousViews = 0;
 

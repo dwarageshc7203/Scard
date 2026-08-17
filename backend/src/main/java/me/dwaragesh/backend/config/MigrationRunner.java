@@ -44,17 +44,13 @@ public class MigrationRunner {
                             LocalDate date = LocalDate.parse((String) record.get("contributionDate"));
                             int count = record.get("count") != null ? (Integer) record.get("count") : 0;
 
-                            if (count > 0) {
+                            if (count > 0 && !contributionRepository.existsByProfileAndPlatformAndDate(profile, platform, date)) {
                                 Contribution c = new Contribution();
                                 c.setProfile(profile);
                                 c.setPlatform(platform);
                                 c.setDate(date);
                                 c.setCount(count);
-                                try {
-                                    contributionRepository.save(c);
-                                } catch (org.springframework.dao.DataIntegrityViolationException ignored) {
-                                    // Duplicate row already exists, safe to ignore
-                                }
+                                contributionRepository.save(c);
                             }
                         } catch (Exception e) {
                             System.err.println("Skipping malformed contribution record for profile " + profile.getProfileId());
