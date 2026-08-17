@@ -13,6 +13,7 @@ export interface Banner {
 }
 
 export interface Contest {
+  platform: string
   name: string
   rating: number
   rank: string
