@@ -26,6 +26,15 @@ public class PublicProfileController {
         return service.getAllProfiles();
     }
 
+    @GetMapping("/api/profile/{userName}/contributions")
+    public org.springframework.data.domain.Page<me.dwaragesh.backend.model.Contribution> getContributions(
+            @PathVariable String userName,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "30") int size
+    ) {
+        return service.getPaginatedContributions(userName, org.springframework.data.domain.PageRequest.of(page, size));
+    }
+
 
 
     @org.springframework.web.bind.annotation.ExceptionHandler(me.dwaragesh.backend.exception.ProfileNotFoundException.class)

@@ -4,11 +4,15 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import me.dwaragesh.backend.model.Badge;
 import me.dwaragesh.backend.model.Profile;
 import me.dwaragesh.backend.model.enums.Platform;
+import me.dwaragesh.backend.model.Contribution;
+import me.dwaragesh.backend.repository.ContributionRepository;
 import me.dwaragesh.backend.repository.BadgeRepository;
 import me.dwaragesh.backend.repository.ProfileRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.Map;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -19,11 +23,12 @@ public class ExportService {
 
     private final ProfileRepository profileRepository;
     private final BadgeRepository badgeRepository;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ContributionRepository contributionRepository;
 
-    public ExportService(ProfileRepository profileRepository, BadgeRepository badgeRepository) {
+    public ExportService(ProfileRepository profileRepository, BadgeRepository badgeRepository, ContributionRepository contributionRepository) {
         this.profileRepository = profileRepository;
         this.badgeRepository = badgeRepository;
+        this.contributionRepository = contributionRepository;
     }
 
     public byte[] exportPdf(String userName) throws Exception {
@@ -44,13 +49,12 @@ public class ExportService {
 
         StringBuilder heatmapHtml = new StringBuilder();
         try {
-            List<Map<String, Object>> contributions = mapper.readValue(
-                profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]", 
-                new TypeReference<List<Map<String, Object>>>() {}
-            );
-            for (Map<String, Object> c : contributions) {
-                int count = c.get("count") != null ? (Integer) c.get("count") : 0;
-                String date = (String) c.get("contributionDate");
+            LocalDate oneYearAgo = LocalDate.now().minusDays(365);
+            List<Contribution> contributions = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, LocalDate.now());
+            
+            for (Contribution c : contributions) {
+                int count = c.getCount();
+                String date = c.getDate().toString();
                 int intensity = Math.min(count, 10) * 25;
                 heatmapHtml.append(String.format(
                         "<div style='width:10px;height:10px;display:inline-block;background:rgb(%d,%d,%d);margin:1px;' title='%s: %d'></div>",
