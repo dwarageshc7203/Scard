@@ -42,7 +42,7 @@ public interface ContributionRepository extends JpaRepository<Contribution, Long
      * Bulk delete by profile and platform — used during sync upsert
      * to wipe stale data before re-inserting fresh data from the API.
      */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("DELETE FROM Contribution c WHERE c.profile = :profile AND c.platform = :platform")
     void deleteByProfileAndPlatform(
             @Param("profile") Profile profile,
