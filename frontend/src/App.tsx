@@ -67,6 +67,9 @@ function AppContent() {
       .then(async (me) => {
         if (me) {
           setCurrentUser(me)
+          if (me.userName) {
+            localStorage.setItem("scard_username", me.userName)
+          }
           if (location.search.includes("login=success")) {
             if (me.hasProfile) {
               navigate(`/${me.userName}`, { replace: true })

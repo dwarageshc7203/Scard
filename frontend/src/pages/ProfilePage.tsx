@@ -304,8 +304,11 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
             {currentUser ? (
               <button
-                onClick={() => window.location.href = '/logout'}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs  rounded-lg text-red-500/80 hover:bg-red-500/10 transition-colors"
+                onClick={() => {
+                  localStorage.removeItem('scard_username')
+                  window.location.href = '/logout'
+                }}
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg text-red-500/80 hover:bg-red-500/10 transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Log out
