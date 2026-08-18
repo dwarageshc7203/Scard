@@ -13,7 +13,7 @@ public record ProfileResponse(
         String profileName,
         String designation,
         String pin,
-        String profileURL,
+        String profileUrl,
         String imageURL,
         String asciiArt,
         Integer bannerId,

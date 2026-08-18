@@ -9,6 +9,7 @@ import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import me.dwaragesh.backend.repository.ProfileViewRepository;
 import me.dwaragesh.backend.repository.UserRepository;
+import me.dwaragesh.backend.repository.ContributionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,34 @@ public class ProfileService {
     @Autowired
     private ProfileViewRepository profileViewRepository;
 
+    @Autowired
+    private ContributionRepository contributionRepository;
+
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     public ProfileResponse toResponse(Profile profile) {
+        String contribJson = profile.getHeatmapJson();
+        if (contribJson == null || contribJson.trim().isEmpty() || contribJson.equals("[]")) {
+            // Fallback to the new normalized table if migration happened or for new users
+            java.time.LocalDate oneYearAgo = java.time.LocalDate.now().minusDays(365);
+            List<Contribution> recent = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, java.time.LocalDate.now());
+            
+            // Map back to the legacy JSON structure expected by the frontend
+            List<java.util.Map<String, Object>> mapped = recent.stream().map(c -> {
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("platform", c.getPlatform().name());
+                map.put("contributionDate", c.getDate().toString());
+                map.put("count", c.getCount());
+                return map;
+            }).collect(Collectors.toList());
+            
+            try {
+                contribJson = mapper.writeValueAsString(mapped);
+            } catch (Exception e) {
+                contribJson = "[]";
+            }
+        }
+
         return new ProfileResponse(
                 profile.getUserName(),
                 profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
@@ -41,12 +69,12 @@ public class ProfileService {
                 profile.getBannerId(),
                 profile.getSocials(),
                 profile.getBadges(),
-                profile.getContest(),
+                profile.getContests(),
                 profile.getProblemStats(),
                 profile.getProjects(),
                 profile.getAnonymousViews(),
                 profile.getUser() != null ? profile.getUser().getCreatedDateTime() : null,
-                profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]");
+                contribJson);
     }
 
     @Transactional
@@ -108,10 +136,20 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProfileResponse> getAllProfiles() {
+    public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
         return repository.findAll().stream()
-                .map(this::toResponse)
+                .map(p -> new me.dwaragesh.backend.model.dto.ProfileSummary(
+                        p.getUserName(),
+                        p.getProfileName() != null ? p.getProfileName() : p.getUserName(),
+                        p.getDesignation(),
+                        (p.getCustomImageUrl() != null && !p.getCustomImageUrl().trim().isEmpty()) ? p.getCustomImageUrl() : (p.getUser() != null ? p.getUser().getImageURL() : null)
+                ))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isUsernameTaken(String username) {
+        return repository.existsByUserName(username);
     }
 
     public Profile getRawProfile(String userName) {
@@ -130,8 +168,8 @@ public class ProfileService {
         if (request.designation() != null) {
             profile.setDesignation(request.designation());
         }
-        if (request.profileURL() != null) {
-            profile.setProfileUrl(request.profileURL());
+        if (request.profileUrl() != null) {
+            profile.setProfileUrl(request.profileUrl());
         }
         if (request.asciiArt() != null) {
             profile.setAsciiArt(request.asciiArt());
@@ -151,14 +189,6 @@ public class ProfileService {
         if (request.email() != null) {
             user.setEmail(request.email());
         }
-        if (request.badges() != null) {
-            profile.setBadges(request.badges());
-        }
-
-        if (request.contests() != null) {
-            profile.setContest(request.contests());
-        }
-        
         if (request.socials() != null) {
             if (profile.getSocials() == null) {
                 profile.setSocials(new java.util.ArrayList<>());
@@ -179,17 +209,10 @@ public class ProfileService {
                 profile.getProjects().add(p);
             }
         }
-
-        if (request.problemsSolved() != null) {
-            profile.setProblemsSolved(request.problemsSolved());
-        }
         
+
         if (request.bannerId() != null) {
             profile.setBannerId(request.bannerId());
-        }
-
-        if (request.socials() != null) {
-            profile.setSocials(request.socials());
         }
 
         Profile saved = repository.save(profile);
@@ -207,12 +230,19 @@ public class ProfileService {
         List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = views.stream()
                 .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
                         v.getViewer().getUserName(),
-                        v.getViewer().getUserName(), 
+                        (v.getViewer().getProfile() != null && v.getViewer().getProfile().getProfileName() != null) ? v.getViewer().getProfile().getProfileName() : v.getViewer().getUserName(), 
                         (v.getViewer().getProfile() != null && v.getViewer().getProfile().getCustomImageUrl() != null && !v.getViewer().getProfile().getCustomImageUrl().isEmpty()) ? v.getViewer().getProfile().getCustomImageUrl() : v.getViewer().getImageURL(),
                         v.getViewedAt()
                 ))
                 .collect(Collectors.toList());
                 
         return new me.dwaragesh.backend.model.dto.AnalyticsResponse(profile.getAnonymousViews(), recentViewers);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Contribution> getPaginatedContributions(String userName, org.springframework.data.domain.Pageable pageable) {
+        Profile profile = repository.findFirstByUserName(userName)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
+        return contributionRepository.findByProfileOrderByDateDesc(profile, pageable);
     }
 }

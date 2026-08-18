@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -36,24 +37,62 @@ public class Profile {
     @Column(columnDefinition = "TEXT")
     private String asciiArt;
 
-    private Integer bannerId;
+    /**
+     * The banner selected for this profile card.
+     * Stored as a FK to the Banner table for referential integrity.
+     * Use getBannerId() to get the raw int for API responses.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "banner_id")
+    private Banner banner;
+
+    /** Convenience accessor for the banner ID, used in ProfileResponse DTO. */
+    public Integer getBannerId() {
+        return banner != null ? banner.getId() : null;
+    }
+
+    /** Convenience setter that constructs a Banner reference from an ID. Used in ProfileService. */
+    public void setBannerId(Integer bannerId) {
+        if (bannerId == null) {
+            this.banner = null;
+        } else {
+            Banner b = new Banner();
+            b.setId(bannerId);
+            this.banner = b;
+        }
+    }
 
     private List<String> socials;
 
     @Column(columnDefinition = "TEXT")
     private String heatmapJson;
 
+    /** Tracks when platforms were last synced to avoid hammering external APIs on every login. */
+    @Column(name = "last_synced_at")
+    private Instant lastSyncedAt;
+
+    /** Set to true once the user completes the onboarding questionnaire. */
+    @Column(name = "onboarding_completed", columnDefinition = "boolean default false")
+    private Boolean onboardingCompleted = false;
+
+    public Boolean getOnboardingCompleted() {
+        return onboardingCompleted != null ? onboardingCompleted : false;
+    }
+
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Contest> contest;
+    private List<Contest> contests;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfileView> views;
+
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Contribution> contributions;
 
     @Column(name = "anonymous_views")
     private Integer anonymousViews = 0;
@@ -66,15 +105,6 @@ public class Profile {
         this.anonymousViews = anonymousViews;
     }
 
-    /**
-     * @deprecated Use problemStats instead. Retained for backwards compatibility with existing databases.
-     */
-    @Deprecated
-    @ElementCollection
-    @CollectionTable(name = "profile_problemjs_solved", joinColumns = @JoinColumn(name = "profile_id"))
-    @MapKeyColumn(name = "platform")
-    @Column(name = "count")
-    private Map<String, Integer> problemsSolved;
 
     @ElementCollection
     @CollectionTable(name = "profile_problem_stats", joinColumns = @JoinColumn(name = "profile_id"))

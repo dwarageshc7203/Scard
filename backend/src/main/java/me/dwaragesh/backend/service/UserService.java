@@ -16,16 +16,25 @@ public class UserService {
     public synchronized User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
         return repository.findByGoogleId(googleId)
                 .orElseGet(() -> {
-                    return repository.findAll().stream()
-                            .filter(u -> email != null && email.equals(u.getEmail()))
-                            .findFirst()
-                            .orElseGet(() -> {
-                                User user = new User();
+                    if (email != null) {
+                        java.util.Optional<User> existing = repository.findByEmail(email);
+                        if (existing.isPresent()) {
+                            User user = existing.get();
+                            if (user.getGoogleId() == null) {
                                 user.setGoogleId(googleId);
-                                user.setEmail(email);
-                                user.setImageURL(imageURL);
+                                if (user.getImageURL() == null) {
+                                    user.setImageURL(imageURL);
+                                }
                                 return repository.save(user);
-                            });
+                            }
+                            return user;
+                        }
+                    }
+                    User user = new User();
+                    user.setGoogleId(googleId);
+                    user.setEmail(email);
+                    user.setImageURL(imageURL);
+                    return repository.save(user);
                 });
     }
 
@@ -33,7 +42,6 @@ public class UserService {
         boolean hasProfile = user.getProfile() != null;
         return new MeResponse(
                 user.getUserId(),
-                user.getEmail(),
                 hasProfile ? user.getProfile().getUserName(): null,
                 user.getImageURL(),
                 hasProfile

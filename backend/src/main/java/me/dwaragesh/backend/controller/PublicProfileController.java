@@ -5,7 +5,6 @@ import me.dwaragesh.backend.service.ProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,8 +22,17 @@ public class PublicProfileController {
     }
 
     @GetMapping("/api/profiles")
-    public List<ProfileResponse> getAllProfiles() {
+    public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
         return service.getAllProfiles();
+    }
+
+    @GetMapping("/api/profile/{userName}/contributions")
+    public org.springframework.data.domain.Page<me.dwaragesh.backend.model.Contribution> getContributions(
+            @PathVariable String userName,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "30") int size
+    ) {
+        return service.getPaginatedContributions(userName, org.springframework.data.domain.PageRequest.of(page, size));
     }
 
 

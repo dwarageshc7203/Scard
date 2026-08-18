@@ -73,20 +73,39 @@ public class AsciiArtService {
         return "/uploads/" + filename;
     }
 
+    private void validateImage(MultipartFile file) {
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds the 5MB limit");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Uploaded file is not a valid image");
+        }
+    }
+
     /** Convenience: does both steps for a MultipartFile upload */
     public String processUpload(MultipartFile file, String filenamePrefix) throws IOException {
+        validateImage(file);
         String asciiText = generateAsciiText(file.getInputStream());
         return renderAndSave(asciiText, filenamePrefix);
     }
 
     /** Saves a raw image directly to disk for normal profile pictures */
     public String saveRawImage(MultipartFile file, String filenamePrefix) throws IOException {
+        validateImage(file);
         File dir = new File(uploadDir);
         if (!dir.exists()) dir.mkdirs();
 
         String extension = ".png";
-        if (file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")) {
-            extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        String contentType = file.getContentType();
+        if (contentType != null) {
+            if (contentType.equals("image/jpeg")) {
+                extension = ".jpg";
+            } else if (contentType.equals("image/gif")) {
+                extension = ".gif";
+            } else if (contentType.equals("image/webp")) {
+                extension = ".webp";
+            }
         }
 
         String filename = filenamePrefix + "-" + UUID.randomUUID() + extension;

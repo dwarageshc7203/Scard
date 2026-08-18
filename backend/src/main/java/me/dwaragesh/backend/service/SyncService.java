@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +27,20 @@ public class SyncService {
     @org.springframework.scheduling.annotation.Async
     public void syncAllPlatformsAsync(Profile profile) {
         if (profile == null || profile.getSocials() == null) return;
+
+        // Rate-limit: only sync if last sync was more than 1 hour ago
+        if (profile.getLastSyncedAt() != null &&
+                Duration.between(profile.getLastSyncedAt(), Instant.now()).toHours() < 1) {
+            return;
+        }
+
         for (String social : profile.getSocials()) {
             if (social.contains(":")) {
                 String[] parts = social.split(":", 2);
                 try {
                     Platform platform = Platform.valueOf(parts[0].toUpperCase());
                     String externalUsername = parts[1];
-                    syncPlatform(profile, platform, externalUsername);
+                    self.syncPlatform(profile, platform, externalUsername);
                 } catch (IllegalArgumentException e) {
                     // Ignore socials that are not valid Sync Platforms (like linkedin, mail, twitter)
                 } catch (Exception e) {
@@ -43,23 +51,30 @@ public class SyncService {
         }
     }
 
+    @org.springframework.context.annotation.Lazy
+    @org.springframework.beans.factory.annotation.Autowired
+    private SyncService self;
+
     private final Map<Platform, PlatformFetcher> fetchers;
     private final ProfileRepository profileRepository;
     private final BadgeRepository badgeRepository;
     private final ContestRepository contestRepository;
+    private final ContributionRepository contributionRepository;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public SyncService(
             List<PlatformFetcher> fetcherList,
             ProfileRepository profileRepository,
             BadgeRepository badgeRepository,
-            ContestRepository contestRepository
+            ContestRepository contestRepository,
+            ContributionRepository contributionRepository
     ) {
         this.fetchers = fetcherList.stream()
                 .collect(Collectors.toMap(PlatformFetcher::platform, Function.identity()));
         this.profileRepository = profileRepository;
         this.badgeRepository = badgeRepository;
         this.contestRepository = contestRepository;
+        this.contributionRepository = contributionRepository;
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -90,36 +105,26 @@ public class SyncService {
         }
 
         profileRepository.save(profile);
+
+        // Update the last-synced timestamp after a successful sync
+        profile.setLastSyncedAt(Instant.now());
+        profileRepository.save(profile);
     }
 
 
     private void upsertContributions(Profile profile, Platform platform, PlatformSyncResult result) {
-        try {
-            List<Map<String, Object>> allContributions;
-            String currentJson = profile.getHeatmapJson();
-            if (currentJson != null && !currentJson.trim().isEmpty() && !currentJson.equals("[]")) {
-                allContributions = mapper.readValue(currentJson, new TypeReference<List<Map<String, Object>>>() {});
-            } else {
-                allContributions = new java.util.ArrayList<>();
+        // Wipe existing rows for this platform, then reinsert — idempotent and clean
+        contributionRepository.deleteByProfileAndPlatform(profile, platform);
+
+        for (ContributionData c : result.contributions()) {
+            if (c.count() > 0) {
+                Contribution contribution = new Contribution();
+                contribution.setProfile(profile);
+                contribution.setPlatform(platform);
+                contribution.setDate(c.date());
+                contribution.setCount(c.count());
+                contributionRepository.save(contribution);
             }
-
-            // Remove old contributions for this platform
-            allContributions.removeIf(c -> platform.name().equals(c.get("platform")));
-
-            // Add new contributions
-            for (ContributionData c : result.contributions()) {
-                if (c.count() > 0) {
-                    Map<String, Object> map = new java.util.HashMap<>();
-                    map.put("platform", platform.name());
-                    map.put("contributionDate", c.date().toString());
-                    map.put("count", c.count());
-                    allContributions.add(map);
-                }
-            }
-
-            profile.setHeatmapJson(mapper.writeValueAsString(allContributions));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update heatmap json", e);
         }
     }
 
