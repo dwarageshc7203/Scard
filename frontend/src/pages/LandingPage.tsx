@@ -48,9 +48,14 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             </button>
           ) : (
             <button
-              onClick={() =>
-                (window.location.href = "/oauth2/authorization/google")
-              }
+              onClick={() => {
+                const storedUsername = localStorage.getItem("scard_username")
+                if (storedUsername) {
+                  navigate(`/${storedUsername}`)
+                } else {
+                  window.location.href = "/oauth2/authorization/google"
+                }
+              }}
               className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-5 py-1.5 rounded-md text-sm font-medium tracking-wide"
             >
               Sign up
@@ -263,9 +268,14 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             </button>
           ) : (
             <button
-              onClick={() =>
-                (window.location.href = "/oauth2/authorization/google")
-              }
+              onClick={() => {
+                const storedUsername = localStorage.getItem("scard_username")
+                if (storedUsername) {
+                  navigate(`/${storedUsername}`)
+                } else {
+                  window.location.href = "/oauth2/authorization/google"
+                }
+              }}
               className="text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-8 py-2 rounded-md text-lg font-medium tracking-wide"
             >
               Sign up
