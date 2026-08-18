@@ -4,14 +4,14 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import me.dwaragesh.backend.model.Badge;
 import me.dwaragesh.backend.model.Profile;
 import me.dwaragesh.backend.model.enums.Platform;
+import me.dwaragesh.backend.model.Contribution;
+import me.dwaragesh.backend.repository.ContributionRepository;
 import me.dwaragesh.backend.repository.BadgeRepository;
 import me.dwaragesh.backend.repository.ProfileRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -19,11 +19,12 @@ public class ExportService {
 
     private final ProfileRepository profileRepository;
     private final BadgeRepository badgeRepository;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ContributionRepository contributionRepository;
 
-    public ExportService(ProfileRepository profileRepository, BadgeRepository badgeRepository) {
+    public ExportService(ProfileRepository profileRepository, BadgeRepository badgeRepository, ContributionRepository contributionRepository) {
         this.profileRepository = profileRepository;
         this.badgeRepository = badgeRepository;
+        this.contributionRepository = contributionRepository;
     }
 
     public byte[] exportPdf(String userName) throws Exception {
@@ -44,13 +45,12 @@ public class ExportService {
 
         StringBuilder heatmapHtml = new StringBuilder();
         try {
-            List<Map<String, Object>> contributions = mapper.readValue(
-                profile.getHeatmapJson() != null ? profile.getHeatmapJson() : "[]", 
-                new TypeReference<List<Map<String, Object>>>() {}
-            );
-            for (Map<String, Object> c : contributions) {
-                int count = c.get("count") != null ? (Integer) c.get("count") : 0;
-                String date = (String) c.get("contributionDate");
+            LocalDate oneYearAgo = LocalDate.now().minusDays(365);
+            List<Contribution> contributions = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, LocalDate.now());
+            
+            for (Contribution c : contributions) {
+                int count = c.getCount();
+                String date = c.getDate().toString();
                 int intensity = Math.min(count, 10) * 25;
                 heatmapHtml.append(String.format(
                         "<div style='width:10px;height:10px;display:inline-block;background:rgb(%d,%d,%d);margin:1px;' title='%s: %d'></div>",
@@ -63,8 +63,11 @@ public class ExportService {
         StringBuilder badgesHtml = new StringBuilder();
         for (Badge b : badges) {
             badgesHtml.append("<div style='display:inline-block;margin:4px;padding:8px;border:1px solid #ccc;'>")
-                    .append(b.getBadgeName()).append("</div>");
+                    .append(org.springframework.web.util.HtmlUtils.htmlEscape(b.getBadgeName())).append("</div>");
         }
+
+        String safeUsername = org.springframework.web.util.HtmlUtils.htmlEscape(profile.getUserName());
+        String safeDesignation = profile.getDesignation() != null ? org.springframework.web.util.HtmlUtils.htmlEscape(profile.getDesignation()) : "";
 
         return """
             <html>
@@ -77,6 +80,6 @@ public class ExportService {
                 <div>%s</div>
             </body>
             </html>
-            """.formatted(profile.getUserName(), profile.getDesignation(), heatmapHtml, badgesHtml);
+            """.formatted(safeUsername, safeDesignation, heatmapHtml, badgesHtml);
     }
 }
