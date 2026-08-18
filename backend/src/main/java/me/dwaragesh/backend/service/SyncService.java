@@ -40,7 +40,7 @@ public class SyncService {
                 try {
                     Platform platform = Platform.valueOf(parts[0].toUpperCase());
                     String externalUsername = parts[1];
-                    syncPlatform(profile, platform, externalUsername);
+                    self.syncPlatform(profile, platform, externalUsername);
                 } catch (IllegalArgumentException e) {
                     // Ignore socials that are not valid Sync Platforms (like linkedin, mail, twitter)
                 } catch (Exception e) {
@@ -50,6 +50,10 @@ public class SyncService {
             }
         }
     }
+
+    @org.springframework.context.annotation.Lazy
+    @org.springframework.beans.factory.annotation.Autowired
+    private SyncService self;
 
     private final Map<Platform, PlatformFetcher> fetchers;
     private final ProfileRepository profileRepository;
