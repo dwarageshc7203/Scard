@@ -85,6 +85,16 @@ function AppContent() {
       })
   }, []) // run once on mount — not on every navigation
 
+  // Auto-redirect to onboarding if logged in but has no profile/username
+  useEffect(() => {
+    if (currentUser && !location.pathname.startsWith("/onboarding")) {
+      const uName = currentUser.userName
+      if (!uName || uName === "0" || !currentUser.hasProfile) {
+        navigate("/onboarding", { replace: true })
+      }
+    }
+  }, [currentUser, location.pathname, navigate])
+
   // Sync current page state with pathnames for NavBar active states
   useEffect(() => {
     const path = location.pathname

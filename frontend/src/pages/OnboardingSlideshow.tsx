@@ -1,185 +1,188 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { createProfile, updateProfile, syncPlatform } from '../lib/api'
-import confetti from 'canvas-confetti'
+import React, { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useNavigate } from "react-router-dom"
+import { createProfile, updateProfile, syncPlatform } from "../lib/api"
+import UsernameSlide from "../components/onboarding/UsernameSlide"
+import SocialsSlide from "../components/onboarding/SocialsSlide"
+import DsaDevSlide from "../components/onboarding/DsaDevSlide"
+import PfpSlide from "../components/onboarding/PfpSlide"
+import FinishSlide from "../components/onboarding/FinishSlide"
 
-export default function OnboardingSlideshow({ currentUser }: { currentUser: any }) {
+interface OnboardingSlideshowProps {
+  currentUser: any
+}
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+}
+
+export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshowProps) {
   const [step, setStep] = useState(0)
+  const [direction, setDirection] = useState(1)
   const navigate = useNavigate()
 
-  const [formData, setFormData] = useState({
-    displayName: '',
-    title: '',
-    github: '',
-    leetcode: ''
-  })
+  // State to hold data across slides
+  const [username, setUsername] = useState("")
+  const [linkedUsername, setLinkedUsername] = useState("")
+  const [mailAddress, setMailAddress] = useState("")
+  const [leetcode, setLeetcode] = useState("")
+  const [github, setGithub] = useState("")
+  const [pfpUrl, setPfpUrl] = useState("")
 
-  const handleNext = () => setStep((s) => s + 1)
-  const handlePrev = () => setStep((s) => s - 1)
+  const nextStep = (customDirection = 1) => {
+    setDirection(customDirection)
+    setStep((s) => s + 1)
+  }
 
-  const handleSubmit = async () => {
+  const prevStep = () => {
+    setDirection(-1)
+    setStep((s) => s - 1)
+  }
+
+  // Slide 1: Create profile
+  const handleUsernameNext = async (selectedUsername: string) => {
+    setUsername(selectedUsername)
     try {
-      const suggestedUsername = currentUser.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '')
-      await createProfile(suggestedUsername, formData.displayName || suggestedUsername, formData.title || 'Developer')
-      
-      const newSocials = []
-      if (formData.github) newSocials.push(`github:${formData.github}`)
-      if (formData.leetcode) newSocials.push(`leetcode:${formData.leetcode}`)
-      
-      if (newSocials.length > 0) {
-        await updateProfile(undefined, undefined, undefined, undefined, undefined, undefined, undefined, newSocials)
-        if (formData.github) {
-          syncPlatform("GITHUB", formData.github).catch(console.error)
-        }
-        if (formData.leetcode) {
-          syncPlatform("LEETCODE", formData.leetcode).catch(console.error)
-        }
+      await createProfile(selectedUsername, selectedUsername, "Developer")
+      nextStep()
+    } catch (e) {
+      console.error("Error creating initial profile:", e)
+    }
+  }
+
+  // Slide 2: Save socials temporarily
+  const handleSocialsNext = (lu: string, ma: string) => {
+    setLinkedUsername(lu)
+    setMailAddress(ma)
+    nextStep()
+  }
+
+  // Slide 3: Save DSA/Dev temporarily
+  const handleDsaDevNext = (lc: string, gh: string) => {
+    setLeetcode(lc)
+    setGithub(gh)
+    nextStep()
+  }
+
+  // Slide 4: Save PFP temporarily
+  const handlePfpNext = (url: string) => {
+    setPfpUrl(url)
+    nextStep()
+  }
+
+  // Slide 5: Submit all remaining changes to backend and redirect
+  const handleFinish = async () => {
+    try {
+      const socialsList: string[] = []
+      if (github) socialsList.push(`GITHUB:${github}`)
+      if (leetcode) socialsList.push(`LEETCODE:${leetcode}`)
+      if (linkedUsername) socialsList.push(`LINKED_IN:${linkedUsername}`)
+
+      const finalDesignation = github === "batman" ? "Batman" : "Developer"
+
+      await updateProfile(
+        finalDesignation,
+        undefined,
+        mailAddress || undefined,
+        undefined,
+        username,
+        username,
+        undefined,
+        socialsList
+      )
+
+      // Async sync platforms
+      if (github && github !== "batman") {
+        syncPlatform("GITHUB", github).catch(console.error)
+      }
+      if (leetcode) {
+        syncPlatform("LEETCODE", leetcode).catch(console.error)
       }
 
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 }
-      })
-
-      setTimeout(() => {
-        navigate(`/${suggestedUsername}`, { replace: true })
-      }, 1500)
+      localStorage.setItem("scard_username", username)
+      // Force reload or navigate
+      window.location.href = `/${username}`
     } catch (e) {
-      console.error(e)
+      console.error("Error finishing onboarding:", e)
+      navigate(`/${username}`)
     }
   }
 
   const slides = [
-    {
-      id: 'welcome',
-      content: (
-        <div className="flex flex-col items-center text-center space-y-6">
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">Welcome to Scard!</h1>
-          <p className="text-gray-500 dark:text-gray-400">Let's build your awesome dev card. What should we call you?</p>
-          <input 
-            type="text" 
-            placeholder="Display Name" 
-            value={formData.displayName}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-            className="w-full max-w-sm px-4 py-3 rounded-xl bg-gray-100 dark:bg-[#252525] border-transparent focus:border-accent focus:ring-1 focus:ring-accent outline-none text-text"
-          />
-        </div>
-      )
-    },
-    {
-      id: 'title',
-      content: (
-        <div className="flex flex-col items-center text-center space-y-6">
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">What's your role?</h1>
-          <p className="text-gray-500 dark:text-gray-400">Software Engineer, Student, Designer...</p>
-          <input 
-            type="text" 
-            placeholder="e.g. Full Stack Developer" 
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full max-w-sm px-4 py-3 rounded-xl bg-gray-100 dark:bg-[#252525] border-transparent focus:border-accent focus:ring-1 focus:ring-accent outline-none text-text"
-          />
-        </div>
-      )
-    },
-    {
-      id: 'github',
-      content: (
-        <div className="flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-[#252525] rounded-full flex items-center justify-center p-3">
-             <img src="/logos/github.png" alt="GitHub" className="w-full h-full object-contain dark:invert" />
-          </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">Link your GitHub</h1>
-          <p className="text-gray-500 dark:text-gray-400">We'll fetch your contributions and projects.</p>
-          <input 
-            type="text" 
-            placeholder="GitHub Username (optional)" 
-            value={formData.github}
-            onChange={(e) => setFormData({ ...formData, github: e.target.value })}
-            className="w-full max-w-sm px-4 py-3 rounded-xl bg-gray-100 dark:bg-[#252525] border-transparent focus:border-accent focus:ring-1 focus:ring-accent outline-none text-text"
-          />
-        </div>
-      )
-    },
-    {
-      id: 'leetcode',
-      content: (
-        <div className="flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-[#252525] rounded-full flex items-center justify-center p-3">
-             <img src="/logos/leetcode.png" alt="LeetCode" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">Link your LeetCode</h1>
-          <p className="text-gray-500 dark:text-gray-400">Show off your problem-solving skills.</p>
-          <input 
-            type="text" 
-            placeholder="LeetCode Username (optional)" 
-            value={formData.leetcode}
-            onChange={(e) => setFormData({ ...formData, leetcode: e.target.value })}
-            className="w-full max-w-sm px-4 py-3 rounded-xl bg-gray-100 dark:bg-[#252525] border-transparent focus:border-accent focus:ring-1 focus:ring-accent outline-none text-text"
-          />
-        </div>
-      )
-    }
+    <UsernameSlide initialValue={username} onNext={handleUsernameNext} />,
+    <SocialsSlide
+      initialLinkedUsername={linkedUsername}
+      initialMailAddress={mailAddress}
+      onNext={handleSocialsNext}
+      onPrev={prevStep}
+    />,
+    <DsaDevSlide
+      initialLeetcode={leetcode}
+      initialGithub={github}
+      onNext={handleDsaDevNext}
+      onPrev={prevStep}
+    />,
+    <PfpSlide initialImageUrl={pfpUrl} onNext={handlePfpNext} onPrev={prevStep} />,
+    <FinishSlide onFinish={handleFinish} />,
   ]
 
+  // Render progress bar fill width
+  const progressPercent = step === 4 ? 100 : (step / 4) * 100
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#111] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-white dark:bg-[#1C1C1C] rounded-[32px] shadow-2xl dark:shadow-none border border-gray-200 dark:border-white/10 p-8 md:p-12 overflow-hidden relative min-h-[450px] flex flex-col">
-        
-        {/* Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gray-100 dark:bg-white/5">
-           <motion.div 
-             className="h-full bg-accent"
-             initial={{ width: 0 }}
-             animate={{ width: `${((step + 1) / slides.length) * 100}%` }}
-             transition={{ duration: 0.3 }}
-           />
-        </div>
-
-        <div className="flex-1 flex flex-col justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="w-full"
-            >
-              {slides[step].content}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between mt-12 pt-6 border-t border-gray-100 dark:border-white/5">
-          <button 
-            onClick={handlePrev}
-            disabled={step === 0}
-            className={`px-6 py-2.5 rounded-xl font-medium transition-colors ${step === 0 ? 'opacity-0 cursor-default' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'}`}
-          >
-            Back
-          </button>
-          
-          {step === slides.length - 1 ? (
-            <button 
-              onClick={handleSubmit}
-              className="px-8 py-2.5 rounded-xl bg-accent text-white font-medium hover:bg-accent/90 transition-colors shadow-lg shadow-accent/25"
-            >
-              Finish
-            </button>
-          ) : (
-            <button 
-              onClick={handleNext}
-              className="px-8 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-            >
-              Next
-            </button>
-          )}
-        </div>
+    <div className="min-h-screen bg-[#121212] flex flex-col justify-between items-center py-12 px-6 overflow-hidden">
+      {/* Top Header Logo */}
+      <div className="flex items-center gap-2 mb-8 select-none">
+        <img src="/logos/scard.png" alt="Scard logo" className="w-6 h-6 object-contain" />
+        <span className="text-white text-xl font-medium font-sans tracking-wide">Scard</span>
       </div>
+
+      {/* Progress Bar Line */}
+      {step < 4 && (
+        <div className="w-full max-w-xl h-[3px] bg-white/10 rounded-full mb-8 overflow-hidden relative">
+          <motion.div
+            className="absolute top-0 left-0 h-full bg-white"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          />
+        </div>
+      )}
+
+      {/* Slides Content */}
+      <div className="flex-1 w-full flex items-center justify-center relative">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={step}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "tween", ease: "easeInOut", duration: 0.4 },
+              opacity: { duration: 0.3 },
+            }}
+            className="w-full absolute flex justify-center items-center"
+          >
+            {slides[step]}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Footer Buffer */}
+      <div className="h-8 w-full" />
     </div>
   )
 }
