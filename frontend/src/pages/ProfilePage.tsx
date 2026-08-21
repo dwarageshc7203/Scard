@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { User } from '../types'
 import Sidebar from '../components/Sidebar'
 import Avatar from '../components/ui/avatar'
+import Button from '../components/ui/button'
 import BadgeContainer from '../components/BadgeContainer'
 import ContestGraph from '../components/ContestGraph'
 import Heatmap from '../components/Heatmap'
@@ -11,7 +12,7 @@ import EditProfileModal from '../components/EditProfileModal'
 import ProjectShowcase from '../components/ProjectShowcase'
 import ProblemsSolved from '../components/ProblemsSolved'
 import ExportCard from '../components/ExportCard'
-import { Menu, Pencil, BarChart2, Users, Sun, Moon, Monitor, LogOut, Mail, Globe, Download } from 'lucide-react'
+import { Menu, Pencil, BarChart2, Users, Sun, Moon, Monitor, LogOut, Mail, Globe, Download, ArrowLeft } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import scardLogo from '../images/scard.png'
 import { useTheme } from '../context/ThemeContext'
@@ -68,6 +69,29 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
     }
   }, [variant, initialUserId])
 
+  const availableYears = Array.from(new Set((activeUser?.rawContributions || []).map(c => c.date.substring(0, 4)))).sort().reverse()
+  if (availableYears.length === 0) availableYears.push(new Date().getFullYear().toString())
+  const hasGithub = !!activeUser?.socials?.github
+  const hasLeetCode = !!activeUser?.socials?.leetcode
+  const hasProjects = !!(activeUser?.projects && activeUser.projects.length > 0)
+
+  const availablePlatforms = Array.from(new Set((activeUser?.rawContributions || [])
+    .map(c => c.platform.toLowerCase())
+    .filter(p => {
+      if (p === 'github' && !hasGithub) return false;
+      if (p === 'leetcode' && !hasLeetCode) return false;
+      return true;
+    })
+  )).sort()
+  const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
+  const [heatmapYear, setHeatmapYear] = useState<string>(availableYears[0])
+
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(heatmapYear)) {
+      setHeatmapYear(availableYears[0])
+    }
+  }, [availableYears.join(','), heatmapYear])
+
   if (!matchedUser && variant === 'standalone' && !liveUser) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text space-y-4">
@@ -77,19 +101,6 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
       </div>
     )
   }
-
-  const availableYears = Array.from(new Set((activeUser?.rawContributions || []).map(c => c.date.substring(0, 4)))).sort().reverse()
-  if (availableYears.length === 0) availableYears.push(new Date().getFullYear().toString())
-  const availablePlatforms = Array.from(new Set((activeUser?.rawContributions || []).map(c => c.platform.toLowerCase()))).sort()
-
-  const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
-  const [heatmapYear, setHeatmapYear] = useState<string>(availableYears[0])
-
-  useEffect(() => {
-    if (availableYears.length > 0 && !availableYears.includes(heatmapYear)) {
-      setHeatmapYear(availableYears[0])
-    }
-  }, [availableYears.join(','), heatmapYear])
 
   const togglePlatform = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setHeatmapPlatform(e.target.value)
@@ -130,6 +141,20 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
   return (
     <div className="flex bg-gray-50 dark:bg-[#202020] text-gray-900 dark:text-gray-200 relative overflow-hidden" style={{ height: '100vh' }}>
+
+      {/* Go Back Button (Viewing Others) */}
+      {currentUser && activeUser && currentUser.userName !== activeUser.username && (
+        <div className="absolute top-6 left-6 z-[70] hidden md:block">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 bg-white/80 dark:bg-[#252525]/80 backdrop-blur-sm border-gray-200 dark:border-white/10"
+            onClick={() => window.location.href = `/${currentUser.userName}`}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Go back
+          </Button>
+        </div>
+      )}
 
       {/* Hover Zone to reveal icon bar */}
       {(!isIconBarVisible) && (
@@ -441,160 +466,177 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
           </div>
 
           {/* 2-Column Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {(hasLeetCode || hasGithub || hasProjects) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 
-            {/* 1. Contest Rating Widget */}
-            <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
-              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
-              {activeUser.contests && activeUser.contests.length > 0 && (
-                <span className="absolute top-5 left-1/2 -translate-x-1/2 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white z-10" style={{ fontFamily: 'Graphic, sans-serif' }}>
-                  {activeUser.contests[activeUser.contests.length - 1].rating}
-                </span>
-              )}
-              <div className="mt-10 flex-1 relative flex items-center justify-center">
-                {activeUser.contests && activeUser.contests.length > 0 ? (
-                  <ContestGraph contests={activeUser.contests} />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-xs text-muted">No contests available</div>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Problems Solved Widget */}
-            <ProblemsSolved problems={activeUser.problemsSolved || {}} />
-
-            {/* Row wrapper for Badges & Projects */}
-            <div className="md:col-span-2 flex flex-col md:flex-row gap-6 h-auto md:h-[350px] relative">
-
-              {/* 3. Badges Widget Base */}
-              <motion.div
-                layoutId="badges-widget"
-                className="w-full md:w-[calc(50%-12px)] bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
-              >
-                <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
-                  <button
-                    onClick={() => setExpandedWidget('badges')}
-                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                  >
-                    Expand
-                  </button>
-                </div>
-                <div className="mt-12 flex-1 relative min-h-0">
-                  {activeUser.badges && activeUser.badges.length > 0 ? (
-                    <BadgeContainer badges={activeUser.badges} isExpanded={false} />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+              {/* 1. Contest Rating Widget */}
+              {hasLeetCode && (
+                <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
+                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
+                  {activeUser.contests && activeUser.contests.length > 0 && (
+                    <span className="absolute top-5 left-1/2 -translate-x-1/2 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white z-10">
+                      {activeUser.contests[activeUser.contests.length - 1].rating}
+                    </span>
                   )}
+                  <div className="mt-10 flex-1 relative flex items-center justify-center">
+                    {activeUser.contests && activeUser.contests.length > 0 ? (
+                      <ContestGraph contests={activeUser.contests} />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-xs text-muted">No contests available</div>
+                    )}
+                  </div>
                 </div>
-              </motion.div>
+              )}
 
-              {/* 4. Project Showcase Widget Base */}
-              <motion.div
-                layoutId="projects-widget"
-                className="w-full md:w-[calc(50%-12px)] bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
-              >
-                <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
-                  <button
-                    onClick={() => setExpandedWidget('projects')}
-                    className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                  >
-                    Expand
-                  </button>
-                </div>
-                <div className="mt-12 flex-1 relative min-h-0">
-                  <ProjectShowcase
-                    projects={activeUser.projects || []}
-                    isExpanded={false}
-                    onToggleExpand={() => setExpandedWidget('projects')}
-                  />
-                </div>
-              </motion.div>
+              {/* 2. Problems Solved Widget */}
+              {hasLeetCode && (
+                <ProblemsSolved problems={activeUser.problemsSolved || {}} />
+              )}
 
-              {/* Expanded Overlays */}
-              <AnimatePresence>
-                {expandedWidget === 'badges' && (
-                  <motion.div
-                    layoutId="badges-widget"
-                    className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
-                  >
-                    <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
-                      <button
-                        onClick={() => setExpandedWidget(null)}
-                        className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+              {/* Row wrapper for Badges & Projects */}
+              {(hasLeetCode || hasProjects) && (
+                <div className={`md:col-span-2 flex flex-col md:flex-row gap-6 h-auto md:h-[350px] relative ${!hasLeetCode || !hasProjects ? 'justify-center' : ''}`}>
+
+                  {/* 3. Badges Widget Base */}
+                  {hasLeetCode && (
+                    <motion.div
+                      layoutId="badges-widget"
+                      className="w-full md:w-[calc(50%-12px)] max-w-2xl bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
+                    >
+                      <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                        <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
+                        <button
+                          onClick={() => setExpandedWidget('badges')}
+                          className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                        >
+                          Expand
+                        </button>
+                      </div>
+                      <div className="mt-12 flex-1 relative min-h-0">
+                        {activeUser.badges && activeUser.badges.length > 0 ? (
+                          <BadgeContainer badges={activeUser.badges} isExpanded={false} />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* 4. Project Showcase Widget Base */}
+                  {hasProjects && (
+                    <motion.div
+                      layoutId="projects-widget"
+                      className="w-full md:w-[calc(50%-12px)] max-w-2xl bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none min-w-0"
+                    >
+                      <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                        <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
+                        <button
+                          onClick={() => setExpandedWidget('projects')}
+                          className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                        >
+                          Expand
+                        </button>
+                      </div>
+                      <div className="mt-12 flex-1 relative min-h-0">
+                        <ProjectShowcase
+                          projects={activeUser.projects || []}
+                          isExpanded={false}
+                          onToggleExpand={() => setExpandedWidget('projects')}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Expanded Overlays */}
+                  <AnimatePresence>
+                    {expandedWidget === 'badges' && (
+                      <motion.div
+                        layoutId="badges-widget"
+                        className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
                       >
-                        Collapse
-                      </button>
-                    </div>
-                    <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto">
-                      {activeUser.badges && activeUser.badges.length > 0 ? (
-                        <BadgeContainer badges={activeUser.badges} isExpanded={true} />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+                        <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                          <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
+                          <button
+                            onClick={() => setExpandedWidget(null)}
+                            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto">
+                          {activeUser.badges && activeUser.badges.length > 0 ? (
+                            <BadgeContainer badges={activeUser.badges} isExpanded={true} />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-xs text-muted">No badges available</div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
 
-                {expandedWidget === 'projects' && (
-                  <motion.div
-                    layoutId="projects-widget"
-                    className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
-                  >
-                    <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
-                      <button
-                        onClick={() => setExpandedWidget(null)}
-                        className="text-[11px] text-gray-400 hover:text-gray-900 dark:hover:text-white tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                    {expandedWidget === 'projects' && (
+                      <motion.div
+                        layoutId="projects-widget"
+                        className="absolute inset-0 z-30 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden"
                       >
-                        Collapse
-                      </button>
-                    </div>
-                    <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto custom-scrollbar">
-                      <ProjectShowcase
-                        projects={activeUser.projects || []}
-                        isExpanded={true}
-                        onToggleExpand={() => setExpandedWidget(null)}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                        <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
+                          <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
+                          <button
+                            onClick={() => setExpandedWidget(null)}
+                            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto custom-scrollbar">
+                          <ProjectShowcase
+                            projects={activeUser.projects || []}
+                            isExpanded={true}
+                            onToggleExpand={() => setExpandedWidget(null)}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
-            {/* 5. Heatmap Widget (Full Width) */}
-            <div className="md:col-span-2 bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[250px] overflow-hidden shadow-sm dark:shadow-none">
-              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Heat Map</span>
-              <div className="absolute top-5 right-6 z-10 flex items-center gap-3">
-                <select
-                  value={heatmapPlatform}
-                  onChange={togglePlatform}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer"
-                  style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                >
-                  <option value="all">All</option>
-                  {availablePlatforms.map(p => (
-                    <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
-                  ))}
-                </select>
-                <select
-                  value={heatmapYear}
-                  onChange={toggleYear}
-                  className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-white/20 appearance-none cursor-pointer min-w-[100px]"
-                  style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                >
-                  {availableYears.map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mt-14 overflow-x-auto pt-2">
-                <Heatmap data={heatmapData} year={heatmapYear} />
-              </div>
+              {/* 5. Heatmap Widget (Full Width) */}
+              {(hasGithub || hasLeetCode) && (
+                <div className="md:col-span-2 bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[250px] overflow-hidden shadow-sm dark:shadow-none">
+                  <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Heat Map</span>
+                  <div className="absolute top-5 right-6 z-10 flex items-center gap-3">
+                    <select
+                      value={heatmapPlatform}
+                      onChange={togglePlatform}
+                      className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
+                      style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                    >
+                      <option value="all">All</option>
+                      {availablePlatforms.map(p => (
+                        <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={heatmapYear}
+                      onChange={toggleYear}
+                      className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:ring-2 focus:ring-accent appearance-none cursor-pointer min-w-[100px]"
+                      style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                    >
+                      {availableYears.map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div 
+                    className="mt-14 overflow-x-auto pt-2 custom-scrollbar"
+                    style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)', maskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
+                  >
+                    <Heatmap data={heatmapData} year={heatmapYear} />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </main>
 

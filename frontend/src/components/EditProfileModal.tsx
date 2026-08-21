@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   X,
   Globe,
@@ -98,6 +98,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   // New Project Creation/Edit State
   const [isCreatingProject, setIsCreatingProject] = useState(false)
   const [editingProjectIndex, setEditingProjectIndex] = useState<number>(-1)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -414,20 +415,14 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   }
 
   const handleDeleteAccount = async () => {
-    if (
-      confirm(
-        "Are you sure you want to delete your account? This action is permanent and cannot be undone.",
-      )
-    ) {
-      try {
-        await deleteAccount()
-        toast.success("Account successfully deleted.")
-        // Redirect to logout endpoint to clear session cookie
-        window.location.href = "/logout"
-      } catch (err) {
-        console.error("Failed to delete account:", err)
-        toast.error("Failed to delete account. Please try again.")
-      }
+    try {
+      await deleteAccount()
+      toast.success("Account successfully deleted.")
+      // Redirect to logout endpoint to clear session cookie
+      window.location.href = "/logout"
+    } catch (err) {
+      console.error("Failed to delete account:", err)
+      toast.error("Failed to delete account. Please try again.")
     }
   }
 
@@ -1198,7 +1193,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     consolidations.
                   </p>
                   <Button
-                    onClick={handleDeleteAccount}
+                    onClick={() => setShowDeleteConfirm(true)}
                     variant="outline"
                     className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60  text-xs flex items-center gap-1.5 h-9 px-4"
                   >
@@ -1225,6 +1220,48 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
             )}
           </div>
         </div>
+        {/* Delete Confirmation Overlay */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 rounded-2xl"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-surface border border-border rounded-xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6 text-red-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-text mb-2">Delete Account</h3>
+                <p className="text-sm text-muted mb-6">
+                  Are you sure you want to delete your account? This action is permanent and cannot be undone.
+                </p>
+                <div className="flex items-center gap-3 w-full">
+                  <Button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteAccount}
+                    variant="default"
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white border-none"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

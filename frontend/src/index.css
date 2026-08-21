@@ -1,11 +1,10 @@
-@import "./fonts.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Graphik', 'Poppins', 'Inter', system-ui, sans-serif;
-  --font-mono: 'Graphik', SFMono-Regular, Consolas, monospace;
+  --font-sans: 'Poppins', system-ui, sans-serif;
+  --font-mono: 'Poppins', SFMono-Regular, Consolas, monospace;
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -14,6 +13,8 @@
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 }
 
 :root {
@@ -25,6 +26,8 @@
   --text: #F0F0F0;
   --muted: #888888;
   --accent: #3B82F6;
+  --success: #4ade80;
+  --warning: #fbbf24;
 }
 
 html.light {
@@ -36,6 +39,8 @@ html.light {
   --text: #09090B;
   --muted: #71717A;
   --accent: #2563EB;
+  --success: #3b9f3f;
+  --warning: #d89e25;
 }
 
 html {
@@ -55,13 +60,13 @@ body {
 
 /* Custom noteSnips branding typography styles */
 .sansation-bold-italic {
-  font-family: 'Sansation', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-style: italic;
 }
 
 .sansation-regular {
-  font-family: 'Sansation', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 

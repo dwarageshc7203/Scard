@@ -53,8 +53,17 @@ public class UserService {
 
     @Transactional
     public void deleteUser(User user) {
-        profileViewRepository.deleteByViewer(user);
-        repository.delete(user);
+        User managedUser = repository.findById(user.getUserId()).orElse(null);
+        if (managedUser == null) return;
+        
+        profileViewRepository.deleteByViewer(managedUser);
+        
+        if (managedUser.getProfile() != null && managedUser.getProfile().getViews() != null) {
+            managedUser.getProfile().getViews().removeIf(v -> 
+                v.getViewer() != null && v.getViewer().getUserId().equals(managedUser.getUserId()));
+        }
+
+        repository.delete(managedUser);
     }
 
 }
