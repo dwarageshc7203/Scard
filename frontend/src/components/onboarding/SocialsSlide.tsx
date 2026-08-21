@@ -22,15 +22,15 @@ export default function SocialsSlide({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4">
-      <h2 className="text-[44px] md:text-[54px] font-light tracking-tight text-white mb-16 text-center font-sans">
+    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4 h-full">
+      <h2 className="onboarding-subheader">
         Let's link your socials
       </h2>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
         <div className="flex flex-col gap-6 w-full max-w-[460px] mb-12">
           <div className="flex items-center justify-between w-full">
-            <span className="text-[#cccccc] font-sans text-[15px]">
+            <span className="onboarding-text mr-4">
               LinkedIn Username
             </span>
             <input
@@ -42,7 +42,7 @@ export default function SocialsSlide({
           </div>
 
           <div className="flex items-center justify-between w-full">
-            <span className="text-[#cccccc] font-sans text-[15px]">
+            <span className="onboarding-text mr-4">
               Mail address
             </span>
             <input
@@ -54,21 +54,19 @@ export default function SocialsSlide({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 w-full max-w-2xl absolute bottom-0 right-0 p-8">
-          <button
-            type="button"
-            onClick={onPrev}
-            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
-          >
-            ← Back
-          </button>
-          <button
-            type="submit"
-            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
-          >
-            Next →
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onPrev}
+          className="absolute bottom-12 left-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+        >
+          ← Back
+        </button>
+        <button
+          type="submit"
+          className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+        >
+          Next →
+        </button>
       </form>
     </div>
   )

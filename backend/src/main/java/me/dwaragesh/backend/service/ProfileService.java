@@ -190,29 +190,30 @@ public class ProfileService {
             user.setEmail(request.email());
         }
         if (request.socials() != null) {
-            if (profile.getSocials() == null) {
-                profile.setSocials(new java.util.ArrayList<>());
-            } else {
-                profile.getSocials().clear();
-            }
-            profile.getSocials().addAll(request.socials());
+            profile.setSocials(new java.util.ArrayList<>(request.socials()));
         }
         if (request.projects() != null) {
-            if (profile.getProjects() == null) {
-                profile.setProjects(new java.util.ArrayList<>());
-            } else {
-                profile.getProjects().clear();
-            }
+            java.util.List<Project> newProjects = new java.util.ArrayList<>();
             for (Project p : request.projects()) {
                 p.setProjectId(null);
                 p.setProfile(profile);
-                profile.getProjects().add(p);
+                newProjects.add(p);
+            }
+            if (profile.getProjects() != null) {
+                profile.getProjects().clear();
+                profile.getProjects().addAll(newProjects);
+            } else {
+                profile.setProjects(newProjects);
             }
         }
         
 
         if (request.bannerId() != null) {
-            profile.setBannerId(request.bannerId());
+            if (request.bannerId() == 0) {
+                profile.setBannerId(null);
+            } else {
+                profile.setBannerId(request.bannerId());
+            }
         }
 
         Profile saved = repository.save(profile);

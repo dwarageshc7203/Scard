@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from "framer-motion"
 import { Mail } from "lucide-react"
 
 import { useNavigate } from "react-router-dom"
+import Image from "../components/ui/Image"
 
 interface LandingPageProps {
   currentUser?: any
@@ -22,7 +23,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
         <div className="flex-1"></div>
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 flex-1">
-          <img
+          <Image
             src="/logos/scard.png"
             alt="Scard"
             className="w-6 h-6 object-contain filter dark:invert-0 rounded-[5px]"
@@ -81,7 +82,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             style={{ y: yCursor }}
             className="absolute -right-5 top-24 md:top-32 w-24 h-24 md:w-32 md:h-32"
           >
-            <img
+            <Image
               src="/elements/cursor.png"
               alt="Cursor"
               className="w-full h-full object-contain"
@@ -107,12 +108,12 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             className="relative w-full flex justify-center drop-shadow-2xl overflow-hidden rounded-[24px]"
           >
             <div className="scale-[0.8] origin-top md:scale-100 flex justify-center w-full px-4 md:px-0">
-              <img
+              <Image
                 src="/elements/scard-card-light.png"
                 alt="Sample Profile Light"
                 className="w-full max-w-[850px] h-auto object-contain rounded-2xl border border-border dark:hidden block"
               />
-              <img
+              <Image
                 src="/elements/scard-card-dark.png"
                 alt="Sample Profile Dark"
                 className="w-full max-w-[850px] h-auto object-contain rounded-2xl border border-border hidden dark:block"
@@ -146,7 +147,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               Your contest ratings
             </h4>
             <div className="flex items-end gap-3 h-[60px]">
-              <img
+              <Image
                 src="/logos/codeforces.png"
                 alt="Codeforces"
                 className="w-10 h-10 object-contain mr-2 mb-1"
@@ -165,7 +166,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               Your contributions
             </h4>
             <div className="flex items-end gap-3 h-[60px]">
-              <img
+              <Image
                 src="/logos/github.png"
                 alt="GitHub"
                 className="w-11 h-11 object-contain mr-1 mb-1 dark:invert"
@@ -184,7 +185,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               Your projects
             </h4>
             <div className="flex items-center justify-center h-[60px]">
-              <img
+              <Image
                 src="/logos/github.png"
                 alt="GitHub"
                 className="w-[70px] h-[70px] object-contain opacity-90 dark:invert"
@@ -200,7 +201,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               Your badges
             </h4>
             <div className="flex items-center justify-center h-[60px]">
-              <img
+              <Image
                 src="/logos/leetcode.png"
                 alt="LeetCode"
                 className="w-[60px] h-[60px] object-contain drop-shadow-lg"
@@ -228,7 +229,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
       <footer className="w-full py-16 px-8 grid grid-cols-1 md:grid-cols-2 gap-12 bg-surface border-t border-border z-20">
         <div className="flex flex-col items-center md:items-end justify-center gap-8 border-r-0 md:border-r border-border pr-0 md:pr-12 md:-translate-x-30">
           <div className="flex items-center gap-4">
-            <img
+            <Image
               src="/logos/scard.png"
               alt="Scard"
               className="w-16 h-16 object-contain rounded-[5px]"

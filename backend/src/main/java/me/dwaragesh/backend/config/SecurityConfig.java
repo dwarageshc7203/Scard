@@ -53,6 +53,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl(frontendUrl + "/?login=success", true)
+                        .failureUrl(frontendUrl + "/?error=oauth_failure")
                 )
                 .logout(logout -> logout
                         .logoutRequestMatcher(request ->

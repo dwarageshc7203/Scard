@@ -86,7 +86,7 @@ body {
 }
 
 .animate-fade-in-blur {
-  animation: fadeInBlur 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fadeInBlur 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animation-delay-200 {
@@ -146,4 +146,38 @@ body {
   to {
     clip-path: circle(150% at 100% 0%);
   }
+}
+/* Onboarding Typography Classes */
+.onboarding-header {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin-bottom: 3rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  margin-top: 0.5rem;
+}
+@media (min-width: 768px) {
+  .onboarding-header {
+    font-size: 54px;
+  }
+}
+
+.onboarding-subheader {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
+  font-family: var(--font-sans);
+}
+
+.onboarding-text {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  color: var(--muted);
+  font-family: var(--font-sans);
 }

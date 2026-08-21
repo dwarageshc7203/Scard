@@ -4,6 +4,7 @@ import Avatar from "./ui/avatar"
 import BadgeContainer from "./BadgeContainer"
 import ProblemsSolved from "./ProblemsSolved"
 import { Mail, Globe } from "lucide-react"
+import Image from "./ui/Image"
 
 interface ExportCardProps {
   user: User
@@ -52,7 +53,7 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
         {/* Avatar */}
         <div className="w-[220px] h-[220px] rounded-full overflow-hidden border-[4px] border-gray-50 dark:border-[#202020] bg-gray-200 dark:bg-[#333] flex items-center justify-center shrink-0 shadow-lg">
           {userImageUrl ? (
-            <img
+            <Image
               src={userImageUrl}
               alt={user.displayName}
               className="w-full h-full object-cover"
@@ -119,7 +120,7 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
                   className="w-[85px] h-[85px] flex items-center justify-center"
                 >
                   {badge.iconUrl ? (
-                    <img
+                    <Image
                       src={badge.iconUrl}
                       alt={badge.label}
                       className="w-full h-full object-contain drop-shadow-xl"

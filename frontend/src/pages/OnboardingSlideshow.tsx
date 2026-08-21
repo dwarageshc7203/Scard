@@ -8,6 +8,7 @@ import SocialsSlide from "../components/onboarding/SocialsSlide"
 import DsaDevSlide from "../components/onboarding/DsaDevSlide"
 import PfpSlide from "../components/onboarding/PfpSlide"
 import FinishSlide from "../components/onboarding/FinishSlide"
+import Image from "../components/ui/Image"
 
 interface OnboardingSlideshowProps {
   currentUser: any
@@ -157,7 +158,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
     <div className="min-h-screen bg-[#222222] flex flex-col items-center py-12 px-6 overflow-hidden relative">
       {/* Top Header Logo */}
       <div className="flex items-center gap-3 mb-16 select-none mt-4">
-        <img src="/scard.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/'} />
+        <Image src="/logos/scard.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/'} />
         <span className="text-white text-2xl font-bold font-sans tracking-wide">Scard</span>
       </div>
 
@@ -175,7 +176,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
 
       {/* Main Title (Steps 1-4) */}
       {step < 4 && (
-        <h1 className="text-5xl md:text-[54px] font-bold tracking-tight text-white mb-12 text-center font-sans mt-2">
+        <h1 className="onboarding-header">
           Let’s start with your onboarding
         </h1>
       )}
@@ -194,7 +195,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
               x: { type: "tween", ease: "easeInOut", duration: 0.4 },
               opacity: { duration: 0.3 },
             }}
-            className="w-full absolute flex justify-center items-center"
+            className="w-full h-full absolute flex justify-center items-center"
           >
             {slides[step]}
           </motion.div>

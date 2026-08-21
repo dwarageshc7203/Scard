@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { ArrowRight, X } from "lucide-react"
+import Image from "./ui/Image"
 
 interface ProblemStats {
   total: number
@@ -64,7 +65,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
                 {/* Default View */}
                 <div className="flex flex-col items-center transition-opacity duration-300 group-hover:opacity-0 group-hover:scale-95">
                   {config.logo ? (
-                    <img
+                    <Image
                       src={config.logo}
                       alt={config.label}
                       className="w-20 h-20 mb-3 object-contain"
@@ -158,7 +159,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
                   >
                     <div className="flex flex-col items-center transition-opacity duration-300 group-hover:opacity-0 group-hover:scale-95">
                       {config.logo ? (
-                        <img
+                        <Image
                           src={config.logo}
                           alt={config.label}
                           className="w-12 h-12 mb-3 object-contain"

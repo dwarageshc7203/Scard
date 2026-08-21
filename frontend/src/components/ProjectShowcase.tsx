@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Project } from "../types"
 import { ArrowLeft, ArrowRight, X, ExternalLink, Code } from "lucide-react"
+import Image from "./ui/Image"
 
 interface ProjectShowcaseProps {
   projects: Project[]
@@ -56,7 +57,7 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                       isExpanded ? "w-16 h-16" : "w-12 h-12"
                     }`}
                   >
-                    <img
+                    <Image
                       src={project.projectImageBase64}
                       alt={project.name}
                       className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
@@ -160,7 +161,7 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                 >
                   {project.projectImageBase64 && (
                     <div className="flex-shrink-0 w-full h-48 overflow-hidden rounded-t-xl bg-surface-2">
-                      <img
+                      <Image
                         src={project.projectImageBase64}
                         alt={project.name}
                         className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
