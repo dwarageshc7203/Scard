@@ -68,7 +68,6 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
         <div className="ml-8 mt-[110px] flex flex-col justify-center">
           <h1
             className="text-6xl font-extrabold text-gray-900 dark:text-white leading-none tracking-tight"
-            style={{ fontFamily: "Graphic, sans-serif" }}
           >
             {user.displayName}
           </h1>
@@ -81,6 +80,7 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
       </div>
 
       {/* Stats Section */}
+      {!!(user as any).socials?.leetcode && (
       <div className="grid grid-cols-3 gap-8 px-12 pt-12 pb-20 mt-2">
         {/* Contest Rating */}
         <div className="flex flex-col items-center justify-start">
@@ -89,7 +89,6 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
           </span>
           <span
             className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight"
-            style={{ fontFamily: "Graphic, sans-serif" }}
           >
             {latestRating || "-"}
           </span>
@@ -102,7 +101,6 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
           </span>
           <span
             className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight"
-            style={{ fontFamily: "Graphic, sans-serif" }}
           >
             {totalProblems || "-"}
           </span>
@@ -141,6 +139,7 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }

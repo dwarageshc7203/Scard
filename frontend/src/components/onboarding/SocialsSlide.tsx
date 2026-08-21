@@ -22,63 +22,52 @@ export default function SocialsSlide({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto px-4 py-8">
-      <h2 className="text-2xl md:text-3xl font-light tracking-tight text-white mb-8 text-center font-sans">
-        Your socials?
+    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4">
+      <h2 className="text-[44px] md:text-[54px] font-light tracking-tight text-white mb-16 text-center font-sans">
+        Let's link your socials
       </h2>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
-        <div className="flex flex-col gap-6 w-full max-w-md mb-8">
-          <div className="flex items-center">
-            <span className="text-gray-400 font-sans text-sm md:text-base mr-4 w-32 text-right">
-              Linked username
+        <div className="flex flex-col gap-6 w-full max-w-[460px] mb-12">
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[#cccccc] font-sans text-[15px]">
+              LinkedIn Username
             </span>
             <input
               type="text"
               value={linkedUsername}
               onChange={(e) => setLinkedUsername(e.target.value)}
-              placeholder="e.g. dev_john"
-              className="flex-1 px-4 py-2 bg-[#1e1e1e] border border-white/10 rounded-md outline-none text-white focus:border-white/30 transition-all font-sans text-sm md:text-base placeholder:text-gray-600"
+              className="w-[280px] px-3 py-1.5 bg-transparent border-b border-[#333333] outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px]"
             />
           </div>
 
-          <div className="flex items-center">
-            <span className="text-gray-400 font-sans text-sm md:text-base mr-4 w-32 text-right">
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[#cccccc] font-sans text-[15px]">
               Mail address
             </span>
             <input
               type="email"
               value={mailAddress}
               onChange={(e) => setMailAddress(e.target.value)}
-              placeholder="e.g. john@example.com"
-              className="flex-1 px-4 py-2 bg-[#1e1e1e] border border-white/10 rounded-md outline-none text-white focus:border-white/30 transition-all font-sans text-sm md:text-base placeholder:text-gray-600"
+              className="w-[280px] px-3 py-1.5 bg-transparent border-b border-[#333333] outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px]"
             />
           </div>
         </div>
 
-        <div className="flex justify-between w-full max-w-md mt-4">
+        <div className="flex justify-end gap-3 w-full max-w-2xl absolute bottom-0 right-0 p-8">
           <button
             type="button"
             onClick={onPrev}
-            className="px-6 py-1.5 border border-white/10 hover:border-white/30 text-gray-400 hover:text-white rounded-md text-sm transition-all font-sans cursor-pointer"
+            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
           >
             ← Back
           </button>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => onNext("", "")}
-              className="px-6 py-1.5 border border-white/10 hover:border-white/30 text-gray-400 hover:text-white rounded-md text-sm transition-all font-sans cursor-pointer"
-            >
-              Skip →
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-1.5 border border-white/20 hover:border-white/50 text-white rounded-md text-sm transition-all font-sans cursor-pointer"
-            >
-              Next →
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+          >
+            Next →
+          </button>
         </div>
       </form>
     </div>

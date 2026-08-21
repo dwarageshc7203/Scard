@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import confetti from "canvas-confetti"
 import { createProfile, updateProfile, syncPlatform } from "../lib/api"
 import UsernameSlide from "../components/onboarding/UsernameSlide"
 import SocialsSlide from "../components/onboarding/SocialsSlide"
@@ -39,6 +40,9 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   const [leetcode, setLeetcode] = useState("")
   const [github, setGithub] = useState("")
   const [pfpUrl, setPfpUrl] = useState("")
+  const [asciiArt, setAsciiArt] = useState("")
+  const [designation, setDesignation] = useState("Full Stack Engineer")
+  const [tagline, setTagline] = useState("")
 
   const nextStep = (customDirection = 1) => {
     setDirection(customDirection)
@@ -53,12 +57,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   // Slide 1: Create profile
   const handleUsernameNext = async (selectedUsername: string) => {
     setUsername(selectedUsername)
-    try {
-      await createProfile(selectedUsername, selectedUsername, "Developer")
-      nextStep()
-    } catch (e) {
-      console.error("Error creating initial profile:", e)
-    }
+    nextStep()
   }
 
   // Slide 2: Save socials temporarily
@@ -76,8 +75,11 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   }
 
   // Slide 4: Save PFP temporarily
-  const handlePfpNext = (url: string) => {
+  const handlePfpNext = (url: string, ascii: string, desig: string, tag: string) => {
     setPfpUrl(url)
+    setAsciiArt(ascii)
+    setDesignation(desig)
+    setTagline(tag)
     nextStep()
   }
 
@@ -89,15 +91,17 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       if (leetcode) socialsList.push(`LEETCODE:${leetcode}`)
       if (linkedUsername) socialsList.push(`LINKED_IN:${linkedUsername}`)
 
-      const finalDesignation = github === "batman" ? "Batman" : "Developer"
+      const finalDesignation = designation || (github === "batman" ? "Batman" : "Developer")
+
+      await createProfile(username, tagline || username, finalDesignation)
 
       await updateProfile(
         finalDesignation,
-        undefined,
+        pfpUrl || undefined,
         mailAddress || undefined,
-        undefined,
+        asciiArt || undefined,
         username,
-        username,
+        tagline || username,
         undefined,
         socialsList
       )
@@ -111,8 +115,17 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       }
 
       localStorage.setItem("scard_username", username)
-      // Force reload or navigate
-      window.location.href = `/${username}`
+      
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 }
+      })
+
+      // Wait a moment before redirect so they see the confetti
+      setTimeout(() => {
+        window.location.href = `/${username}`
+      }, 1500)
     } catch (e) {
       console.error("Error finishing onboarding:", e)
       navigate(`/${username}`)
@@ -141,23 +154,30 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   const progressPercent = step === 4 ? 100 : (step / 4) * 100
 
   return (
-    <div className="min-h-screen bg-[#121212] flex flex-col justify-between items-center py-12 px-6 overflow-hidden">
+    <div className="min-h-screen bg-[#222222] flex flex-col items-center py-12 px-6 overflow-hidden relative">
       {/* Top Header Logo */}
-      <div className="flex items-center gap-2 mb-8 select-none">
-        <img src="/logos/scard.png" alt="Scard logo" className="w-6 h-6 object-contain" />
-        <span className="text-white text-xl font-medium font-sans tracking-wide">Scard</span>
+      <div className="flex items-center gap-3 mb-16 select-none mt-4">
+        <img src="/scard.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/'} />
+        <span className="text-white text-2xl font-bold font-sans tracking-wide">Scard</span>
       </div>
 
       {/* Progress Bar Line */}
       {step < 4 && (
-        <div className="w-full max-w-xl h-[3px] bg-white/10 rounded-full mb-8 overflow-hidden relative">
+        <div className="w-full max-w-2xl h-[4px] bg-[#333333] rounded-full mb-8 overflow-hidden relative">
           <motion.div
-            className="absolute top-0 left-0 h-full bg-white"
+            className="absolute top-0 left-0 h-full bg-[#dddddd]"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           />
         </div>
+      )}
+
+      {/* Main Title (Steps 1-4) */}
+      {step < 4 && (
+        <h1 className="text-5xl md:text-[54px] font-bold tracking-tight text-white mb-12 text-center font-sans mt-2">
+          Let’s start with your onboarding
+        </h1>
       )}
 
       {/* Slides Content */}

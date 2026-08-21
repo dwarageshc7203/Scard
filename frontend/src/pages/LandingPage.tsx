@@ -29,7 +29,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           />
           <span
             className="text-text font-semibold tracking-wide text-lg"
-            style={{ fontFamily: "'Graphik', sans-serif" }}
+            
           >
             Scard
           </span>
@@ -49,12 +49,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           ) : (
             <button
               onClick={() => {
-                const storedUsername = localStorage.getItem("scard_username")
-                if (storedUsername) {
-                  navigate(`/${storedUsername}`)
-                } else {
-                  window.location.href = "/oauth2/authorization/google"
-                }
+                window.location.href = "/oauth2/authorization/google"
               }}
               className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-5 py-1.5 rounded-md text-sm font-medium tracking-wide"
             >
@@ -65,20 +60,18 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
       </header>
 
       {/* Hero Section */}
-      <main className="w-full flex-col flex items-center pt-[180px] pb-32 px-4 relative z-10">
+      <main className="w-full flex-col flex items-center pt-32 md:pt-48 pb-32 px-4 relative z-10">
         <motion.div
           style={{ y: yHeroText }}
           className="text-center leading-[1.1] relative"
         >
           <h1
-            className="text-[60px] md:text-[100px] text-text font-normal"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-6xl md:text-8xl text-text font-bold"
           >
-            Your concise <span className="text-[#3b9f3f] italic">dev</span>
+            Your concise <span className="text-success italic">dev</span>
           </h1>
           <h1
-            className="text-[60px] md:text-[100px] text-text font-normal"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-6xl md:text-8xl text-text font-bold"
           >
             profile
           </h1>
@@ -86,7 +79,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           {/* Custom Cursor Graphic */}
           <motion.div
             style={{ y: yCursor }}
-            className="absolute -right-[20px] top-[120px] w-[140px] h-[140px]"
+            className="absolute -right-5 top-24 md:top-32 w-24 h-24 md:w-32 md:h-32"
           >
             <img
               src="/elements/cursor.png"
@@ -101,12 +94,11 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
       <section className="w-full flex flex-col items-center justify-center relative z-20 pb-32">
         <div className="flex flex-col items-center max-w-[900px] w-full">
           <h2
-            className="text-[32px] text-muted mb-6 self-start pl-8"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-3xl md:text-4xl text-muted mb-6 self-start pl-8 font-semibold"
           >
-            why{" "}
-            <span className="text-red-500 dark:text-[#e24a4a]">multiple</span>{" "}
-            profiles
+            No more logging into <br />
+            <span className="text-red-500">multiple</span>{" "}
+            platforms
           </h2>
 
           {/* Static ExportCard Image */}
@@ -128,31 +120,28 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             </div>
           </motion.div>
 
-          <h3
-            className="text-[32px] md:text-[40px] text-muted italic mt-6 self-end pr-8"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+          <h2
+            className="text-3xl md:text-4xl text-muted italic mt-6 self-end pr-8 font-semibold"
           >
-            when it be presented{" "}
-            <span className="text-[#d89e25] font-semibold">this good</span>
-          </h3>
+            Never looked <br />
+            <span className="text-warning font-semibold">this good</span>
+          </h2>
         </div>
       </section>
 
       {/* Features Grid Section */}
       <section className="w-full flex flex-col items-center justify-center pb-40 px-4">
         <h2
-          className="text-[40px] md:text-[48px] text-text text-center leading-tight mb-16 max-w-lg"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="text-4xl md:text-5xl text-text text-center leading-tight mb-16 max-w-lg font-bold"
         >
           A platform for every developers
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[800px] w-full">
           {/* Card 1 */}
-          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
+          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
             <h4
-              className="text-text text-[30px] mb-8"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="text-text text-3xl mb-8 font-bold"
             >
               Your contest ratings
             </h4>
@@ -162,17 +151,16 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
                 alt="Codeforces"
                 className="w-10 h-10 object-contain mr-2 mb-1"
               />
-              <div className="w-4 h-full bg-[#d89e25] rounded-t-sm"></div>
-              <div className="w-4 h-[70%] bg-[#3b9f3f] rounded-t-sm"></div>
-              <div className="w-4 h-[40%] bg-[#e24a4a] rounded-t-sm"></div>
+              <div className="w-4 h-full bg-warning rounded-t-sm"></div>
+              <div className="w-4 h-[70%] bg-success rounded-t-sm"></div>
+              <div className="w-4 h-[40%] bg-red-500 rounded-t-sm"></div>
             </div>
           </div>
 
           {/* Card 2 */}
-          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
+          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
             <h4
-              className="text-text text-[30px] mb-8"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="text-text text-3xl mb-8 font-bold"
             >
               Your contributions
             </h4>
@@ -182,17 +170,16 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
                 alt="GitHub"
                 className="w-11 h-11 object-contain mr-1 mb-1 dark:invert"
               />
-              <div className="w-4 h-full bg-[#d89e25] rounded-t-sm"></div>
-              <div className="w-4 h-[60%] bg-[#3b9f3f] rounded-t-sm"></div>
-              <div className="w-4 h-[80%] bg-[#e24a4a] rounded-t-sm"></div>
+              <div className="w-4 h-full bg-warning rounded-t-sm"></div>
+              <div className="w-4 h-[60%] bg-success rounded-t-sm"></div>
+              <div className="w-4 h-[80%] bg-red-500 rounded-t-sm"></div>
             </div>
           </div>
 
           {/* Card 3 */}
-          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
+          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
             <h4
-              className="text-text text-[30px] mb-8"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="text-text text-3xl mb-8 font-bold"
             >
               Your projects
             </h4>
@@ -206,10 +193,9 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
+          <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">
             <h4
-              className="text-text text-[30px] mb-8"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="text-text text-3xl mb-8 font-bold"
             >
               Your badges
             </h4>
@@ -227,14 +213,12 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
       {/* See it yourself Section */}
       <section className="w-full flex flex-col items-center justify-center pb-32 px-4 text-center">
         <h3
-          className="text-[24px] md:text-[28px] text-[#d89e25] italic mb-4"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="text-2xl md:text-3xl text-warning italic mb-4 font-semibold"
         >
-          why scroll this long?
+          Stay ahead.
         </h3>
         <h2
-          className="text-[44px] md:text-[56px] text-text font-normal"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="text-5xl md:text-6xl text-text font-bold"
         >
           See it yourself!
         </h2>
@@ -251,7 +235,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             />
             <span
               className="text-text font-semibold tracking-wide text-5xl"
-              style={{ fontFamily: "'Graphik', sans-serif" }}
+              
             >
               Scard
             </span>
@@ -269,12 +253,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           ) : (
             <button
               onClick={() => {
-                const storedUsername = localStorage.getItem("scard_username")
-                if (storedUsername) {
-                  navigate(`/${storedUsername}`)
-                } else {
-                  window.location.href = "/oauth2/authorization/google"
-                }
+                window.location.href = "/oauth2/authorization/google"
               }}
               className="text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-8 py-2 rounded-md text-lg font-medium tracking-wide"
             >
@@ -285,8 +264,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
 
         <div className="flex flex-col items-center md:items-start justify-start pt-2 pl-0 md:pl-12 gap-6 text-center md:text-left">
           <h4
-            className="text-text text-2xl"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-text text-2xl font-bold"
           >
             Contact the creator
           </h4>

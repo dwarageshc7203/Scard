@@ -124,13 +124,22 @@ function AppContent() {
     (location.pathname === "/" && location.search.includes("login=success"))
   ) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg text-text">
-        <div className="w-8 h-8 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
-        <p className="mt-4 text-xs text-muted text-center">
-          {location.search.includes("login=success")
-            ? "Authenticating..."
-            : "Loading Scard profiles..."}
-        </p>
+      <div className="min-h-screen bg-bg p-8 w-full max-w-5xl mx-auto flex flex-col pt-[100px] animate-pulse">
+        {/* Profile info skeleton */}
+        <div className="w-full flex flex-col sm:flex-row gap-8 items-center sm:items-start mt-12">
+          <div className="w-28 h-28 sm:w-40 sm:h-40 rounded-full bg-surface-2 shrink-0 border border-border/50"></div>
+          <div className="flex flex-col gap-4 w-full items-center sm:items-start mt-4 sm:mt-4">
+            <div className="h-10 sm:h-12 w-3/4 sm:w-1/2 bg-surface-2 rounded-md border border-border/50"></div>
+            <div className="h-6 w-1/2 sm:w-1/3 bg-surface-2 rounded-md border border-border/50"></div>
+          </div>
+        </div>
+        
+        {/* Grid skeletons */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
+          <div className="h-[300px] bg-surface-2 rounded-[20px] border border-border/50"></div>
+          <div className="h-[300px] bg-surface-2 rounded-[20px] border border-border/50"></div>
+          <div className="h-[350px] bg-surface-2 rounded-[20px] md:col-span-2 border border-border/50"></div>
+        </div>
       </div>
     )
   }
