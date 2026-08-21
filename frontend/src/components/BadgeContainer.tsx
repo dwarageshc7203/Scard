@@ -2,6 +2,7 @@ import { useState, type FC } from "react"
 import type { Badge as BadgeType } from "../types"
 import Badge from "./ui/badge"
 import { ArrowRight, ArrowLeft } from "lucide-react"
+import Image from "./ui/Image"
 
 interface BadgeContainerProps {
   badges: BadgeType[]
@@ -40,10 +41,10 @@ const BadgeContainer: FC<BadgeContainerProps> = ({
           {displayBadges.map((badge, i) => (
             <div
               key={i}
-              className="relative flex flex-col items-center justify-center p-6 w-[140px] sm:w-[170px] h-[180px] sm:h-[210px] rounded-2xl border border-gray-200 dark:border-white/10 bg-transparent"
+              className="relative flex flex-col items-center justify-center p-6 w-[140px] sm:w-[170px] h-[180px] sm:h-[210px] rounded-2xl border border-gray-200 dark:border-white/10 bg-transparent group transition-colors hover:bg-gray-50/50 dark:hover:bg-white/5"
             >
               {badge.iconUrl ? (
-                <img
+                <Image
                   src={badge.iconUrl}
                   alt={badge.label}
                   className="w-[84px] h-[84px] sm:w-[100px] sm:h-[100px] object-contain drop-shadow-md z-10"
@@ -56,7 +57,7 @@ const BadgeContainer: FC<BadgeContainerProps> = ({
                   {badge.platform.substring(0, 3)}
                 </Badge>
               )}
-              <span className="mt-4 text-sm text-gray-900 dark:text-white font-normal text-center z-10 line-clamp-2 leading-tight">
+              <span className="mt-4 text-[11px] text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white font-normal text-center z-10 line-clamp-2 leading-tight transition-colors duration-300">
                 {badge.label}
               </span>
             </div>
@@ -71,7 +72,7 @@ const BadgeContainer: FC<BadgeContainerProps> = ({
               className="relative flex items-center justify-center w-[88px] h-[88px] sm:w-[104px] sm:h-[104px] rounded-full bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/30 transition-all duration-300 outline-none hover:scale-105 shadow-lg"
             >
               {badge.iconUrl ? (
-                <img
+                <Image
                   src={badge.iconUrl}
                   alt={badge.label}
                   className="w-[68px] h-[68px] sm:w-[80px] sm:h-[80px] object-contain"
@@ -134,7 +135,7 @@ const BadgeContainer: FC<BadgeContainerProps> = ({
                   className="relative flex items-center justify-center w-[88px] h-[88px] sm:w-[104px] sm:h-[104px] rounded-full bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/30 transition-all duration-300 outline-none hover:scale-105 shadow-lg"
                 >
                   {b.iconUrl ? (
-                    <img
+                    <Image
                       src={b.iconUrl}
                       alt={b.label}
                       className="w-[68px] h-[68px] sm:w-[80px] sm:h-[80px] object-contain"
@@ -164,7 +165,7 @@ const BadgeContainer: FC<BadgeContainerProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {selectedBadge.iconUrl && (
-              <img
+              <Image
                 src={selectedBadge.iconUrl}
                 alt={selectedBadge.label}
                 className="w-32 h-32 object-contain drop-shadow-xl"

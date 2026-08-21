@@ -43,15 +43,15 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4 mt-8">
-      <h2 className="text-3xl font-light tracking-tight text-white mb-10 text-center font-sans">
+    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4 mt-8 h-full">
+      <h2 className="onboarding-subheader">
         What should we call you?
       </h2>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center relative min-h-[200px]">
         <div className="flex flex-col w-full max-w-[340px] mb-8">
           <div className="flex items-center justify-between w-full">
-            <span className="text-[#cccccc] font-sans text-[15px]">
+            <span className="onboarding-text mr-4">
               Username
             </span>
             <input
@@ -74,15 +74,13 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
           )}
         </div>
 
-        <div className="flex justify-end w-full max-w-2xl absolute bottom-0 right-8 p-8">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ml-4"
-          >
-            {loading ? "Checking..." : "Next →"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {loading ? "Checking..." : "Next →"}
+        </button>
       </form>
     </div>
   )

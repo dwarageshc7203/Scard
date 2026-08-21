@@ -66,8 +66,8 @@ export interface User {
   }>
   anonymousViews?: number
   socials?: SocialLinks
-  customSocials?: { type: string url: string }[]
-  heatmapData: Array<{ date: string count: number }>
-  rawContributions: Array<{ platform: string date: string count: number }>
+  customSocials?: { type: string; url: string }[]
+  heatmapData: Array<{ date: string; count: number }>
+  rawContributions: Array<{ platform: string; date: string; count: number }>
   isOnline: boolean
 }

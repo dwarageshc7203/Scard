@@ -1,40 +1,43 @@
 package me.dwaragesh.backend.controller;
 
 import me.dwaragesh.backend.model.User;
-import me.dwaragesh.backend.model.dto.OnBoardingRequest;
 import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.service.ProfileService;
 import me.dwaragesh.backend.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController {
 
-    @Autowired
-    private ProfileService service;
+    private final ProfileService service;
+    private final UserService userService;
 
-    @Autowired
-    private UserService userService;
-
-    @GetMapping("/check-username")
-    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        return ResponseEntity.ok(service.isUsernameTaken(username));
+    public ProfileController(ProfileService service, UserService userService) {
+        this.service = service;
+        this.userService = userService;
     }
 
-    @PostMapping
-    public ResponseEntity<ProfileResponse> createProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody OnBoardingRequest request) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleExceptions(Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(Map.of("error", e.getClass().getName(), "message", e.getMessage() == null ? "null" : e.getMessage()));
+    }
+
+    @GetMapping
+    public ResponseEntity<ProfileResponse> getProfile(@AuthenticationPrincipal OidcUser principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getName(), principal.getPicture());
-        return new ResponseEntity<>(service.createProfile(user, request), HttpStatus.CREATED);
+        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        return ResponseEntity.ok(service.getProfileAndTrackView(user.getUserName(), null));
     }
 
     @PatchMapping
@@ -54,5 +57,4 @@ public class ProfileController {
         User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
         return ResponseEntity.ok(service.getAnalytics(user));
     }
-
 }

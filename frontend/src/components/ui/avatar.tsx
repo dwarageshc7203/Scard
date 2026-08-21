@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
+import Image from "./Image"
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   initials?: string
@@ -49,7 +50,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     const renderNormal = () => (
       <>
         {src && !imgError ? (
-          <img
+          <Image
             src={src}
             referrerPolicy="no-referrer"
             alt={alt || "Avatar"}

@@ -8,7 +8,7 @@ import {
 import { useTheme } from "@/context/ThemeContext"
 
 interface HeatmapProps {
-  data: Array<{ date: string count: number }>
+  data: Array<{ date: string; count: number }>
   year?: string | number
 }
 
@@ -44,7 +44,7 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
 
   // Group by month
   const months = useMemo(() => {
-    const monthGroups: { name: string columns: (Date | null)[][] }[] = []
+    const monthGroups: { name: string; columns: (Date | null)[][] }[] = []
     const monthNames = [
       "Jan",
       "Feb",

@@ -27,6 +27,7 @@ import {
 } from "../lib/api"
 import { generateAsciiFromImage, generateAsciiFromBase64 } from "../lib/ascii"
 import { useTheme } from "../context/ThemeContext"
+import Image from "./ui/Image"
 
 interface EditProfileModalProps {
   user: User
@@ -427,8 +428,20 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-3xl h-[70vh] bg-surface border border-border rounded-2xl overflow-hidden shadow-2xl flex flex-col animate-fade-in-blur">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    >
+      <motion.div 
+        initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+        animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+        exit={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-3xl h-[70vh] bg-surface border border-border rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -735,7 +748,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             >
                               <div className="flex items-center gap-4">
                                 {proj.projectImageBase64 ? (
-                                  <img
+                                  <Image
                                     src={proj.projectImageBase64}
                                     alt={proj.name}
                                     className="w-12 h-12 object-cover rounded-lg border border-border/50 bg-surface"
@@ -820,7 +833,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             {newProject.projectImageBase64 ? (
                               <>
                                 <div className="relative w-20 h-20 rounded-lg border-2 border-border overflow-hidden group shrink-0">
-                                  <img
+                                  <Image
                                     src={newProject.projectImageBase64}
                                     alt="Preview"
                                     className="w-full h-full object-cover"
@@ -964,7 +977,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     {photoBase64 ? (
                       <div className="flex items-center gap-6">
                         <div className="relative group rounded-full overflow-hidden border border-border bg-surface-2/30 h-28 w-28 shrink-0 shadow-md">
-                          <img
+                          <Image
                             src={photoBase64}
                             alt="Preview"
                             className="w-full h-full object-cover"
@@ -1262,9 +1275,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
-  )
+        </motion.div>
+      </motion.div>
+    )
 }
 
 export default EditProfileModal

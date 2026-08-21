@@ -3,6 +3,7 @@ import Button from "./ui/button"
 import { Compass, User, LogIn, Sparkles, Sun, Moon, Laptop } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import scardLogo from "../images/scard.png"
+import Image from "./ui/Image"
 
 type Page = "landing" | "directory" | "standalone"
 
@@ -34,7 +35,7 @@ const NavBar: FC<NavBarProps> = ({ currentPage, onNavigate }) => {
           onClick={() => onNavigate("landing")}
           className="text-lg tracking-tight text-text hover:opacity-90 flex items-center gap-2 cursor-pointer select-none transition-all duration-200"
         >
-          <img
+          <Image
             src={scardLogo}
             alt="Scard Logo"
             className="w-8 h-8 object-contain rounded-[8px] drop-shadow-md"

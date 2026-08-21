@@ -92,7 +92,7 @@ function stringToColor(str: string): string {
 export function mapContributionsToHeatmap(
   contributions?: BackendContribution[],
   filterPlatform?: string,
-): { heatmapData: Array<{ date: string count: number }> total: number } {
+): { heatmapData: Array<{ date: string; count: number }>; total: number } {
   if (!contributions || contributions.length === 0) {
     return { heatmapData: [], total: 0 }
   }
@@ -313,7 +313,11 @@ export async function updateProfile(
       problemsSolved,
     }),
   })
-  if (!res.ok) throw new Error("Failed to update profile")
+  if (!res.ok) {
+    const txt = await res.text()
+    console.error("Backend error response:", txt)
+    throw new Error(`Failed to update profile: ${txt}`)
+  }
   return res.json()
 }
 

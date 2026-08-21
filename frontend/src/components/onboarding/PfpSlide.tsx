@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react"
 import { Upload, FileImage, Trash2 } from "lucide-react"
+import Image from "../ui/Image"
 
 interface PfpSlideProps {
   initialImageUrl: string
@@ -29,8 +30,8 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4 min-h-[300px]">
-      <h2 className="text-[44px] md:text-[54px] font-light tracking-tight text-white mb-12 text-center font-sans">
+    <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 py-4 min-h-[300px] h-full">
+      <h2 className="onboarding-subheader">
         We're almost there..
       </h2>
 
@@ -40,7 +41,7 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
           {photoBase64 ? (
             <div className="flex flex-col items-center gap-4">
               <div className="relative w-32 h-32 rounded-full overflow-hidden border border-[#333333] group cursor-pointer">
-                <img
+                <Image
                   src={photoBase64}
                   alt="Profile"
                   className="w-full h-full object-cover"
@@ -58,7 +59,7 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
               <button
                 type="button"
                 onClick={() => setPhotoBase64("")}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs border border-red-500/20"
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs border border-red-500/20 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Remove
@@ -78,26 +79,24 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
               </span>
             </label>
           )}
-          <span className="text-[#888888] font-sans text-xs mt-4">
+          <span className="onboarding-text mt-4">
             Upload your profile picture
           </span>
         </div>
 
-        <div className="flex justify-between w-full max-w-2xl absolute bottom-0 right-0 p-8">
-          <button
-            type="button"
-            onClick={onPrev}
-            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
-          >
-            ← Back
-          </button>
-          <button
-            type="submit"
-            className="px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
-          >
-            Next →
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onPrev}
+          className="absolute bottom-12 left-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+        >
+          ← Back
+        </button>
+        <button
+          type="submit"
+          className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+        >
+          Next →
+        </button>
       </form>
     </div>
   )
