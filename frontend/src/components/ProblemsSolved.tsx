@@ -43,7 +43,7 @@ const ProblemsSolved: React.FC<ProblemsSolvedProps> = ({ problems }) => {
   const hasMore = platforms.length > 4
 
   return (
-    <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[300px] flex flex-col shadow-sm dark:shadow-none">
+    <div className="bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative h-full flex flex-col shadow-sm dark:shadow-none">
       <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">
         Problems Solved
       </span>

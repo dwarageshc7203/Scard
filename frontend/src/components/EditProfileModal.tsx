@@ -356,36 +356,45 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     const timers: NodeJS.Timeout[] = []
 
     customSocials.forEach((social, idx) => {
-      if (!social.url.trim()) return
+      const url = social.url.trim()
+      if (!url) return
       if (social.type !== "linkedin" && social.type !== "mail") return
       
-      // If we already resolved state for this specific URL, ignore
-      if (social.success || social.error) return
+      // Skip if this matches user's initial saved customSocials URL
+      const initialSocial = (user.customSocials || []).find(s => s.type === social.type && s.url.trim() === url)
+      if (initialSocial) return
+
+      // Skip if we already checked or are currently checking
+      if (social.checking || social.success || social.error) return
 
       const timer = setTimeout(async () => {
         try {
           if (isMounted) {
             setCustomSocials(prev => {
               const next = [...prev];
-              next[idx] = { ...next[idx], checking: true, error: "", success: false };
+              if (next[idx]) {
+                next[idx] = { ...next[idx], checking: true, error: "", success: false };
+              }
               return next;
             });
           }
 
           let dbCheck = { taken: false, ownerUsername: "" };
           if (social.type === "linkedin") {
-            dbCheck = await checkLinkedin(social.url.trim()) as any;
+            dbCheck = await checkLinkedin(url) as any;
           } else if (social.type === "mail") {
-            dbCheck = await checkMail(social.url.trim()) as any;
+            dbCheck = await checkMail(url) as any;
           }
 
           if (isMounted) {
             setCustomSocials(prev => {
               const next = [...prev];
-              if (dbCheck.taken) {
-                next[idx] = { ...next[idx], checking: false, error: `This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries` };
-              } else {
-                next[idx] = { ...next[idx], checking: false, success: true };
+              if (next[idx]) {
+                if (dbCheck.taken) {
+                  next[idx] = { ...next[idx], checking: false, error: `This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries` };
+                } else {
+                  next[idx] = { ...next[idx], checking: false, success: true };
+                }
               }
               return next;
             });
@@ -394,12 +403,14 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           if (isMounted) {
             setCustomSocials(prev => {
               const next = [...prev];
-              next[idx] = { ...next[idx], checking: false, error: "Validation failed" };
+              if (next[idx]) {
+                next[idx] = { ...next[idx], checking: false, error: "Validation failed" };
+              }
               return next;
             });
           }
         }
-      }, 500);
+      }, 600);
       timers.push(timer);
     });
 
@@ -407,7 +418,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       isMounted = false
       timers.forEach(clearTimeout)
     }
-  }, [customSocials])
+  }, [customSocials, user.customSocials])
 
   useEffect(() => {
     document.body.style.overflow = "hidden"
