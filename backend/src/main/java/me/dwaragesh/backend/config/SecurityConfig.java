@@ -27,7 +27,11 @@ public class SecurityConfig {
                         // otherwise Spring Security will match e.g. GET /api/profile/analytics
                         // as a public profile view where {userName} = "analytics".
                         .requestMatchers("/api/profile/analytics").authenticated()
-                        .requestMatchers("/api/profile/check-username").authenticated()
+                        .requestMatchers("/api/profile/check-username").permitAll()
+                        .requestMatchers("/api/profile/check-linkedin").permitAll()
+                        .requestMatchers("/api/profile/check-github").permitAll()
+                        .requestMatchers("/api/profile/check-leetcode").permitAll()
+                        .requestMatchers("/api/profile/check-mail").permitAll()
                         .requestMatchers("/api/profile/pfp").authenticated()
                         .requestMatchers("/api/profile/pfp/**").authenticated()
                         .requestMatchers("/api/profile/platforms").authenticated()
@@ -40,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/profile/{userName}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profile/{userName}/export").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profile/{userName}/contributions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/profiles").permitAll()
 
                         // ── PUBLIC static/asset endpoints ────────────────────────────────────
                         .requestMatchers("/api/banners").permitAll()

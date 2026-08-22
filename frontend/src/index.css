@@ -153,7 +153,7 @@ body {
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #ffffff;
+  color: var(--text);
   margin-bottom: 3rem;
   text-align: center;
   font-family: var(--font-sans);
@@ -169,7 +169,7 @@ body {
   font-size: 1.875rem;
   line-height: 2.25rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text);
   margin-bottom: 2rem;
   font-family: var(--font-sans);
 }
@@ -180,4 +180,16 @@ body {
   font-weight: 400;
   color: var(--muted);
   font-family: var(--font-sans);
+}
+
+/* Ensure all clickable elements use the pointer cursor globally */
+button, 
+a, 
+label, 
+select, 
+summary, 
+[role="button"], 
+[role="tab"], 
+[role="menuitem"] {
+  cursor: pointer;
 }

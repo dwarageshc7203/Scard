@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface BadgeRepository extends JpaRepository<Badge, Integer> {
     List<Badge> findByProfileProfileId(int profileId);
+    void deleteByProfileAndPlatform(me.dwaragesh.backend.model.Profile profile, me.dwaragesh.backend.model.enums.Platform platform);
 }

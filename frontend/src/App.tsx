@@ -6,6 +6,7 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom"
+import ErrorBoundary from "./components/ErrorBoundary"
 import NavBar from "./components/NavBar"
 import LandingPage from "./pages/LandingPage"
 import ProfilePage from "./pages/ProfilePage"
@@ -87,7 +88,7 @@ function AppContent() {
 
   // Auto-redirect to onboarding if logged in but has no profile/username
   useEffect(() => {
-    if (currentUser && !location.pathname.startsWith("/onboarding")) {
+    if (currentUser && !location.pathname.startsWith("/onboarding") && location.pathname !== "/") {
       const uName = currentUser.userName
       if (!uName || uName === "0" || !currentUser.hasProfile) {
         navigate("/onboarding", { replace: true })
@@ -250,11 +251,13 @@ function useParamsHelper(defaultId: string) {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <AppContent />
-        <Toaster theme="system" />
-      </Router>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Router>
+          <AppContent />
+          <Toaster theme="system" />
+        </Router>
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }

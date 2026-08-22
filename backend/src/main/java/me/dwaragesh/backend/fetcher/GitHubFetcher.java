@@ -73,14 +73,18 @@ public class GitHubFetcher implements PlatformFetcher{
             JsonNode weeks = root.path("data").path("user")
                     .path("contributionsCollection").path("contributionCalendar").path("weeks");
 
-            List<ContributionData> contributions = new ArrayList<>();
+            java.util.Map<LocalDate, Integer> dailyCounts = new java.util.HashMap<>();
             for (JsonNode week : weeks) {
                 for (JsonNode day : week.path("contributionDays")) {
                     LocalDate date = LocalDate.parse(day.path("date").asText());
                     int count = day.path("contributionCount").asInt();
-                    contributions.add(new ContributionData(date, count));
+                    dailyCounts.merge(date, count, Integer::sum);
                 }
             }
+            
+            List<ContributionData> contributions = dailyCounts.entrySet().stream()
+                    .map(e -> new ContributionData(e.getKey(), e.getValue()))
+                    .toList();
 
             // GitHub has no native badge/contest concept — leave empty for now,
             // revisit later if you want derived badges (streaks, stars, etc.)

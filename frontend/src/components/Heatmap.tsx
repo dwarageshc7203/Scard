@@ -1,4 +1,4 @@
-import { FC, useMemo } from "react"
+import { FC, useMemo, useRef, useEffect } from "react"
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +14,13 @@ interface HeatmapProps {
 
 const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
   const { resolvedTheme } = useTheme()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    }
+  }, [data, year])
 
   const currentYear = new Date().getFullYear()
   const displayYear = year ? parseInt(year.toString(), 10) : currentYear
@@ -113,6 +120,7 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
 
   return (
     <div
+      ref={scrollRef}
       className="w-full overflow-x-auto pb-4 flex items-center justify-start min-h-[160px] relative"
       style={{ scrollbarWidth: "thin" }}
     >

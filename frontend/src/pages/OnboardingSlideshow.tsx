@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import confetti from "canvas-confetti"
-import { createProfile, updateProfile, syncPlatform } from "../lib/api"
+import { createProfile, updateProfile, syncPlatform, getCsrfToken } from "../lib/api"
 import UsernameSlide from "../components/onboarding/UsernameSlide"
 import SocialsSlide from "../components/onboarding/SocialsSlide"
 import DsaDevSlide from "../components/onboarding/DsaDevSlide"
@@ -42,7 +42,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   const [github, setGithub] = useState("")
   const [pfpUrl, setPfpUrl] = useState("")
   const [asciiArt, setAsciiArt] = useState("")
-  const [designation, setDesignation] = useState("Full Stack Engineer")
+  const [designation, setDesignation] = useState("")
   const [tagline, setTagline] = useState("")
 
   const nextStep = (customDirection = 1) => {
@@ -91,14 +91,15 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       if (github) socialsList.push(`GITHUB:${github}`)
       if (leetcode) socialsList.push(`LEETCODE:${leetcode}`)
       if (linkedUsername) socialsList.push(`LINKED_IN:${linkedUsername}`)
+      if (mailAddress) socialsList.push(`MAIL:${mailAddress}`)
 
-      const finalDesignation = designation || (github === "batman" ? "Batman" : "Developer")
+      const finalDesignation = designation || ""
 
       await createProfile(username, tagline || username, finalDesignation)
 
       await updateProfile(
         finalDesignation,
-        pfpUrl || undefined,
+        undefined, // profileUrl should not be the base64 PFP
         mailAddress || undefined,
         asciiArt || undefined,
         username,
@@ -106,6 +107,25 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
         undefined,
         socialsList
       )
+
+      if (pfpUrl && pfpUrl.startsWith("data:image")) {
+        try {
+          const pfpRes = await fetch(pfpUrl)
+          const blob = await pfpRes.blob()
+          const formData = new FormData()
+          formData.append("file", blob, "profile.png")
+          // Upload custom PFP
+          await fetch("/api/profile/pfp", {
+            method: "POST",
+            headers: {
+              "X-XSRF-TOKEN": getCsrfToken()
+            },
+            body: formData
+          })
+        } catch (err) {
+          console.error("Failed to upload custom PFP:", err)
+        }
+      }
 
       // Async sync platforms
       if (github && github !== "batman") {
@@ -155,18 +175,18 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   const progressPercent = step === 4 ? 100 : (step / 4) * 100
 
   return (
-    <div className="min-h-screen bg-[#222222] flex flex-col items-center py-12 px-6 overflow-hidden relative">
+    <div className="min-h-screen bg-bg text-text flex flex-col items-center py-12 px-6 overflow-hidden relative">
       {/* Top Header Logo */}
       <div className="flex items-center gap-3 mb-16 select-none mt-4">
-        <Image src="/logos/scard.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/'} />
-        <span className="text-white text-2xl font-bold font-sans tracking-wide">Scard</span>
+        <Image src="/logos/scard-1.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/logout'} />
+        <span className="text-text text-2xl font-bold font-sans tracking-wide">Scard</span>
       </div>
 
       {/* Progress Bar Line */}
       {step < 4 && (
-        <div className="w-full max-w-2xl h-[4px] bg-[#333333] rounded-full mb-8 overflow-hidden relative">
+        <div className="w-full max-w-2xl h-[4px] bg-border rounded-full mb-8 overflow-hidden relative">
           <motion.div
-            className="absolute top-0 left-0 h-full bg-[#dddddd]"
+            className="absolute top-0 left-0 h-full bg-accent"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -183,7 +203,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
 
       {/* Slides Content */}
       <div className="flex-1 w-full flex items-center justify-center relative">
-        <AnimatePresence initial={false} custom={direction} mode="wait">
+        <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={step}
             custom={direction}

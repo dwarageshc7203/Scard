@@ -52,6 +52,7 @@ export interface BackendProfile {
   socials?: string[]
   anonymousViews?: number
   createdAt?: string
+  displayPreferences?: any
 }
 
 function getJoinedText(createdAt?: string): string {
@@ -142,10 +143,8 @@ export function mapProfileToUser(profile: BackendProfile): User {
     id: profile.userName,
     username: profile.userName,
     profileName: profile.profileName,
-    displayName:
-      profile.profileName ||
-      profile.userName.charAt(0).toUpperCase() + profile.userName.slice(1),
-    title: profile.designation || "Full Stack Engineer",
+    displayName: (profile.profileName && profile.profileName.trim()) ? profile.profileName : profile.userName,
+    title: profile.designation || "",
     designation: profile.designation,
     pin: profile.pin,
     email: profile.email,
@@ -217,6 +216,11 @@ export function mapProfileToUser(profile: BackendProfile): User {
         if (idx === -1) return { type: "link", url: s }
         return { type: s.substring(0, idx), url: s.substring(idx + 1) }
       }),
+    platformPreferences: typeof profile.displayPreferences === "object" && profile.displayPreferences !== null
+      ? profile.displayPreferences
+      : typeof profile.displayPreferences === "string" && profile.displayPreferences.trim() !== ""
+      ? JSON.parse(profile.displayPreferences)
+      : JSON.parse(localStorage.getItem(`platform_prefs_${profile.userName}`) || "{}"),
     heatmapData,
     rawContributions: (profile.contributions || []).map((c) => ({
       platform: c.platform,
@@ -265,6 +269,30 @@ export async function checkUsername(username: string): Promise<boolean> {
   return res.json()
 }
 
+export async function checkLinkedin(username: string): Promise<{ taken: boolean, ownerUsername?: string }> {
+  const res = await fetch(`/api/profile/check-linkedin?username=${encodeURIComponent(username)}`)
+  if (!res.ok) return { taken: false }
+  return res.json()
+}
+
+export async function checkGithub(username: string): Promise<{ taken: boolean, ownerUsername?: string }> {
+  const res = await fetch(`/api/profile/check-github?username=${encodeURIComponent(username)}`)
+  if (!res.ok) return { taken: false }
+  return res.json()
+}
+
+export async function checkLeetcode(username: string): Promise<{ taken: boolean, ownerUsername?: string }> {
+  const res = await fetch(`/api/profile/check-leetcode?username=${encodeURIComponent(username)}`)
+  if (!res.ok) return { taken: false }
+  return res.json()
+}
+
+export async function checkMail(email: string): Promise<{ taken: boolean, ownerUsername?: string }> {
+  const res = await fetch(`/api/profile/check-mail?email=${encodeURIComponent(email)}`)
+  if (!res.ok) throw new Error(`check-mail returned ${res.status}`)
+  return res.json()
+}
+
 export async function createProfile(
   userName: string,
   profileName: string,
@@ -293,6 +321,7 @@ export async function updateProfile(
   socials?: string[],
   projects?: any[],
   problemsSolved?: Record<string, number>,
+  displayPreferences?: string,
 ) {
   const res = await fetch("/api/profile", {
     method: "PATCH",
@@ -311,6 +340,7 @@ export async function updateProfile(
       socials,
       projects,
       problemsSolved,
+      displayPreferences,
     }),
   })
   if (!res.ok) {

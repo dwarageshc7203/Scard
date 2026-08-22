@@ -57,4 +57,46 @@ public class ProfileController {
         User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
         return ResponseEntity.ok(service.getAnalytics(user));
     }
+
+    @GetMapping("/check-username")
+    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
+        boolean exists = service.isUsernameTaken(username);
+        return ResponseEntity.ok(exists);
+    }
+
+    private ResponseEntity<java.util.Map<String, Object>> buildCheckResponse(String owner) {
+        if (owner != null) {
+            return ResponseEntity.ok(java.util.Map.of("taken", true, "ownerUsername", owner));
+        }
+        return ResponseEntity.ok(java.util.Map.of("taken", false));
+    }
+
+    @GetMapping("/check-linkedin")
+    public ResponseEntity<java.util.Map<String, Object>> checkLinkedin(@RequestParam String username) {
+        return buildCheckResponse(service.checkLinkedinOwner(username));
+    }
+
+    @GetMapping("/check-github")
+    public ResponseEntity<java.util.Map<String, Object>> checkGithub(@RequestParam String username) {
+        return buildCheckResponse(service.checkGithubOwner(username));
+    }
+
+    @GetMapping("/check-leetcode")
+    public ResponseEntity<java.util.Map<String, Object>> checkLeetcode(@RequestParam String username) {
+        return buildCheckResponse(service.checkLeetcodeOwner(username));
+    }
+
+    @GetMapping("/check-mail")
+    public ResponseEntity<java.util.Map<String, Object>> checkMail(@RequestParam String email) {
+        return buildCheckResponse(service.checkMailOwner(email));
+    }
+
+    @PostMapping
+    public ResponseEntity<ProfileResponse> createProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody me.dwaragesh.backend.model.dto.OnBoardingRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        return ResponseEntity.ok(service.createProfile(user, request));
+    }
 }

@@ -14,7 +14,8 @@ public record PatchProfileRequest(
         String asciiArt,
         Integer bannerId,
         List<String> socials,
-        List<Project> projects
+        List<Project> projects,
+        String displayPreferences
 
 ) {
 }

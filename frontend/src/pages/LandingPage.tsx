@@ -1,9 +1,9 @@
 import type { FC } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { Mail } from "lucide-react"
-
-import { useNavigate } from "react-router-dom"
 import Image from "../components/ui/Image"
+import { useNavigate } from "react-router-dom"
+import { useTheme } from "../context/ThemeContext"
+import { Sun, Moon, Laptop, Mail } from "lucide-react"
 
 interface LandingPageProps {
   currentUser?: any
@@ -11,32 +11,57 @@ interface LandingPageProps {
 
 const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
   const navigate = useNavigate()
+  const { theme, setTheme, resolvedTheme } = useTheme()
   const { scrollY } = useScroll()
   const yHeroText = useTransform(scrollY, [0, 1000], [0, -100])
   const yCursor = useTransform(scrollY, [0, 1000], [0, 150])
   const yImage = useTransform(scrollY, [0, 1000], [0, -50])
 
+  const toggleTheme = () => {
+    if (resolvedTheme === "dark") setTheme("light")
+    else setTheme("dark")
+  }
+
+  const renderThemeIcon = () => {
+    if (resolvedTheme === "light")
+      return <Sun className="w-4 h-4 text-yellow-500 animate-spin-slow" />
+    return <Moon className="w-4 h-4 text-accent" />
+  }
+
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col items-center relative overflow-x-hidden selection:bg-accent/30 font-sans transition-colors duration-300 scroll-smooth">
+    <motion.div
+      initial={{ /* scale: 0.9, */ opacity: 0, filter: "blur(10px)" }}
+      animate={{ /*scale: 1, */ opacity: 1, filter: "blur(0px)" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-bg text-text flex flex-col items-center relative overflow-x-hidden selection:bg-accent/30 font-sans transition-colors duration-300 scroll-smooth"
+    >
       {/* Header */}
       <header className="w-full px-8 py-6 flex justify-between items-center absolute top-0 left-0 z-50">
         <div className="flex-1"></div>
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 flex-1">
           <Image
-            src="/logos/scard.png"
+            src="/logos/scard-1.png"
             alt="Scard"
             className="w-6 h-6 object-contain filter dark:invert-0 rounded-[5px]"
           />
           <span
             className="text-text font-semibold tracking-wide text-lg"
-            
+
           >
             Scard
           </span>
         </div>
         {/* Auth Buttons */}
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="w-9 h-9 border border-border/60 hover:bg-surface-2 transition-all duration-300 rounded-md flex items-center justify-center"
+            title={`Theme: ${theme} (Click to change)`}
+          >
+            {renderThemeIcon()}
+          </button>
+
           {currentUser ? (
             <button
               onClick={() => {
@@ -230,13 +255,13 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
         <div className="flex flex-col items-center md:items-end justify-center gap-8 border-r-0 md:border-r border-border pr-0 md:pr-12 md:-translate-x-30">
           <div className="flex items-center gap-4">
             <Image
-              src="/logos/scard.png"
+              src="/logos/scard-1.png"
               alt="Scard"
               className="w-16 h-16 object-contain rounded-[5px]"
             />
             <span
               className="text-text font-semibold tracking-wide text-5xl"
-              
+
             >
               Scard
             </span>
@@ -295,7 +320,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           </div>
         </div>
       </footer>
-    </div>
+    </motion.div>
   )
 }
 

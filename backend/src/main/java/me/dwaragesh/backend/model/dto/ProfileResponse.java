@@ -26,7 +26,10 @@ public record ProfileResponse(
         java.time.Instant createdAt,
 
         @com.fasterxml.jackson.annotation.JsonRawValue
-        String contributions
+        String contributions,
+
+        @com.fasterxml.jackson.annotation.JsonRawValue
+        String displayPreferences
 ) {
 }
 
