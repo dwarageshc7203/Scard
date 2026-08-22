@@ -168,7 +168,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       onPrev={prevStep}
     />,
     <PfpSlide initialImageUrl={pfpUrl} onNext={handlePfpNext} onPrev={prevStep} />,
-    <FinishSlide onFinish={handleFinish} />,
+    <FinishSlide onFinish={handleFinish} onPrev={prevStep} />,
   ]
 
   // Render progress bar fill width
@@ -183,23 +183,19 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       </div>
 
       {/* Progress Bar Line */}
-      {step < 4 && (
-        <div className="w-full max-w-2xl lg:max-w-3xl xl:max-w-4xl h-[4px] bg-border rounded-full mb-8 overflow-hidden relative">
-          <motion.div
-            className="absolute top-0 left-0 h-full bg-accent"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercent}%` }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          />
-        </div>
-      )}
+      <div className="w-full max-w-2xl lg:max-w-3xl xl:max-w-4xl h-[4px] bg-border rounded-full mb-8 overflow-hidden relative">
+        <motion.div
+          className="absolute top-0 left-0 h-full bg-accent"
+          initial={{ width: 0 }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        />
+      </div>
 
-      {/* Main Title (Steps 1-4) */}
-      {step < 4 && (
-        <h1 className="onboarding-header">
-          Let’s start with your onboarding
-        </h1>
-      )}
+      {/* Main Title */}
+      <h1 className="onboarding-header">
+        {step < 4 ? "Let’s start with your onboarding" : "You’re all set!"}
+      </h1>
 
       {/* Slides Content */}
       <div className="flex-1 w-full flex items-center justify-center relative">
