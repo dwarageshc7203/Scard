@@ -9,4 +9,5 @@ import java.util.UUID;
 
 public interface ContestRepository extends JpaRepository<Contest, Integer> {
     List<Contest> findByProfileProfileId(int profileId);
+    void deleteByProfileAndPlatform(Profile profile, me.dwaragesh.backend.model.enums.Platform platform);
 }

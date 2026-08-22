@@ -65,6 +65,9 @@ public class Profile {
     private List<String> socials;
 
     @Column(columnDefinition = "TEXT")
+    private String displayPreferences;
+
+    @Column(columnDefinition = "TEXT")
     private String heatmapJson;
 
     /** Tracks when platforms were last synced to avoid hammering external APIs on every login. */

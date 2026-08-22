@@ -11,6 +11,9 @@ import {
   FileImage,
   Pencil,
   Upload,
+  Loader2,
+  Check,
+  ChevronDown,
 } from "lucide-react"
 import { toast } from "sonner"
 import Button from "./ui/button"
@@ -24,10 +27,15 @@ import {
   checkUsername,
   deleteAccount,
   fetchBanners,
+  checkGithub,
+  checkLeetcode,
+  checkLinkedin,
+  checkMail,
 } from "../lib/api"
 import { generateAsciiFromImage, generateAsciiFromBase64 } from "../lib/ascii"
 import { useTheme } from "../context/ThemeContext"
 import Image from "./ui/Image"
+import ValidationTooltip from "./ui/ValidationTooltip"
 
 interface EditProfileModalProps {
   user: User
@@ -42,8 +50,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<"profile" | "account">("profile")
   const [activeSection, setActiveSection] =
-    useState<"details" | "connections" | "socials" | "projects" | "photo" | "banner">(
-      "details",
+    useState<"yourself" | "photo" | "banner" | "platforms" | "socials" | "projects" | "theme" | "danger">(
+      "yourself",
     )
 
   // Theme support
@@ -78,19 +86,48 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   const [githubUser, setGithubUser] = useState(
     extractUsername(savedSocials.githubUrl || user.socials?.github || ""),
   )
+  const [githubChecking, setGithubChecking] = useState(false)
+  const [githubError, setGithubError] = useState("")
+  const [githubSuccess, setGithubSuccess] = useState(false)
+
   const [leetcodeUser, setLeetcodeUser] = useState(
     extractUsername(savedSocials.leetcodeUrl || user.socials?.leetcode || ""),
   )
+  const [leetcodeChecking, setLeetcodeChecking] = useState(false)
+  const [leetcodeError, setLeetcodeError] = useState("")
+  const [leetcodeSuccess, setLeetcodeSuccess] = useState(false)
+
   const [codeforcesUser, setCodeforcesUser] = useState(
     extractUsername(
       savedSocials.codeforcesUrl || user.socials?.codeforces || "",
     ),
   )
 
+  const savedPrefs = JSON.parse(
+    localStorage.getItem(`platform_prefs_${user.username}`) || "{}",
+  )
+
+  const [leetcodeAccordionOpen, setLeetcodeAccordionOpen] = useState(false)
+  const [leetcodeShowRating, setLeetcodeShowRating] = useState(
+    savedPrefs.leetcode?.showRating ?? user.platformPreferences?.leetcode?.showRating ?? true,
+  )
+  const [leetcodeShowProblems, setLeetcodeShowProblems] = useState(
+    savedPrefs.leetcode?.showProblems ?? user.platformPreferences?.leetcode?.showProblems ?? true,
+  )
+  const [leetcodeShowHeatmap, setLeetcodeShowHeatmap] = useState(
+    savedPrefs.leetcode?.showHeatmap ?? user.platformPreferences?.leetcode?.showHeatmap ?? true,
+  )
+  const [leetcodeShowBadges, setLeetcodeShowBadges] = useState(
+    savedPrefs.leetcode?.showBadges ?? user.platformPreferences?.leetcode?.showBadges ?? true,
+  )
+
   // Custom Socials (Dynamic)
   const [customSocials, setCustomSocials] = useState<{
     type: string
     url: string
+    checking?: boolean
+    error?: string
+    success?: boolean
   }[]>(user.customSocials || [])
 
   // Projects
@@ -230,6 +267,148 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     return () => clearTimeout(timer)
   }, [username, user.username])
 
+  // Debounced GitHub check
+  useEffect(() => {
+    let isMounted = true
+    const check = async () => {
+      if (!githubUser.trim() || githubUser === extractUsername(user.socials?.github || "")) {
+        if (isMounted) {
+          setGithubChecking(false)
+          setGithubError("")
+          setGithubSuccess(false)
+        }
+        return
+      }
+      setGithubChecking(true)
+      setGithubSuccess(false)
+      setGithubError("")
+      try {
+        const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`)
+        if (res.status !== 200) {
+          if (isMounted) setGithubError("GitHub user not found")
+        } else {
+          const dbCheck = await checkGithub(githubUser.trim())
+          if (isMounted) {
+            if (dbCheck.taken) {
+              setGithubError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+            } else {
+              setGithubSuccess(true)
+            }
+          }
+        }
+      } catch (err) {
+        if (isMounted) setGithubError("Error checking GitHub")
+      } finally {
+        if (isMounted) setGithubChecking(false)
+      }
+    }
+    const timer = setTimeout(check, 500)
+    return () => { isMounted = false; clearTimeout(timer) }
+  }, [githubUser, user.socials?.github])
+
+  // Debounced LeetCode check
+  useEffect(() => {
+    let isMounted = true
+    const check = async () => {
+      if (!leetcodeUser.trim() || leetcodeUser === extractUsername(user.socials?.leetcode || "")) {
+        if (isMounted) {
+          setLeetcodeChecking(false)
+          setLeetcodeError("")
+          setLeetcodeSuccess(false)
+        }
+        return
+      }
+      setLeetcodeChecking(true)
+      setLeetcodeSuccess(false)
+      setLeetcodeError("")
+      try {
+        const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`)
+        if (res.status !== 200) {
+          if (isMounted) setLeetcodeError("LeetCode user not found")
+        } else {
+          const data = await res.json()
+          if (data.errors) {
+            if (isMounted) setLeetcodeError("LeetCode user not found")
+          } else {
+            const dbCheck = await checkLeetcode(leetcodeUser.trim())
+            if (isMounted) {
+              if (dbCheck.taken) {
+                setLeetcodeError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+              } else {
+                setLeetcodeSuccess(true)
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (isMounted) setLeetcodeError("Error checking LeetCode")
+      } finally {
+        if (isMounted) setLeetcodeChecking(false)
+      }
+    }
+    const timer = setTimeout(check, 500)
+    return () => { isMounted = false; clearTimeout(timer) }
+  }, [leetcodeUser, user.socials?.leetcode])
+
+  // Custom Socials Check
+  useEffect(() => {
+    let isMounted = true
+    const timers: NodeJS.Timeout[] = []
+
+    customSocials.forEach((social, idx) => {
+      if (!social.url.trim()) return
+      if (social.type !== "linkedin" && social.type !== "mail") return
+      
+      // If we already resolved state for this specific URL, ignore
+      if (social.success || social.error) return
+
+      const timer = setTimeout(async () => {
+        try {
+          if (isMounted) {
+            setCustomSocials(prev => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], checking: true, error: "", success: false };
+              return next;
+            });
+          }
+
+          let dbCheck = { taken: false, ownerUsername: "" };
+          if (social.type === "linkedin") {
+            dbCheck = await checkLinkedin(social.url.trim()) as any;
+          } else if (social.type === "mail") {
+            dbCheck = await checkMail(social.url.trim()) as any;
+          }
+
+          if (isMounted) {
+            setCustomSocials(prev => {
+              const next = [...prev];
+              if (dbCheck.taken) {
+                next[idx] = { ...next[idx], checking: false, error: `This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries` };
+              } else {
+                next[idx] = { ...next[idx], checking: false, success: true };
+              }
+              return next;
+            });
+          }
+        } catch (e) {
+          if (isMounted) {
+            setCustomSocials(prev => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], checking: false, error: "Validation failed" };
+              return next;
+            });
+          }
+        }
+      }, 500);
+      timers.push(timer);
+    });
+
+    return () => {
+      isMounted = false
+      timers.forEach(clearTimeout)
+    }
+  }, [customSocials])
+
   useEffect(() => {
     document.body.style.overflow = "hidden"
     const mainContainer = document.querySelector("main")
@@ -319,6 +498,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         if (githubUser) mappedSocials.push(`GITHUB:${githubUser}`)
         if (leetcodeUser) mappedSocials.push(`LEETCODE:${leetcodeUser}`)
         if (codeforcesUser) mappedSocials.push(`CODEFORCES:${codeforcesUser}`)
+        const platformPreferences = {
+          leetcode: {
+            showRating: leetcodeShowRating,
+            showProblems: leetcodeShowProblems,
+            showHeatmap: leetcodeShowHeatmap,
+            showBadges: leetcodeShowBadges,
+          },
+        }
+        const displayPreferencesJson = JSON.stringify(platformPreferences)
+
         await updateProfile(
           designation,
           undefined,
@@ -330,6 +519,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           mappedSocials,
           projects,
           undefined,
+          displayPreferencesJson,
         )
         toast.success("Profile saved successfully!")
 
@@ -385,12 +575,26 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           ...user,
           username,
           profileName,
-          displayName: profileName,
+          displayName: profileName && profileName.trim() ? profileName : username,
           designation,
           title: designation,
           bannerId: selectedBannerId,
         }
       }
+      updatedUser.displayName = (updatedUser.profileName && updatedUser.profileName.trim()) ? updatedUser.profileName : (updatedUser.username || username)
+
+      const platformPreferences = {
+        leetcode: {
+          showRating: leetcodeShowRating,
+          showProblems: leetcodeShowProblems,
+          showHeatmap: leetcodeShowHeatmap,
+          showBadges: leetcodeShowBadges,
+        },
+      }
+      localStorage.setItem(
+        `platform_prefs_${username}`,
+        JSON.stringify(platformPreferences),
+      )
 
       // Merge local connections state into updatedUser socials so they are immediately displayed
       updatedUser.socials = {
@@ -400,6 +604,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       }
       updatedUser.customSocials = customSocials
       updatedUser.projects = projects
+      updatedUser.platformPreferences = platformPreferences
 
       onSave(updatedUser)
       onClose()
@@ -409,7 +614,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       }
     } catch (err) {
       console.error("Failed to save profile:", err)
-      alert("Failed to save profile changes. Please try again.")
+      toast.error("Failed to save profile changes. Please try again.")
     } finally {
       setSaving(false)
     }
@@ -428,14 +633,14 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     >
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
         animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
         exit={{ opacity: 0, filter: "blur(10px)", y: 20 }}
@@ -461,13 +666,13 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   key={tab}
                   onClick={() => {
                     setActiveTab(tab as any)
-                    if (tab === "profile") setActiveSection("details")
+                    if (tab === "profile") setActiveSection("yourself")
+                    if (tab === "account") setActiveSection("theme")
                   }}
-                  className={`relative flex-1 text-center py-1.5 text-xs rounded-md transition-colors z-10 ${
-                    activeTab === tab
+                  className={`relative flex-1 text-center py-1.5 text-xs rounded-md transition-colors z-10 ${activeTab === tab
                       ? "text-text"
                       : "text-muted hover:text-text"
-                  }`}
+                    }`}
                 >
                   {activeTab === tab && (
                     <motion.div
@@ -490,23 +695,22 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
               {activeTab === "profile" ? (
                 <>
                   {[
-                    "details",
-                    "connections",
-                    "socials",
-                    "projects",
-                    "photo",
-                    "banner",
+                    { id: "yourself", label: `"Yourself?"` },
+                    { id: "photo", label: "Profile Photo" },
+                    { id: "banner", label: "Banner" },
+                    { id: "platforms", label: "Platforms" },
+                    { id: "socials", label: "Socials" },
+                    { id: "projects", label: "Projects" },
                   ].map((section) => (
                     <button
-                      key={section}
-                      onClick={() => setActiveSection(section as any)}
-                      className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${
-                        activeSection === section
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id as any)}
+                      className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${activeSection === section.id
                           ? "text-text"
                           : "text-muted hover:text-text hover:bg-surface/50"
-                      }`}
+                        }`}
                     >
-                      {activeSection === section && (
+                      {activeSection === section.id && (
                         <motion.div
                           layoutId="editModalSectionTabs"
                           className="absolute inset-0 bg-surface-2 border border-border rounded-md -z-10"
@@ -517,14 +721,39 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                           }}
                         />
                       )}
-                      {section.charAt(0).toUpperCase() + section.slice(1)}
+                      {section.label}
                     </button>
                   ))}
                 </>
               ) : (
-                <div className="px-3 py-2 text-[10px]  font-mono  text-muted">
-                  Settings
-                </div>
+                <>
+                  {[
+                    { id: "theme", label: "Theme" },
+                    { id: "danger", label: `"Don't touch here"` },
+                  ].map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id as any)}
+                      className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${activeSection === section.id
+                          ? "text-text"
+                          : "text-muted hover:text-text hover:bg-surface/50"
+                        }`}
+                    >
+                      {activeSection === section.id && (
+                        <motion.div
+                          layoutId="editModalSectionTabs"
+                          className="absolute inset-0 bg-surface-2 border border-border rounded-md -z-10"
+                          transition={{
+                            type: "spring",
+                            bounce: 0.2,
+                            duration: 0.6,
+                          }}
+                        />
+                      )}
+                      {section.label}
+                    </button>
+                  ))}
+                </>
               )}
             </div>
           </div>
@@ -532,31 +761,36 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           {/* Form Content Panel */}
           <div className="flex-1 bg-surface p-6 sm:p-8 overflow-y-auto flex flex-col">
             {activeTab === "profile" ? (
-              activeSection === "details" ? (
+              activeSection === "yourself" ? (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-sm text-text mb-4">Profile Details</h3>
+                  <h3 className="text-sm text-text mb-4">"Yourself?"</h3>
 
                   {/* Username */}
                   <div>
                     <label className="text-[11px] text-muted  tracking-wider mb-2 block">
                       Username
                     </label>
-                    <Input
-                      value={username}
-                      onChange={(e) =>
-                        setUsername(
-                          e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]/g, ""),
-                        )
-                      }
-                      placeholder="e.g. dwaragesh"
-                      className={`w-full ${
-                        isUsernameTaken
-                          ? "border-red-500 focus:ring-red-500"
-                          : ""
-                      }`}
-                    />
+                    <div className="relative">
+                      <ValidationTooltip
+                        message="This username is already taken."
+                        visible={isUsernameTaken && !isCheckingUsername}
+                      />
+                      <Input
+                        value={username}
+                        onChange={(e) =>
+                          setUsername(
+                            e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9]/g, ""),
+                          )
+                        }
+                        placeholder="e.g. dwaragesh"
+                        className={`w-full ${isUsernameTaken
+                            ? "border-red-500 focus:ring-red-500"
+                            : ""
+                          }`}
+                      />
+                    </div>
                     {isCheckingUsername ? (
                       <p className="text-[10px] text-muted mt-1">
                         Checking availability...
@@ -566,10 +800,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                       !isUsernameTaken ? (
                       <p className="text-[10px] text-green-500 mt-1">
                         Username is good to proceed!
-                      </p>
-                    ) : isUsernameTaken ? (
-                      <p className="text-[10px] text-red-500 mt-1 ">
-                        This username is already taken.
                       </p>
                     ) : (
                       <p className="text-[10px] text-muted mt-1">
@@ -606,47 +836,150 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     />
                   </div>
                 </div>
-              ) : activeSection === "connections" ? (
+              ) : activeSection === "platforms" ? (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-sm text-text mb-4">Connections</h3>
+                  <h3 className="text-sm text-text mb-4">Platforms</h3>
 
                   {/* GitHub URL */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 flex flex-col w-full">
                     <label className="text-[11px]  text-muted">
                       GitHub Username
                     </label>
-                    <Input
-                      value={githubUser}
-                      onChange={(e) => setGithubUser(e.target.value)}
-                      // placeholder="e.g. johndoe"
-                      className="bg-surface border-border"
-                      icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
-                    />
+                    <div className="relative">
+                      <ValidationTooltip message={githubError} visible={!!githubError && !githubChecking} />
+                      <Input
+                        value={githubUser}
+                        onChange={(e) => setGithubUser(e.target.value)}
+                        className={`bg-surface ${githubError ? "border-red-500" : githubSuccess ? "border-green-500" : "border-border"}`}
+                        icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
+                        rightIcon={
+                          githubChecking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
+                          githubSuccess ? <Check className="w-4 h-4 text-green-500" /> :
+                          githubError ? <X className="w-4 h-4 text-red-500" /> : undefined
+                        }
+                      />
+                    </div>
                   </div>
 
-                  {/* LeetCode URL */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px]  text-muted">
+                  {/* LeetCode URL & Settings Accordion */}
+                  <div className="space-y-1.5 flex flex-col w-full border border-border/40 rounded-xl p-3 bg-surface-2/20">
+                    <label className="text-[11px] text-muted">
                       LeetCode Username
                     </label>
-                    <Input
-                      value={leetcodeUser}
-                      onChange={(e) => setLeetcodeUser(e.target.value)}
-                      // placeholder="e.g. johndoe"
-                      className="bg-surface border-border"
-                      icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
-                    />
+                    <div className="relative">
+                      <ValidationTooltip message={leetcodeError} visible={!!leetcodeError && !leetcodeChecking} />
+                      <Input
+                        value={leetcodeUser}
+                        onChange={(e) => setLeetcodeUser(e.target.value)}
+                        className={`bg-surface ${leetcodeError ? "border-red-500" : leetcodeSuccess ? "border-green-500" : "border-border"}`}
+                        icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
+                        rightIcon={
+                          leetcodeChecking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
+                          leetcodeSuccess ? <Check className="w-4 h-4 text-green-500" /> :
+                          leetcodeError ? <X className="w-4 h-4 text-red-500" /> : undefined
+                        }
+                      />
+                    </div>
+
+                    {/* Accordion Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setLeetcodeAccordionOpen(!leetcodeAccordionOpen)}
+                      className="flex items-center justify-between pt-2 text-xs text-muted hover:text-text cursor-pointer select-none"
+                    >
+                      <span>Display Preferences</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${leetcodeAccordionOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {/* Accordion Content */}
+                    <AnimatePresence>
+                      {leetcodeAccordionOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-2 pt-2 border-t border-border/30 overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between text-xs py-1">
+                            <span className="text-muted">Show Contest Rating</span>
+                            <button
+                              type="button"
+                              onClick={() => setLeetcodeShowRating(!leetcodeShowRating)}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                                leetcodeShowRating ? "bg-accent" : "bg-surface border border-border"
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                                  leetcodeShowRating ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs py-1">
+                            <span className="text-muted">Show Problem Count</span>
+                            <button
+                              type="button"
+                              onClick={() => setLeetcodeShowProblems(!leetcodeShowProblems)}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                                leetcodeShowProblems ? "bg-accent" : "bg-surface border border-border"
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                                  leetcodeShowProblems ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs py-1">
+                            <span className="text-muted">Show Heatmap</span>
+                            <button
+                              type="button"
+                              onClick={() => setLeetcodeShowHeatmap(!leetcodeShowHeatmap)}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                                leetcodeShowHeatmap ? "bg-accent" : "bg-surface border border-border"
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                                  leetcodeShowHeatmap ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs py-1">
+                            <span className="text-muted">Show Badges</span>
+                            <button
+                              type="button"
+                              onClick={() => setLeetcodeShowBadges(!leetcodeShowBadges)}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                                leetcodeShowBadges ? "bg-accent" : "bg-surface border border-border"
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                                  leetcodeShowBadges ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Codeforces URL */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px]  text-muted">
+                  <div className="space-y-1.5 border border-border/40 rounded-xl p-3 bg-surface-2/20">
+                    <label className="text-[11px] text-muted">
                       Codeforces Username
                     </label>
                     <Input
                       value={codeforcesUser}
                       onChange={(e) => setCodeforcesUser(e.target.value)}
-                      // placeholder="e.g. johndoe"
                       className="bg-surface border-border"
                       icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                     />
@@ -677,45 +1010,63 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   ) : (
                     <div className="space-y-3">
                       {customSocials.map((social, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <select
-                            className="bg-surface border border-border rounded-md text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent/50 w-28 text-text"
-                            value={social.type}
-                            onChange={(e) => {
-                              const newSocials = [...customSocials]
-                              newSocials[idx].type = e.target.value
-                              setCustomSocials(newSocials)
-                            }}
-                          >
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="twitter">Twitter / X</option>
-                            <option value="mail">Email</option>
-                            <option value="website">Website</option>
-                          </select>
-                          <Input
-                            value={social.url}
-                            onChange={(e) => {
-                              const newSocials = [...customSocials]
-                              newSocials[idx].url = e.target.value
-                              setCustomSocials(newSocials)
-                            }}
-                            placeholder={
-                              social.type === "mail"
-                                ? "johndoe@example.com"
-                                : "https://..."
-                            }
-                            className="bg-surface border-border flex-1"
-                          />
-                          <button
-                            onClick={() => {
-                              const newSocials = [...customSocials]
-                              newSocials.splice(idx, 1)
-                              setCustomSocials(newSocials)
-                            }}
-                            className="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <div key={idx} className="flex flex-col gap-1 w-full relative">
+                          <div className="flex gap-2 items-center w-full">
+                            <select
+                              className="bg-surface border border-border rounded-md text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent/50 w-28 text-text h-9"
+                              value={social.type}
+                              onChange={(e) => {
+                                const newSocials = [...customSocials]
+                                newSocials[idx].type = e.target.value
+                                newSocials[idx].error = ""
+                                newSocials[idx].success = false
+                                setCustomSocials(newSocials)
+                              }}
+                            >
+                              <option value="linkedin">LinkedIn</option>
+                              <option value="twitter">Twitter / X</option>
+                              <option value="mail">Email</option>
+                              <option value="website">Website</option>
+                            </select>
+                            <Input
+                              value={social.url}
+                              onChange={(e) => {
+                                const newSocials = [...customSocials]
+                                newSocials[idx].url = e.target.value
+                                newSocials[idx].error = ""
+                                newSocials[idx].success = false
+                                setCustomSocials(newSocials)
+                              }}
+                              placeholder={
+                                social.type === "mail"
+                                  ? "johndoe@example.com"
+                                  : social.type === "linkedin"
+                                    ? "https://linkedin.com/in/..."
+                                    : "https://..."
+                              }
+                              className={`bg-surface flex-1 ${social.error ? "border-red-500" : social.success ? "border-green-500" : "border-border"}`}
+                              rightIcon={
+                                social.checking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
+                                social.success ? <Check className="w-4 h-4 text-green-500" /> :
+                                social.error ? <X className="w-4 h-4 text-red-500" /> : undefined
+                              }
+                            />
+                            <button
+                              onClick={() => {
+                                const newSocials = [...customSocials]
+                                newSocials.splice(idx, 1)
+                                setCustomSocials(newSocials)
+                              }}
+                              className="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {social.error && (
+                            <div className="relative" style={{ marginTop: 0, height: 0 }}>
+                              <ValidationTooltip message={social.error} visible={!!social.error && !social.checking} />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1118,11 +1469,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div
                       onClick={() => setSelectedBannerId(0)}
-                      className={`h-24 rounded-lg border-2 cursor-pointer flex items-center justify-center transition-all bg-surface-2 ${
-                        selectedBannerId === 0
+                      className={`h-24 rounded-lg border-2 cursor-pointer flex items-center justify-center transition-all bg-surface-2 ${selectedBannerId === 0
                           ? "border-accent ring-2 ring-accent/30"
                           : "border-border hover:border-muted"
-                      }`}
+                        }`}
                     >
                       <span className="text-xs text-muted ">
                         Default Solid Color
@@ -1132,11 +1482,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                       <div
                         key={banner.id}
                         onClick={() => setSelectedBannerId(banner.id)}
-                        className={`h-24 rounded-lg border-2 cursor-pointer transition-all relative overflow-hidden bg-cover bg-center ${
-                          selectedBannerId === banner.id
+                        className={`h-24 rounded-lg border-2 cursor-pointer transition-all relative overflow-hidden bg-cover bg-center ${selectedBannerId === banner.id
                             ? "border-accent ring-2 ring-accent/30"
                             : "border-border hover:border-muted"
-                        }`}
+                          }`}
                         style={{ backgroundImage: banner.cssBackground }}
                       >
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -1151,11 +1500,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   </div>
                 </div>
               ) : null
-            ) : (
-              <div className="space-y-6 flex-1">
-                <h3 className="text-sm text-text mb-4">Account Settings</h3>
+            ) : activeTab === "account" ? (
+              activeSection === "theme" ? (
+                <div className="space-y-6 flex-1">
+                  <h3 className="text-sm text-text mb-4">Theme Settings</h3>
 
-                {/* Theme Settings selector mimicking a shadcn tab/select */}
+                  {/* Theme Settings selector mimicking a shadcn tab/select */}
                 <div className="space-y-2">
                   <label className="text-[11px]  text-muted block">
                     System Theme
@@ -1163,69 +1513,67 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   <div className="flex border border-border rounded-lg bg-surface/30 p-1 max-w-sm">
                     <button
                       onClick={() => setTheme("light")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${
-                        theme === "light"
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "light"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                      }`}
+                        }`}
                     >
                       <Sun className="w-3.5 h-3.5" />
                       <span>Light</span>
                     </button>
                     <button
                       onClick={() => setTheme("dark")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${
-                        theme === "dark"
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "dark"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                      }`}
+                        }`}
                     >
                       <Moon className="w-3.5 h-3.5" />
                       <span>Dark</span>
                     </button>
                     <button
                       onClick={() => setTheme("system")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${
-                        theme === "system"
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "system"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                      }`}
+                        }`}
                     >
                       <Monitor className="w-3.5 h-3.5" />
                       <span>System</span>
                     </button>
                   </div>
                 </div>
-
-                {/* Danger Zone / Delete Account */}
-                <div className="pt-6 border-t border-border space-y-3">
-                  <div className="text-xs text-red-500">Danger Zone</div>
-                  <p className="text-[11px] text-muted leading-relaxed">
-                    Permanently delete your Scard account and all related
-                    developer profiles, badge data, and contribution
-                    consolidations.
-                  </p>
-                  <Button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    variant="outline"
-                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60  text-xs flex items-center gap-1.5 h-9 px-4"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Account</span>
-                  </Button>
                 </div>
-              </div>
-            )}
+              ) : activeSection === "danger" ? (
+                <div className="space-y-6 flex-1">
+                  {/* Danger Zone / Delete Account */}
+                  <div className="space-y-3">
+                    <div className="text-xs text-red-500">Danger Zone</div>
+                    <p className="text-[11px] text-muted leading-relaxed">
+                      Permanently delete your Scard account and all related
+                      developer profiles, badge data, and contribution
+                      consolidations.
+                    </p>
+                    <Button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      variant="outline"
+                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60  text-xs flex items-center gap-1.5 h-9 px-4"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Account</span>
+                    </Button>
+                  </div>
+                </div>
+              ) : null
+            ) : null}
 
             {/* Bottom Actions (Only for Profile saving) */}
             {activeTab === "profile" && !isCreatingProject && (
               <div className="flex justify-end pt-4 border-t border-border mt-6">
                 <Button
                   onClick={handleSave}
-                  disabled={saving || isUsernameTaken || isCheckingUsername}
-                  className={`bg-accent hover:bg-accent/90 text-white  text-xs py-1.5 px-4 rounded ${
-                    isUsernameTaken ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  disabled={saving || isCheckingUsername || isUsernameTaken || githubChecking || !!githubError || leetcodeChecking || !!leetcodeError || customSocials.some(s => s.checking || !!s.error)}
+                  className="px-4 py-2 text-sm bg-accent text-white rounded-md hover:bg-accent/90"
                 >
                   {saving ? "Saving..." : "Save"}
                 </Button>
@@ -1275,9 +1623,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
-        </motion.div>
       </motion.div>
-    )
+    </motion.div>
+  )
 }
 
 export default EditProfileModal

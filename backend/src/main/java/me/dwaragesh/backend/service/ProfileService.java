@@ -60,7 +60,7 @@ public class ProfileService {
 
         return new ProfileResponse(
                 profile.getUserName(),
-                profile.getProfileName() != null ? profile.getProfileName() : profile.getUserName(),
+                (profile.getProfileName() != null && !profile.getProfileName().trim().isEmpty()) ? profile.getProfileName() : profile.getUserName(),
                 profile.getDesignation(),
                 profile.getPin(),
                 profile.getProfileUrl(),
@@ -74,7 +74,8 @@ public class ProfileService {
                 profile.getProjects(),
                 profile.getAnonymousViews(),
                 profile.getUser() != null ? profile.getUser().getCreatedDateTime() : null,
-                contribJson);
+                contribJson,
+                profile.getDisplayPreferences() != null && !profile.getDisplayPreferences().isEmpty() ? profile.getDisplayPreferences() : "{}");
     }
 
     @Transactional
@@ -85,7 +86,7 @@ public class ProfileService {
             return toResponse(existing);
         }
 
-        if (repository.existsByUserName(request.userName())) {
+        if (repository.existsByUserNameIgnoreCase(request.userName())) {
             throw new UsernameTakenException("Username already taken: " + request.userName());
         }
 
@@ -149,7 +150,54 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public boolean isUsernameTaken(String username) {
-        return repository.existsByUserName(username);
+        return repository.existsByUserNameIgnoreCase(username);
+    }
+
+    private String extractUsernameFromUrl(String url) {
+        if (url == null) return null;
+        String trimmed = url.trim();
+        if (trimmed.contains("/")) {
+            String[] parts = trimmed.split("/");
+            String last = parts[parts.length - 1];
+            if (last.isEmpty() && parts.length > 1) {
+                return parts[parts.length - 2];
+            }
+            return last;
+        }
+        return trimmed;
+    }
+
+    @Transactional(readOnly = true)
+    public String checkLinkedinOwner(String username) {
+        java.util.List<String> owners = repository.findUserNameByLinkedin(extractUsernameFromUrl(username));
+        if (owners.isEmpty()) {
+            owners = repository.findUserNameByLinkedin(username);
+        }
+        return owners.isEmpty() ? null : owners.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public String checkGithubOwner(String username) {
+        java.util.List<String> owners = repository.findUserNameByGithub(extractUsernameFromUrl(username));
+        if (owners.isEmpty()) {
+            owners = repository.findUserNameByGithub(username);
+        }
+        return owners.isEmpty() ? null : owners.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public String checkLeetcodeOwner(String username) {
+        java.util.List<String> owners = repository.findUserNameByLeetcode(extractUsernameFromUrl(username));
+        if (owners.isEmpty()) {
+            owners = repository.findUserNameByLeetcode(username);
+        }
+        return owners.isEmpty() ? null : owners.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public String checkMailOwner(String email) {
+        java.util.List<String> owners = repository.findUserNameByMail(email);
+        return owners.isEmpty() ? null : owners.get(0);
     }
 
     public Profile getRawProfile(String userName) {
@@ -176,7 +224,7 @@ public class ProfileService {
         }
         if (request.userName() != null && !request.userName().isEmpty()) {
             if (!request.userName().equals(profile.getUserName())) {
-                if (repository.existsByUserName(request.userName())) {
+                if (repository.existsByUserNameIgnoreCase(request.userName())) {
                     throw new UsernameTakenException("Username already taken: " + request.userName());
                 }
                 profile.setUserName(request.userName());
@@ -214,6 +262,9 @@ public class ProfileService {
             } else {
                 profile.setBannerId(request.bannerId());
             }
+        }
+        if (request.displayPreferences() != null) {
+            profile.setDisplayPreferences(request.displayPreferences());
         }
 
         Profile saved = repository.save(profile);

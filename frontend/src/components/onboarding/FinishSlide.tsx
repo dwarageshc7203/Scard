@@ -16,7 +16,7 @@ export default function FinishSlide({ onFinish }: FinishSlideProps) {
 
       <button
         onClick={onFinish}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 px-8 py-2.5 bg-white text-black font-semibold rounded-md text-[15px] transition-all font-sans cursor-pointer flex items-center justify-center gap-2 hover:bg-gray-200"
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 px-8 py-2.5 bg-text text-bg font-semibold rounded-md text-[15px] transition-all font-sans cursor-pointer flex items-center justify-center gap-2 hover:bg-text/80"
       >
         Finish
       </button>

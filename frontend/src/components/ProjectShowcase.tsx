@@ -1,6 +1,6 @@
-import React, { useState } from "react"
+import React from "react"
 import { Project } from "../types"
-import { ArrowLeft, ArrowRight, X, ExternalLink, Code } from "lucide-react"
+import { ArrowRight, ExternalLink, Code, Briefcase } from "lucide-react"
 import Image from "./ui/Image"
 
 interface ProjectShowcaseProps {
@@ -14,7 +14,6 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   isExpanded,
   onToggleExpand,
 }) => {
-  const [showAll, setShowAll] = useState(false)
   const displayProjects = isExpanded
     ? projects
     : projects
@@ -119,7 +118,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
           ))}
           {hasMore && (
             <button
-              onClick={() => setShowAll(true)}
+              onClick={() => {
+                if (onToggleExpand) onToggleExpand()
+              }}
               className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface border border-border/40 hover:border-muted hover:shadow-lg transition-all duration-300 text-xs text-muted hover:text-text"
             >
               Show {projects.length - 2} More{" "}
@@ -128,67 +129,14 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-xs text-muted text-center">
-            No projects to showcase yet.
-          </p>
-        </div>
-      )}
-
-      {showAll && !isExpanded && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200"
-          onClick={() => setShowAll(false)}
-        >
-          <div
-            className="bg-surface p-6 rounded-2xl border border-border flex flex-col gap-6 w-full max-w-2xl max-h-[85vh] shadow-2xl relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowAll(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-surface-2 text-muted hover:text-text transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-text text-xl w-full text-center">
-              All Projects
-            </h3>
-            <div className="flex flex-col gap-4 overflow-y-auto p-2 custom-scrollbar">
-              {projects.map((project, idx) => (
-                <div
-                  key={idx}
-                  className="bg-surface-2 rounded-xl p-4 border border-border/40 hover:border-border transition-colors text-center"
-                >
-                  {project.projectImageBase64 && (
-                    <div className="flex-shrink-0 w-full h-48 overflow-hidden rounded-t-xl bg-surface-2">
-                      <Image
-                        src={project.projectImageBase64}
-                        alt={project.name}
-                        className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
-                      />
-                    </div>
-                  )}
-                  {project.url || project.projectUrl ? (
-                    <a
-                      href={project.url || project.projectUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-accent hover:underline block mb-1"
-                    >
-                      {project.name}
-                    </a>
-                  ) : (
-                    <span className="text-sm text-text block mb-1">
-                      {project.name}
-                    </span>
-                  )}
-                  <p className="text-xs text-muted leading-relaxed">
-                    {project.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+        <div className={`flex flex-col items-center justify-center h-full text-center ${isExpanded ? 'p-8 mt-8' : 'p-6'} bg-surface-2/30 rounded-xl border border-dashed border-border/50 w-full`}>
+          <div className={`${isExpanded ? 'w-16 h-16 mb-4' : 'w-10 h-10 mb-3'} rounded-full bg-surface-2 flex items-center justify-center border border-border/50`}>
+            <Briefcase className={`${isExpanded ? 'w-8 h-8 opacity-50' : 'w-5 h-5'} text-muted-foreground`} />
           </div>
+          <h3 className={`${isExpanded ? 'text-lg mb-2' : 'text-sm'} font-medium text-text`}>No Projects Yet</h3>
+          <p className={`${isExpanded ? 'text-sm max-w-sm' : 'text-xs max-w-[200px] mt-1'} text-muted`}>
+            Add some projects to your profile to showcase your work and attract more viewers.
+          </p>
         </div>
       )}
     </div>

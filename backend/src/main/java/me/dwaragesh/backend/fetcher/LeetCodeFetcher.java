@@ -20,8 +20,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Fetches LeetCode data using the public LeetCode GraphQL endpoint.
@@ -108,7 +110,7 @@ public class LeetCodeFetcher implements PlatformFetcher {
             }
 
             // --- Contributions ---
-            List<ContributionData> contributions = new ArrayList<>();
+            Map<LocalDate, Integer> dailyCounts = new HashMap<>();
             String calendarJson = matchedUser.path("submissionCalendar").asText("{}");
             JsonNode calendar = objectMapper.readTree(calendarJson);
             // Jackson 3.x: properties() returns Set<Map.Entry<String, JsonNode>>
@@ -118,11 +120,15 @@ public class LeetCodeFetcher implements PlatformFetcher {
                     int count = entry.getValue().asInt();
                     LocalDate date = Instant.ofEpochSecond(epochSeconds)
                             .atZone(ZoneId.systemDefault()).toLocalDate();
-                    contributions.add(new ContributionData(date, count));
+                    dailyCounts.merge(date, count, Integer::sum);
                 } catch (NumberFormatException ignored) {
                     // skip malformed entries
                 }
             }
+            
+            List<ContributionData> contributions = dailyCounts.entrySet().stream()
+                    .map(e -> new ContributionData(e.getKey(), e.getValue()))
+                    .collect(Collectors.toList());
 
             // --- Badges ---
             List<BadgeData> badges = new ArrayList<>();

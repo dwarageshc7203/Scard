@@ -53,9 +53,10 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
         {/* Avatar */}
         <div className="w-[220px] h-[220px] rounded-full overflow-hidden border-[4px] border-gray-50 dark:border-[#202020] bg-gray-200 dark:bg-[#333] flex items-center justify-center shrink-0 shadow-lg">
           {userImageUrl ? (
-            <Image
+            <img
               src={userImageUrl}
               alt={user.displayName}
+              crossOrigin="anonymous"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -65,15 +66,16 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
           )}
         </div>
 
-        {/* Name and Designation */}
+        {/* Name, Username and Designation */}
         <div className="ml-8 mt-[110px] flex flex-col justify-center">
-          <h1
-            className="text-6xl font-extrabold text-gray-900 dark:text-white leading-none tracking-tight"
-          >
+          <h1 className="text-6xl font-extrabold text-gray-900 dark:text-white leading-none tracking-tight">
             {user.displayName}
           </h1>
+          <p className="text-2xl text-gray-500 dark:text-gray-400 font-mono mt-2">
+            @{user.username}
+          </p>
           {user.designation && (
-            <p className="text-2xl text-gray-600 dark:text-gray-400 mt-3 font-medium tracking-wide">
+            <p className="text-2xl text-gray-600 dark:text-gray-400 mt-2 font-medium tracking-wide">
               {user.designation}
             </p>
           )}
@@ -81,48 +83,45 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
       </div>
 
       {/* Stats Section */}
-      {!!(user as any).socials?.leetcode && (
-      <div className="grid grid-cols-3 gap-8 px-12 pt-12 pb-20 mt-2">
+      <div className="flex justify-center gap-16 px-12 pt-12 pb-20 mt-2">
         {/* Contest Rating */}
-        <div className="flex flex-col items-center justify-start">
-          <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
-            Contest Rating
-          </span>
-          <span
-            className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight"
-          >
-            {latestRating || "-"}
-          </span>
-        </div>
+        {latestRating > 0 && (user.platformPreferences?.leetcode?.showRating ?? true) && (
+          <div className="flex flex-col items-center justify-start">
+            <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
+              Contest Rating
+            </span>
+            <span className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {latestRating}
+            </span>
+          </div>
+        )}
 
         {/* Problems Solved */}
-        <div className="flex flex-col items-center justify-start">
-          <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
-            Problems solved
-          </span>
-          <span
-            className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight"
-          >
-            {totalProblems || "-"}
-          </span>
-        </div>
+        {totalProblems > 0 && (user.platformPreferences?.leetcode?.showProblems ?? true) && (
+          <div className="flex flex-col items-center justify-start">
+            <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
+              Problems solved
+            </span>
+            <span className="text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {totalProblems}
+            </span>
+          </div>
+        )}
 
         {/* Badges */}
-        <div className="flex flex-col items-center justify-start">
-          <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
-            Badges
-          </span>
-          <div className="flex items-center gap-6">
-            {user.badges && user.badges.length > 0 ? (
-              user.badges.slice(0, 3).map((badge, idx) => (
-                <div
-                  key={idx}
-                  className="w-[85px] h-[85px] flex items-center justify-center"
-                >
+        {user.badges && user.badges.length > 0 && (user.platformPreferences?.leetcode?.showBadges ?? true) && (
+          <div className="flex flex-col items-center justify-start">
+            <span className="text-[26px] text-gray-700 dark:text-gray-300 mb-8 font-medium">
+              Badges
+            </span>
+            <div className="flex items-center gap-6">
+              {user.badges.slice(0, 3).map((badge, idx) => (
+                <div key={idx} className="w-[85px] h-[85px] flex items-center justify-center">
                   {badge.iconUrl ? (
-                    <Image
+                    <img
                       src={badge.iconUrl}
                       alt={badge.label}
+                      crossOrigin="anonymous"
                       className="w-full h-full object-contain drop-shadow-xl"
                     />
                   ) : (
@@ -133,14 +132,11 @@ const ExportCard: React.FC<ExportCardProps> = ({ user, banner }) => {
                     </div>
                   )}
                 </div>
-              ))
-            ) : (
-              <span className="text-4xl text-gray-500 font-light">-</span>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      )}
     </div>
   )
 }

@@ -40,7 +40,7 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
           
           {photoBase64 ? (
             <div className="flex flex-col items-center gap-4">
-              <div className="relative w-32 h-32 rounded-full overflow-hidden border border-[#333333] group cursor-pointer">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border border-border group cursor-pointer">
                 <Image
                   src={photoBase64}
                   alt="Profile"
@@ -66,15 +66,15 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-32 h-32 rounded-full border-2 border-dashed border-[#444444] hover:border-white/50 hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden group">
+            <label className="flex flex-col items-center justify-center w-32 h-32 rounded-full border-2 border-dashed border-border hover:border-text/50 hover:bg-surface-2 transition-colors cursor-pointer relative overflow-hidden group">
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <FileImage className="w-8 h-8 text-[#888888] group-hover:text-white transition-colors mb-2" />
-              <span className="text-[10px] text-[#888888] group-hover:text-white transition-colors text-center px-2 leading-tight">
+              <FileImage className="w-8 h-8 text-muted-foreground group-hover:text-text transition-colors mb-2" />
+              <span className="text-[10px] text-muted-foreground group-hover:text-text transition-colors text-center px-2 leading-tight">
                 Upload image
               </span>
             </label>
@@ -87,13 +87,13 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
         <button
           type="button"
           onClick={onPrev}
-          className="absolute bottom-12 left-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+          className="absolute bottom-12 left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
         >
           ← Back
         </button>
         <button
           type="submit"
-          className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+          className="absolute bottom-12 right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
         >
           Next →
         </button>
