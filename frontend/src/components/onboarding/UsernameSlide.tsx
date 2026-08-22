@@ -107,7 +107,7 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
                       setError("")
                       setIsSuccess(false)
                     }}
-                    className={`w-56 lg:w-72 xl:w-80 px-3 py-1.5 lg:py-2.5 bg-[#222222] border ${error ? "border-red-500" : isSuccess ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px] lg:text-[17px]`}
+                    className={`w-56 lg:w-72 xl:w-80 px-3 py-1.5 lg:py-2.5 bg-transparent border ${error ? "border-red-500" : isSuccess ? "border-green-500" : "border-border"} rounded-md outline-none text-text focus:border-text/50 transition-all font-sans text-[15px] lg:text-[17px]`}
                     disabled={loading}
                   />
                 </div>
@@ -126,7 +126,7 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
         type="button"
         onClick={() => handleSubmit()}
         disabled={loading || isChecking || !!error || !username.trim()}
-        className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        className="absolute bottom-12 right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {loading ? "Checking..." : "Next →"}
       </button>

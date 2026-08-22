@@ -152,7 +152,7 @@ export default function SocialsSlide({
                     setErrorLinked("")
                     setSuccessLinked(false)
                   }}
-                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorLinked ? "border-red-500" : successLinked ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px] lg:text-[16px]`}
+                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorLinked ? "border-red-500" : successLinked ? "border-green-500" : "border-border"} rounded-md outline-none text-text focus:border-text/50 transition-all font-sans text-[15px] lg:text-[16px]`}
                 />
               </div>
               <div className="absolute -right-6 flex items-center justify-center">
@@ -180,7 +180,7 @@ export default function SocialsSlide({
                     setErrorMail("")
                     setSuccessMail(false)
                   }}
-                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorMail ? "border-red-500" : successMail ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px] lg:text-[16px]`}
+                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorMail ? "border-red-500" : successMail ? "border-green-500" : "border-border"} rounded-md outline-none text-text focus:border-text/50 transition-all font-sans text-[15px] lg:text-[16px]`}
                 />
               </div>
               <div className="absolute -right-6 flex items-center justify-center">
@@ -196,14 +196,14 @@ export default function SocialsSlide({
         <button
           type="button"
           onClick={onPrev}
-          className="absolute bottom-12 left-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+          className="absolute bottom-12 left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
         >
           ← Back
         </button>
         <button
           type="submit"
           disabled={loadingLinked || loadingMail || !!errorLinked || !!errorMail}
-          className="absolute bottom-12 right-12 px-5 py-2 border border-[#444444] hover:border-white/50 text-[#dddddd] rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute bottom-12 right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loadingLinked || loadingMail ? "Checking..." : "Next →"}
         </button>
