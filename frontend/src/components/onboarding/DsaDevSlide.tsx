@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { checkLeetcode, checkGithub } from "../../lib/api"
 import { Loader2, Check, X } from "lucide-react"
-import ValidationTooltip from "../ui/ValidationTooltip"
+import ValidationTooltip from "@/components/ui/ValidationTooltip"
 
 interface DsaDevSlideProps {
   initialLeetcode: string

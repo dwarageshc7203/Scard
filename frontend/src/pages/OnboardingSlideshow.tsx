@@ -184,7 +184,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
 
       {/* Progress Bar Line */}
       {step < 4 && (
-        <div className="w-full max-w-2xl h-[4px] bg-border rounded-full mb-8 overflow-hidden relative">
+        <div className="w-full max-w-2xl lg:max-w-3xl xl:max-w-4xl h-[4px] bg-border rounded-full mb-8 overflow-hidden relative">
           <motion.div
             className="absolute top-0 left-0 h-full bg-accent"
             initial={{ width: 0 }}

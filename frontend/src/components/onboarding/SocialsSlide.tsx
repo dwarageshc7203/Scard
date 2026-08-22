@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { checkLinkedin, checkMail } from "../../lib/api"
 import { Loader2, Check, X } from "lucide-react"
-import ValidationTooltip from "../ui/ValidationTooltip"
+import ValidationTooltip from "@/components/ui/ValidationTooltip"
 
 interface SocialsSlideProps {
   initialLinkedUsername: string
@@ -132,7 +132,7 @@ export default function SocialsSlide({
       </h2>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
-        <div className="flex flex-col gap-6 w-full max-w-[460px] mb-12">
+        <div className="flex flex-col gap-6 w-full max-w-[460px] lg:max-w-[540px] xl:max-w-[600px] mb-12 transition-all">
 
           {/* LinkedIn */}
           <div className="flex items-center justify-between w-full">
@@ -152,7 +152,7 @@ export default function SocialsSlide({
                     setErrorLinked("")
                     setSuccessLinked(false)
                   }}
-                  className={`w-[280px] px-3 py-2 bg-transparent border ${errorLinked ? "border-red-500" : successLinked ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px]`}
+                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorLinked ? "border-red-500" : successLinked ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px] lg:text-[16px]`}
                 />
               </div>
               <div className="absolute -right-6 flex items-center justify-center">
@@ -165,7 +165,7 @@ export default function SocialsSlide({
 
           {/* Mail */}
           <div className="flex items-center justify-between w-full">
-            <span className="onboarding-text mr-4">
+            <span className="onboarding-text mr-4 whitespace-nowrap">
               Mail address
             </span>
             <div className="relative flex items-center">
@@ -180,7 +180,7 @@ export default function SocialsSlide({
                     setErrorMail("")
                     setSuccessMail(false)
                   }}
-                  className={`w-[280px] px-3 py-2 bg-transparent border ${errorMail ? "border-red-500" : successMail ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px]`}
+                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorMail ? "border-red-500" : successMail ? "border-green-500" : "border-[#333333]"} rounded-md outline-none text-white focus:border-[#555555] transition-all font-sans text-[15px] lg:text-[16px]`}
                 />
               </div>
               <div className="absolute -right-6 flex items-center justify-center">
