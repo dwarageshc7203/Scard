@@ -38,7 +38,7 @@ export default function FinishSlide({ onFinish, onPrev }: FinishSlideProps) {
           <button
             type="submit"
             disabled={loading}
-            className="px-10 py-3.5 border border-border hover:border-text hover:bg-text hover:text-bg text-text rounded-lg text-base font-medium transition-all font-sans cursor-pointer flex items-center justify-center min-w-[160px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 md:px-10 md:py-3.5 border border-border hover:border-text hover:bg-text hover:text-bg text-text rounded-lg text-sm md:text-base font-medium transition-all font-sans cursor-pointer flex items-center justify-center min-w-[140px] md:min-w-[160px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Finishing..." : "Finish up"}
           </button>
@@ -49,7 +49,7 @@ export default function FinishSlide({ onFinish, onPrev }: FinishSlideProps) {
             type="button"
             onClick={onPrev}
             disabled={loading}
-            className="absolute bottom-12 left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute bottom-6 left-6 md:bottom-12 md:left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← Back
           </button>

@@ -132,10 +132,9 @@ export default function SocialsSlide({
       </h2>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
-        <div className="flex flex-col gap-6 w-full max-w-[460px] lg:max-w-[540px] xl:max-w-[600px] mb-12 transition-all">
-
+        <div className="flex flex-col items-center gap-6 w-full max-w-[460px] lg:max-w-[540px] xl:max-w-[600px] mb-12 transition-all">
           {/* LinkedIn */}
-          <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-[280px] sm:max-w-none gap-2 sm:gap-0 mx-auto">
             <span className="onboarding-text mr-4 whitespace-nowrap">
               LinkedIn Profile Link
             </span>
@@ -164,7 +163,7 @@ export default function SocialsSlide({
           </div>
 
           {/* Mail */}
-          <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-[280px] sm:max-w-none gap-2 sm:gap-0 mx-auto">
             <span className="onboarding-text mr-4 whitespace-nowrap">
               Mail address
             </span>
@@ -196,14 +195,14 @@ export default function SocialsSlide({
         <button
           type="button"
           onClick={onPrev}
-          className="absolute bottom-12 left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+          className="absolute bottom-6 left-6 md:bottom-12 md:left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
         >
           ← Back
         </button>
         <button
           type="submit"
           disabled={loadingLinked || loadingMail || !!errorLinked || !!errorMail}
-          className="absolute bottom-12 right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute bottom-6 right-6 md:bottom-12 md:right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loadingLinked || loadingMail ? "Checking..." : "Next →"}
         </button>

@@ -45,12 +45,12 @@ function FlipCard({
   }, [isFlipped])
 
   return (
-    <div className="relative w-[280px] h-[46px]">
+    <div className="relative w-full max-w-[300px] sm:w-[300px] h-[54px]">
       {!isFlipped ? (
         <button
           type="button"
           onClick={onFlip}
-          className="w-full h-full rounded-lg border border-border bg-transparent text-muted text-[15px] font-sans hover:border-text/50 hover:text-text transition-all cursor-pointer"
+          className="w-full h-full rounded-lg border border-border bg-transparent text-muted text-base font-medium font-sans hover:border-text/50 hover:text-text transition-all cursor-pointer"
         >
           {label}
         </button>
@@ -69,9 +69,8 @@ function FlipCard({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={loading}
-            className={`w-full h-full bg-transparent border ${
-              error ? "border-red-500" : success ? "border-green-500" : "border-border"
-            } rounded-lg pl-3 pr-9 text-sm text-text outline-none focus:border-text/50 transition-all font-sans placeholder:text-muted`}
+            className={`w-full h-full bg-transparent border ${error ? "border-red-500" : success ? "border-green-500" : "border-border"
+              } rounded-lg pl-4 pr-10 text-base text-text outline-none focus:border-text/50 transition-all font-sans placeholder:text-muted`}
           />
           <div className="absolute right-2.5 flex items-center justify-center pointer-events-none">
             {checking && <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" />}
@@ -242,7 +241,7 @@ export default function DsaDevSlide({
         <button
           type="button"
           onClick={handleNone}
-          className="w-[280px] h-[46px] rounded-lg border border-border bg-transparent text-muted text-[15px] font-sans hover:border-text/50 hover:text-text transition-all cursor-pointer"
+          className="w-full max-w-[300px] sm:w-[300px] px-6 py-4 rounded-lg border border-border bg-transparent text-muted text-base font-medium font-sans hover:border-text/50 hover:text-text transition-all cursor-pointer"
         >
           None
         </button>
@@ -253,7 +252,7 @@ export default function DsaDevSlide({
         type="button"
         onClick={handleNext}
         disabled={loadingDsa || loadingDev || !!errorDsa || !!errorDev}
-        className="absolute bottom-12 right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="absolute bottom-6 right-6 md:bottom-12 md:right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loadingDsa || loadingDev ? "Checking..." : "Next →"}
       </button>
@@ -261,7 +260,7 @@ export default function DsaDevSlide({
       <button
         type="button"
         onClick={onPrev}
-        className="absolute bottom-12 left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
+        className="absolute bottom-6 left-6 md:bottom-12 md:left-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px]"
       >
         ← Back
       </button>

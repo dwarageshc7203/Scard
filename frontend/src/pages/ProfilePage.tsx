@@ -169,10 +169,10 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
       {/* Static Left Sidebar (Desktop sidebar / Mobile bottom bar) */}
       {isOwnProfile && (
-        <aside className="w-full md:w-[64px] h-[56px] md:h-full flex flex-row md:flex-col items-center justify-between md:justify-start px-6 md:px-0 py-0 md:py-6 border-t md:border-t-0 md:border-r border-gray-200 dark:border-white/10 bg-white dark:bg-[#252525] shrink-0 fixed md:relative bottom-0 left-0 right-0 z-[60]">
+        <aside className="w-full md:w-[64px] h-[56px] md:h-full flex flex-row md:flex-col items-center justify-around md:justify-start px-2 sm:px-6 md:px-0 py-0 md:py-6 border-t md:border-t-0 md:border-r border-gray-200 dark:border-white/10 bg-white dark:bg-[#252525] shrink-0 fixed md:relative bottom-0 left-0 right-0 z-[60]">
           <Image onClick={() => window.location.href = '/'} src="/logos/scard-1.png" className="w-8 h-8 rounded-[8px] cursor-pointer hover:opacity-80 transition-opacity hidden md:block" alt="Scard Logo" />
 
-          <div className="flex flex-row md:flex-col gap-8 md:gap-10 flex-1 md:mt-12 justify-around md:justify-center items-center w-full">
+          <div className="flex flex-row md:flex-col gap-0 md:gap-10 flex-1 md:mt-12 justify-around md:justify-center items-center w-full">
 
             {/* Analytics */}
             <button
@@ -197,11 +197,11 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
               <AnimatePresence>
                 {activeOverlay === 'menu' && (
                   <motion.div
-                    initial={{ opacity: 0, x: -20, y: '-50%' }}
-                    animate={{ opacity: 1, x: 0, y: '-50%' }}
-                    exit={{ opacity: 0, x: -20, y: '-50%' }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute left-[50px] top-1/2 bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 p-2 w-[160px] rounded-xl shadow-2xl flex flex-col gap-2 z-[70]"
+                    className="absolute bottom-16 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-auto md:left-[60px] md:top-1/2 md:-translate-y-1/2 bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 p-2 w-[160px] rounded-xl shadow-2xl flex flex-col gap-2 z-[70]"
                   >
                     <div className="flex border border-gray-200 dark:border-white/10 rounded-lg bg-gray-50 dark:bg-[#202020] p-1 w-full">
                       <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'light' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
@@ -240,19 +240,18 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
               <Pencil className="w-5 h-5" />
             </button>
 
-          </div>
-
-          <div className="mt-auto">
-            <button
-              onClick={() => {
-                localStorage.removeItem('scard_username')
-                window.location.href = '/logout'
-              }}
-              className="transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-              title="Log Out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <div className="md:mt-auto">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('scard_username')
+                  window.location.href = '/logout'
+                }}
+                className="transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                title="Log Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </aside>
       )}
@@ -408,9 +407,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                 )}
               </div>
 
-              <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-center -mt-16 sm:mt-[110px]">
+              <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-3 sm:gap-8 items-center self-start mt-[110px]">
                 {/* Avatar overlapping the banner */}
-                <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 -ml-0 sm:-ml-2 mt-4 sm:mt-0 shrink-0">
+                <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 shrink-0">
                   <Avatar
                     initials={activeUser.initials}
                     color={activeUser.color}
@@ -423,7 +422,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
                 </div>
 
                 {/* Name, Username & Title */}
-                <div className="flex flex-col z-10 w-full sm:w-auto items-center sm:items-start text-center sm:text-left pt-2 sm:pt-16">
+                <div className="flex flex-col z-10 items-center sm:items-start text-center sm:text-left">
                   <div className="flex items-center flex-wrap gap-3">
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
                       {(activeUser.displayName && activeUser.displayName.trim()) ? activeUser.displayName : activeUser.username}

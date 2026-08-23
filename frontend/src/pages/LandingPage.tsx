@@ -35,40 +35,41 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-bg text-text flex flex-col items-center relative overflow-x-hidden selection:bg-accent/30 font-sans transition-colors duration-300 scroll-smooth"
     >
-      {/* Header */}
-      <header className="w-full px-8 py-6 flex justify-between items-center absolute top-0 left-0 z-50">
-        <div className="flex-1"></div>
+      <header className="w-full flex items-center justify-between py-6 px-4 md:px-6 relative z-50">
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-md hover:bg-surface-2 text-muted hover:text-text transition-colors"
+          title={`Theme: ${theme} (Click to change)`}
+        >
+          {renderThemeIcon()}
+        </button>
+
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 flex-1">
+        <div className="flex items-center gap-2 select-none">
           <Image
             src="/logos/scard-1.png"
-            alt="Scard"
-            className="w-6 h-6 object-contain filter dark:invert-0 rounded-[5px]"
+            alt="Scard Logo"
+            className="w-6 h-6 rounded-md"
           />
-          <span
-            className="text-text font-semibold tracking-wide text-lg"
-
-          >
+          <span className="text-text font-bold text-xl font-sans tracking-wide">
             Scard
           </span>
         </div>
-        {/* Auth Buttons */}
-        <div className="flex-1 flex justify-end items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className="w-9 h-9 border border-border/60 hover:bg-surface-2 transition-all duration-300 rounded-md flex items-center justify-center"
-            title={`Theme: ${theme} (Click to change)`}
-          >
-            {renderThemeIcon()}
-          </button>
 
+        {/* Auth Button */}
+        <div>
           {currentUser ? (
             <button
               onClick={() => {
-                if (currentUser.hasProfile) navigate(`/${currentUser.userName}`)
-                else navigate("/onboarding")
+                if (currentUser.hasProfile) {
+                  navigate(`/${currentUser.userName}`)
+                } else {
+                  navigate("/onboarding")
+                }
               }}
-              className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-5 py-1.5 rounded-md text-sm font-medium tracking-wide"
+              className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-3 py-1 sm:px-5 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium tracking-wide"
             >
               Go to my Card
             </button>
@@ -77,7 +78,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               onClick={() => {
                 window.location.href = "/oauth2/authorization/google"
               }}
-              className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-5 py-1.5 rounded-md text-sm font-medium tracking-wide"
+              className="bg-transparent text-text border border-border dark:border-white/40 hover:bg-text hover:text-bg transition-all px-3 py-1 sm:px-5 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium tracking-wide"
             >
               Sign up
             </button>
@@ -105,7 +106,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
           {/* Custom Cursor Graphic */}
           <motion.div
             style={{ y: yCursor }}
-            className="absolute -right-5 top-24 md:top-32 w-24 h-24 md:w-32 md:h-32"
+            className="absolute -right-0.5 top-33 sm:-right-5 sm:top-24 md:top-32 w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32"
           >
             <Image
               src="/elements/cursor.png"
