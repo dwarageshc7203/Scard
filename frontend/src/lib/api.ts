@@ -1,4 +1,5 @@
 import { User, Badge, Contest, Platform } from "../types"
+import { getJoinedText, stringToColor } from "./utils"
 
 export interface BackendBadge {
   badgeId: number
@@ -30,7 +31,6 @@ export interface BackendProfile {
   profileUrl: string
   imageURL?: string
   email?: string
-  asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
   projects?: {
@@ -55,40 +55,6 @@ export interface BackendProfile {
   displayPreferences?: any
 }
 
-function getJoinedText(createdAt?: string): string {
-  if (!createdAt) return "today"
-  const diffDays = Math.floor(
-    (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24),
-  )
-  if (diffDays <= 0) return "today"
-  if (diffDays === 1) return "yesterday"
-  if (diffDays < 7) return "this week"
-  if (diffDays < 30) return "a few weeks ago"
-  if (diffDays < 60) return "this month"
-  if (diffDays < 365) return "few months ago"
-  return "few years ago"
-}
-
-function stringToColor(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const colors = [
-    "#1E3A5F",
-    "#3B1F5E",
-    "#1F4A3B",
-    "#4A3A1F",
-    "#1F3A4A",
-    "#4A1F3A",
-    "#3A4A1F",
-    "#2D1F4A",
-    "#1F4A2D",
-    "#4A2D1F",
-  ]
-  const index = Math.abs(hash) % colors.length
-  return colors[index]
-}
 
 export function mapContributionsToHeatmap(
   contributions?: BackendContribution[],
@@ -149,9 +115,8 @@ export function mapProfileToUser(profile: BackendProfile): User {
     pin: profile.pin,
     email: profile.email,
     pdfUrl: `/api/profile/${profile.userName}/export`,
-    statusMessage: profile.asciiArt ? "ASCII PFP Custom Art Loaded" : undefined,
+    statusMessage: undefined,
     statusTime: "Recently",
-    asciiArt: profile.asciiArt,
     imageURL:
       profile.imageURL ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.profileName || profile.userName)}&background=random`,
@@ -309,7 +274,6 @@ export async function updateProfile(
   designation?: string,
   profileUrl?: string,
   email?: string,
-  asciiArt?: string,
   userName?: string,
   profileName?: string,
   bannerId?: number,
@@ -328,7 +292,6 @@ export async function updateProfile(
       designation,
       profileUrl,
       email,
-      asciiArt,
       userName,
       profileName,
       bannerId,

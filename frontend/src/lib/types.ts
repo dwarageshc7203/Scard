@@ -28,7 +28,6 @@ export interface BackendProfile {
   profileUrl: string
   imageURL?: string
   email?: string
-  asciiArt?: string
   badges?: BackendBadge[]
   contests?: BackendContest[]
   projects?: {

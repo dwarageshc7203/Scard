@@ -65,7 +65,6 @@ public class ProfileService {
                 profile.getPin(),
                 profile.getProfileUrl(),
                 (profile.getCustomImageUrl() != null && !profile.getCustomImageUrl().trim().isEmpty()) ? profile.getCustomImageUrl() : (profile.getUser() != null ? profile.getUser().getImageURL() : null),
-                profile.getAsciiArt(),
                 profile.getBannerId(),
                 profile.getSocials(),
                 profile.getBadges(),
@@ -223,9 +222,6 @@ public class ProfileService {
         }
         if (request.profileUrl() != null) {
             profile.setProfileUrl(request.profileUrl());
-        }
-        if (request.asciiArt() != null) {
-            profile.setAsciiArt(request.asciiArt());
         }
         if (request.userName() != null && !request.userName().isEmpty()) {
             if (!request.userName().equals(profile.getUserName())) {

@@ -9,7 +9,6 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   alt?: string
   size?: "sm" | "md" | "lg" | "xl"
   isOnline?: boolean
-  asciiArt?: string
 }
 
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
@@ -22,7 +21,6 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       alt,
       size = "md",
       isOnline = false,
-      asciiArt,
       ...props
     },
     ref,
@@ -68,20 +66,6 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       </>
     )
 
-    // Fallback cleanup in case stale HTML is passed
-    const cleanAsciiArt = asciiArt?.includes("<span") ? "" : asciiArt
-
-    const renderAscii = () => (
-      <div className="flex h-full w-full items-center justify-center bg-transparent overflow-hidden @container">
-        <pre
-          className="font-mono leading-[0.9] text-center text-text whitespace-pre select-none drop-shadow-md"
-          style={{ fontSize: "calc(100cqw / 49.5)" }} // 90 chars * ~0.55 width ratio = ~49.5
-        >
-          {cleanAsciiArt}
-        </pre>
-      </div>
-    )
-
     return (
       <div
         ref={ref}
@@ -90,35 +74,22 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           sizeClasses[size],
           className,
         )}
-        style={{ perspective: "1000px" }}
         {...props}
       >
         <div
           className={cn(
             "relative h-full w-full rounded-full transition-transform duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-            cleanAsciiArt
-              ? "group-hover:[transform:rotateY(180deg)] [transform-style:preserve-3d]"
-              : "overflow-hidden border border-border bg-surface-2",
+            "overflow-hidden border border-border bg-surface-2",
           )}
         >
           {/* Front Face */}
           <div
             className={cn(
               "absolute inset-0 h-full w-full rounded-full overflow-hidden",
-              cleanAsciiArt
-                ? "[backface-visibility:hidden] border border-border bg-surface-2"
-                : "",
             )}
           >
-            {cleanAsciiArt ? renderAscii() : renderNormal()}
+            {renderNormal()}
           </div>
-
-          {/* Back Face (Only if ASCII exists) */}
-          {cleanAsciiArt && (
-            <div className="absolute inset-0 h-full w-full rounded-full overflow-hidden border border-border bg-surface-2 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-              {renderNormal()}
-            </div>
-          )}
         </div>
       </div>
     )

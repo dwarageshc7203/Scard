@@ -61,9 +61,8 @@ export function mapProfileToUser(profile: BackendProfile): User {
     pin: profile.pin,
     email: profile.email,
     pdfUrl: `/api/profile/${profile.userName}/export`,
-    statusMessage: profile.asciiArt ? "ASCII PFP Custom Art Loaded" : undefined,
+    statusMessage: undefined,
     statusTime: "Recently",
-    asciiArt: profile.asciiArt,
     imageURL:
       profile.imageURL ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.profileName || profile.userName)}&background=random`,

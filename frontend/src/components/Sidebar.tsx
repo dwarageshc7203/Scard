@@ -103,7 +103,7 @@ const Sidebar: FC<SidebarProps> = ({
                 initials={user.initials}
                 color={user.color}
                 src={user.imageURL}
-                asciiArt={user.asciiArt}
+
                 size="md"
                 isOnline={user.isOnline}
               />

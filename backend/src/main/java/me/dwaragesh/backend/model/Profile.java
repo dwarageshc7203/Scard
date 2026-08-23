@@ -34,8 +34,6 @@ public class Profile {
     private String profileUrl;
     private String customImageUrl;
 
-    @Column(columnDefinition = "TEXT")
-    private String asciiArt;
 
     /**
      * The banner selected for this profile card.

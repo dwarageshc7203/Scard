@@ -15,7 +15,6 @@ public record ProfileResponse(
         String pin,
         String profileUrl,
         String imageURL,
-        String asciiArt,
         Integer bannerId,
         List<String> socials,
         List<Badge> badges,

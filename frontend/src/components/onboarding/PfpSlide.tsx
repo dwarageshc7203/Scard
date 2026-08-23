@@ -4,7 +4,7 @@ import Image from "../ui/Image"
 
 interface PfpSlideProps {
   initialImageUrl: string
-  onNext: (uploadedUrl: string, ascii: string, desig: string, tag: string) => void
+  onNext: (uploadedUrl: string, desig: string, tag: string) => void
   onPrev: () => void
 }
 
@@ -14,8 +14,8 @@ export default function PfpSlide({ initialImageUrl, onNext, onPrev }: PfpSlidePr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // We pass empty strings for ascii, designation, and tagline as requested.
-    onNext(photoBase64, "", "", "")
+    // We pass empty strings for designation, and tagline as requested.
+    onNext(photoBase64, "", "")
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

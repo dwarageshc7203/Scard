@@ -41,7 +41,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   const [leetcode, setLeetcode] = useState("")
   const [github, setGithub] = useState("")
   const [pfpUrl, setPfpUrl] = useState("")
-  const [asciiArt, setAsciiArt] = useState("")
+
   const [designation, setDesignation] = useState("")
   const [tagline, setTagline] = useState("")
 
@@ -76,9 +76,8 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   }
 
   // Slide 4: Save PFP temporarily
-  const handlePfpNext = (url: string, ascii: string, desig: string, tag: string) => {
+  const handlePfpNext = (url: string, desig: string, tag: string) => {
     setPfpUrl(url)
-    setAsciiArt(ascii)
     setDesignation(desig)
     setTagline(tag)
     nextStep()
@@ -101,7 +100,6 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
         finalDesignation,
         undefined, // profileUrl should not be the base64 PFP
         mailAddress || undefined,
-        asciiArt || undefined,
         username,
         tagline || username,
         undefined,

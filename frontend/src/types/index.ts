@@ -46,7 +46,6 @@ export interface User {
   statusMessage?: string
   statusTime?: string
   email?: string
-  asciiArt?: string
   imageURL?: string
   bannerId?: number
   initials: string

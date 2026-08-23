@@ -33,7 +33,6 @@ import {
   checkLinkedin,
   checkMail,
 } from "../lib/api"
-import { generateAsciiFromImage, generateAsciiFromBase64 } from "../lib/ascii"
 import { useTheme } from "../context/ThemeContext"
 import Image from "./ui/Image"
 import ValidationTooltip from "./ui/ValidationTooltip"
@@ -210,15 +209,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   }
 
   // Photo / ASCII
-  const [useAscii, setUseAscii] = useState(
-    !!user.asciiArt && !user.asciiArt.includes("<span"),
-  )
-  const [generatedAscii, setGeneratedAscii] = useState(() => {
-    const initial = user.asciiArt || ""
-    // If it contains stale HTML tags from previous version, clear it so it regenerates
-    return initial.includes("<span") ? "" : initial
-  })
-  const [showAsciiPreview, setShowAsciiPreview] = useState(false)
   const [photoBase64, setPhotoBase64] = useState<string>("")
   const [photoFile, setPhotoFile] = useState<File | null>(null)
 
@@ -441,14 +431,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     }
   }, [])
 
-  // Auto-generate ASCII from existing photo if missing
-  useEffect(() => {
-    if (photoBase64 && !generatedAscii) {
-      generateAsciiFromBase64(photoBase64)
-        .then(setGeneratedAscii)
-        .catch(console.error)
-    }
-  }, [photoBase64, generatedAscii])
 
   const handleSave = async () => {
     setSaving(true)
@@ -479,10 +461,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         }
       }
 
-      if (uploadFile && !useAscii) {
+      if (uploadFile) {
         const formData = new FormData()
         formData.append("file", uploadFile)
-        formData.append("ascii", "false")
         try {
           await fetch("/api/profile/pfp", {
             method: "POST",
@@ -492,7 +473,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         } catch (e) {
           console.error("Failed to upload custom image:", e)
         }
-      } else if (!photoBase64 && !useAscii) {
+      } else if (!photoBase64) {
         try {
           await fetch("/api/profile/pfp", {
             method: "DELETE",
@@ -523,7 +504,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           designation,
           undefined,
           undefined,
-          useAscii ? generatedAscii : "",
           username,
           profileName,
           selectedBannerId,
@@ -1330,9 +1310,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                 const file = e.target.files?.[0]
                                 if (file) {
                                   try {
-                                    const ascii =
-                                      await generateAsciiFromImage(file)
-                                    setGeneratedAscii(ascii)
                                     setPhotoFile(file)
                                     const reader = new FileReader()
                                     reader.onload = (re) =>
@@ -1340,8 +1317,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                         re.target?.result as string,
                                       )
                                     reader.readAsDataURL(file)
-                                    // Don't auto-check ASCII, let the user decide
-                                    setUseAscii(false)
                                   } catch (err) {
                                     console.error(err)
                                   }
@@ -1355,8 +1330,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                           onClick={() => {
                             setPhotoFile(null)
                             setPhotoBase64("")
-                            setGeneratedAscii("")
-                            setUseAscii(false)
                           }}
                           className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 rounded-md hover:bg-red-500/20 transition-colors text-xs  border border-red-500/20"
                           title="Remove Photo"
@@ -1375,14 +1348,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             const file = e.target.files?.[0]
                             if (file) {
                               try {
-                                const ascii = await generateAsciiFromImage(file)
-                                setGeneratedAscii(ascii)
                                 setPhotoFile(file)
                                 const reader = new FileReader()
                                 reader.onload = (re) =>
                                   setPhotoBase64(re.target?.result as string)
                                 reader.readAsDataURL(file)
-                                setUseAscii(false)
                               } catch (err) {
                                 console.error(err)
                               }
@@ -1397,56 +1367,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     )}
                   </div>
 
-                  {photoBase64 && generatedAscii && (
-                    <>
-                      <div className="flex items-center justify-between border border-border p-3 rounded-lg bg-surface-2/30 mt-4">
-                        <div>
-                          <div className="text-xs ">Use ASCII Art</div>
-                          <div className="text-[10px] text-muted">
-                            Convert profile photo to ASCII
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={useAscii}
-                            onChange={(e) => setUseAscii(e.target.checked)}
-                          />
-                          <div className="w-9 h-5 bg-border rounded-full peer peer-checked:bg-accent peer-focus:ring-2 peer-focus:ring-accent/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-                        </label>
-                      </div>
 
-                      {useAscii && (
-                        <div className="mt-2">
-                          <Button
-                            onClick={() => setShowAsciiPreview(true)}
-                            variant="outline"
-                            className="w-full border-border text-xs  h-9"
-                          >
-                            Try Out
-                          </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {showAsciiPreview && (
-                    <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm z-10 rounded-lg p-4 flex flex-col items-center justify-center animate-fade-in-blur">
-                      <button
-                        onClick={() => setShowAsciiPreview(false)}
-                        className="absolute top-2 right-2 p-1.5 text-muted hover:text-text bg-surface-2 rounded-full shadow-md z-20"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <h4 className="text-xs mb-4">ASCII Preview</h4>
-                      <div className="bg-surface-2 p-4 rounded-lg overflow-auto max-w-full max-h-[250px] shadow-lg border border-border">
-                        <pre className="text-[6px] sm:text-[8px] font-mono leading-[1.1] text-text whitespace-pre">
-                          {generatedAscii}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : activeSection === "banner" ? (
                 <div className="space-y-5 flex-1">

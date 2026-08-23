@@ -26,8 +26,6 @@ public record PatchProfileRequest(
         @Size(max = 254, message = "Email must be 254 characters or fewer")
         String email,
 
-        @Size(max = 50000, message = "ASCII art is too large")
-        String asciiArt,
 
         Integer bannerId,
 
