@@ -4,6 +4,7 @@ import me.dwaragesh.backend.model.Banner;
 import me.dwaragesh.backend.model.Profile;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +26,9 @@ public class OgImageController {
 
     @Autowired
     private ProfileRepository profileRepository;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @GetMapping(value = {"/api/og/{userName}.png", "/api/og/{userName}"}, produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateOgImage(@PathVariable String userName) {
@@ -66,9 +70,10 @@ public class OgImageController {
                         String imageUrl = bg.replaceAll(".*url\\(['\"]?([^'\")]+)['\"]?\\).*", "$1");
                         BufferedImage bannerImg = null;
                         if (imageUrl.startsWith("http")) {
-                            bannerImg = ImageIO.read(new URL(imageUrl));
+                            java.net.URLConnection conn = new URL(imageUrl).openConnection();
+                            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                            bannerImg = ImageIO.read(conn.getInputStream());
                         } else if (imageUrl.startsWith("/")) {
-                            // Relative static asset inside classpath or frontend build (e.g. /banners/mountain-abstract.jpg)
                             java.io.File bannerFile = new java.io.File("./static" + imageUrl);
                             if (!bannerFile.exists()) {
                                 bannerFile = new java.io.File("/app/static" + imageUrl);
@@ -78,7 +83,6 @@ public class OgImageController {
                             }
                         }
                         if (bannerImg != null) {
-                            // Draw background keeping aspect ratio fill
                             double scale = Math.max((double) width / bannerImg.getWidth(), (double) height / bannerImg.getHeight());
                             int w = (int) (bannerImg.getWidth() * scale);
                             int h = (int) (bannerImg.getHeight() * scale);
@@ -99,7 +103,7 @@ public class OgImageController {
                             else if (match.equalsIgnoreCase("white")) colors.add(Color.WHITE);
                             else if (match.startsWith("#")) {
                                 String hex = match;
-                                if (hex.length() == 4) { // #abc -> #aabbcc
+                                if (hex.length() == 4) {
                                     hex = "#" + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2) + hex.charAt(3) + hex.charAt(3);
                                 }
                                 colors.add(Color.decode(hex));
@@ -117,19 +121,17 @@ public class OgImageController {
             }
 
             if (!bannerDrawn) {
-                // Dark cosmic gradient default
                 GradientPaint defaultBg = new GradientPaint(0, 0, new Color(20, 30, 48), width, height, new Color(36, 59, 85));
                 g2d.setPaint(defaultBg);
                 g2d.fillRect(0, 0, width, height);
             }
 
-            // Light semi-transparent overlay (0.25f) so banner pops while text remains readable
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, width, height);
             g2d.setComposite(AlphaComposite.SrcOver);
 
-            // 2. Center-Left PFP Avatar (Size: 220x220)
+            // 2. Center-Left PFP Avatar
             int avatarSize = 220;
             int avatarX = 90;
             int avatarY = (height - avatarSize) / 2;
@@ -143,16 +145,17 @@ public class OgImageController {
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 try {
                     if (avatarUrl.startsWith("http")) {
-                        avatarImg = ImageIO.read(new URL(avatarUrl));
+                        java.net.URLConnection conn = new URL(avatarUrl).openConnection();
+                        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                        avatarImg = ImageIO.read(conn.getInputStream());
                     } else {
-                        // Resolve uploaded file relative to current directory and /app/uploads
                         String filename = avatarUrl.substring(avatarUrl.lastIndexOf('/') + 1);
-                        java.io.File file = new java.io.File("./uploads/" + filename);
+                        java.io.File file = new java.io.File(uploadDir, filename);
                         if (!file.exists()) {
-                            file = new java.io.File("/app/uploads/" + filename);
+                            file = new java.io.File("./uploads/" + filename);
                         }
                         if (!file.exists()) {
-                            file = new java.io.File("uploads/" + filename);
+                            file = new java.io.File("/app/uploads/" + filename);
                         }
                         if (file.exists()) {
                             avatarImg = ImageIO.read(file);
