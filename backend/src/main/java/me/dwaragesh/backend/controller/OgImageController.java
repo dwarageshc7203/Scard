@@ -64,18 +64,37 @@ public class OgImageController {
                         if (imageUrl.startsWith("http")) {
                             BufferedImage bannerImg = ImageIO.read(new URL(imageUrl));
                             if (bannerImg != null) {
-                                g2d.drawImage(bannerImg, 0, 0, width, height, null);
+                                // Draw background keeping aspect ratio fill
+                                double scale = Math.max((double) width / bannerImg.getWidth(), (double) height / bannerImg.getHeight());
+                                int w = (int) (bannerImg.getWidth() * scale);
+                                int h = (int) (bannerImg.getHeight() * scale);
+                                int x = (width - w) / 2;
+                                int y = (height - h) / 2;
+                                g2d.drawImage(bannerImg, x, y, w, h, null);
                                 bannerDrawn = true;
                             }
                         }
                     } catch (Exception ignored) {
                     }
                 } else if (bg.contains("linear-gradient")) {
-                    // Render linear gradient background fallback
-                    GradientPaint grad = new GradientPaint(0, 0, new Color(40, 40, 50), width, height, new Color(15, 23, 42));
-                    g2d.setPaint(grad);
-                    g2d.fillRect(0, 0, width, height);
-                    bannerDrawn = true;
+                    // Try parsing colors from linear-gradient string e.g. linear-gradient(to right, #434343 0%, black 100%)
+                    try {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("#[a-fA-F0-9]{3,6}|rgba?\\([^)]+\\)|black|white").matcher(bg);
+                        java.util.List<Color> colors = new java.util.ArrayList<>();
+                        while (m.find()) {
+                            String match = m.group();
+                            if (match.equalsIgnoreCase("black")) colors.add(Color.BLACK);
+                            else if (match.equalsIgnoreCase("white")) colors.add(Color.WHITE);
+                            else if (match.startsWith("#")) colors.add(Color.decode(match));
+                        }
+                        if (colors.size() >= 2) {
+                            GradientPaint grad = new GradientPaint(0, 0, colors.get(0), width, height, colors.get(colors.size() - 1));
+                            g2d.setPaint(grad);
+                            g2d.fillRect(0, 0, width, height);
+                            bannerDrawn = true;
+                        }
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 
@@ -86,15 +105,15 @@ public class OgImageController {
                 g2d.fillRect(0, 0, width, height);
             }
 
-            // Dark semi-transparent overlay for contrast
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+            // Dark semi-transparent overlay for readability
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.40f));
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, width, height);
             g2d.setComposite(AlphaComposite.SrcOver);
 
-            // 2. Center-Left PFP Avatar (Size: 220x220, Pos: X=100, Y=205)
+            // 2. Center-Left PFP Avatar (Size: 220x220)
             int avatarSize = 220;
-            int avatarX = 100;
+            int avatarX = 90;
             int avatarY = (height - avatarSize) / 2;
 
             BufferedImage avatarImg = null;
@@ -121,23 +140,41 @@ public class OgImageController {
                 }
             }
 
-            // Draw white ring background around avatar
-            g2d.setColor(new Color(255, 255, 255, 60));
-            g2d.fillOval(avatarX - 8, avatarY - 8, avatarSize + 16, avatarSize + 16);
-
             if (avatarImg != null) {
                 BufferedImage circleAvatar = new BufferedImage(avatarSize, avatarSize, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D gAvatar = circleAvatar.createGraphics();
                 gAvatar.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                gAvatar.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                
+                // Circular clipping path
                 gAvatar.setClip(new Ellipse2D.Float(0, 0, avatarSize, avatarSize));
-                gAvatar.drawImage(avatarImg, 0, 0, avatarSize, avatarSize, null);
+                
+                // Crop and scale keeping aspect ratio
+                double scale = Math.max((double) avatarSize / avatarImg.getWidth(), (double) avatarSize / avatarImg.getHeight());
+                int w = (int) (avatarImg.getWidth() * scale);
+                int h = (int) (avatarImg.getHeight() * scale);
+                int x = (avatarSize - w) / 2;
+                int y = (avatarSize - h) / 2;
+                
+                gAvatar.drawImage(avatarImg, x, y, w, h, null);
+                
+                // Subtle white border around circular avatar
+                gAvatar.setClip(null);
+                gAvatar.setStroke(new BasicStroke(4.0f));
+                gAvatar.setColor(new Color(255, 255, 255, 180));
+                gAvatar.drawOval(2, 2, avatarSize - 4, avatarSize - 4);
+                
                 gAvatar.dispose();
 
                 g2d.drawImage(circleAvatar, avatarX, avatarY, null);
             } else {
                 // Initial Letter Avatar Fallback
-                g2d.setColor(new Color(40, 40, 50));
+                g2d.setColor(new Color(30, 41, 59));
                 g2d.fillOval(avatarX, avatarY, avatarSize, avatarSize);
+                g2d.setStroke(new BasicStroke(4.0f));
+                g2d.setColor(new Color(255, 255, 255, 180));
+                g2d.drawOval(avatarX + 2, avatarY + 2, avatarSize - 4, avatarSize - 4);
+                
                 g2d.setColor(Color.WHITE);
                 g2d.setFont(new Font("SansSerif", Font.BOLD, 90));
                 FontMetrics fm = g2d.getFontMetrics();
@@ -148,31 +185,31 @@ public class OgImageController {
             }
 
             // 3. Center-Right Display Name and Username Text
-            int textX = avatarX + avatarSize + 60;
+            int textX = avatarX + avatarSize + 50;
 
             // Display Name
-            g2d.setFont(new Font("SansSerif", Font.BOLD, 64));
+            g2d.setFont(new Font("SansSerif", Font.BOLD, 60));
             g2d.setColor(Color.WHITE);
             FontMetrics nameFm = g2d.getFontMetrics();
-            int nameY = (height / 2) - 15;
+            int nameY = (height / 2) - 10;
             g2d.drawString(displayName, textX, nameY);
 
             // Username (@handle)
-            g2d.setFont(new Font("SansSerif", Font.PLAIN, 38));
-            g2d.setColor(new Color(200, 210, 225));
-            g2d.drawString(handle, textX, nameY + nameFm.getHeight() + 10);
+            g2d.setFont(new Font("SansSerif", Font.PLAIN, 36));
+            g2d.setColor(new Color(226, 232, 240));
+            g2d.drawString(handle, textX, nameY + nameFm.getHeight() + 8);
 
             // Designation / Title (if present)
             if (profile.getDesignation() != null && !profile.getDesignation().trim().isEmpty()) {
-                g2d.setFont(new Font("SansSerif", Font.PLAIN, 30));
-                g2d.setColor(new Color(170, 180, 200));
-                g2d.drawString(profile.getDesignation(), textX, nameY + nameFm.getHeight() + 60);
+                g2d.setFont(new Font("SansSerif", Font.PLAIN, 28));
+                g2d.setColor(new Color(148, 163, 184));
+                g2d.drawString(profile.getDesignation(), textX, nameY + nameFm.getHeight() + 54);
             }
 
-            // Scard Branding Tag (Bottom Right)
-            g2d.setFont(new Font("SansSerif", Font.BOLD, 26));
-            g2d.setColor(new Color(255, 255, 255, 180));
-            g2d.drawString("scard.dwaragesh.me", width - 280, height - 50);
+            // Clean Scard Branding Tag (Bottom Right)
+            g2d.setFont(new Font("SansSerif", Font.BOLD, 24));
+            g2d.setColor(new Color(255, 255, 255, 140));
+            g2d.drawString("scard.dwaragesh.me", width - 270, height - 40);
 
             g2d.dispose();
 
