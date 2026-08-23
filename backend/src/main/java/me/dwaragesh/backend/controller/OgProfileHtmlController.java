@@ -28,6 +28,37 @@ public class OgProfileHtmlController {
             "telegrambot", "slackbot", "discordbot", "pinterest", "bingbot"
     );
 
+    @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> getSiteHtml(@RequestHeader(value = "User-Agent", required = false) String userAgent) {
+        String title = "Scard — Developer Profile & Card Showcase";
+        String description = "Scard streamlines developer profile showcase by allowing users to display tech stacks, projects, github stats, and social links.";
+        String ogImageUrl = baseUrl + "/logos/scard-1.png";
+
+        String html = "<!doctype html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head>\n" +
+                "  <meta charset=\"UTF-8\">\n" +
+                "  <title>" + escapeHtml(title) + "</title>\n" +
+                "  <meta name=\"description\" content=\"" + escapeHtml(description) + "\">\n" +
+                "  <meta property=\"og:type\" content=\"website\">\n" +
+                "  <meta property=\"og:title\" content=\"" + escapeHtml(title) + "\">\n" +
+                "  <meta property=\"og:description\" content=\"" + escapeHtml(description) + "\">\n" +
+                "  <meta property=\"og:url\" content=\"" + baseUrl + "/\">\n" +
+                "  <meta property=\"og:image\" content=\"" + ogImageUrl + "\">\n" +
+                "  <meta name=\"twitter:card\" content=\"summary_large_image\">\n" +
+                "  <meta name=\"twitter:title\" content=\"" + escapeHtml(title) + "\">\n" +
+                "  <meta name=\"twitter:description\" content=\"" + escapeHtml(description) + "\">\n" +
+                "  <meta name=\"twitter:image\" content=\"" + ogImageUrl + "\">\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "  <h1>" + escapeHtml(title) + "</h1>\n" +
+                "  <p>" + escapeHtml(description) + "</p>\n" +
+                "</body>\n" +
+                "</html>";
+
+        return ResponseEntity.ok(html);
+    }
+
     @GetMapping(value = "/{userName}", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> getProfileHtml(
             @PathVariable String userName,
