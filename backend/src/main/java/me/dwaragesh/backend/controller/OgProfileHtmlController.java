@@ -64,7 +64,7 @@ public class OgProfileHtmlController {
                 ? profile.getDesignation()
                 : "Check out @" + profile.getUserName() + "'s developer profile on Scard.";
 
-        String ogImageUrl = baseUrl + "/api/og/" + profile.getUserName() + ".png";
+        String ogImageUrl = baseUrl + "/api/og/" + profile.getUserName();
         String profilePageUrl = baseUrl + "/" + profile.getUserName();
 
         String html = "<!doctype html>\n" +
