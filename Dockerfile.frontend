@@ -16,6 +16,9 @@ RUN echo 'server { \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
+        if ($http_user_agent ~* (facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|pinterest|bingbot)) { \
+            proxy_pass http://backend:8080; \
+        } \
         try_files $uri $uri/ /index.html; \
     } \
     location /api/ { \

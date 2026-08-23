@@ -49,6 +49,7 @@ public class SecurityConfig {
                         // ── PUBLIC static/asset endpoints ────────────────────────────────────
                         .requestMatchers("/api/banners").permitAll()
                         .requestMatchers("/api/images/**").permitAll()
+                        .requestMatchers("/api/og/**").permitAll()
 
                         // ── EVERYTHING ELSE under /api requires authentication ────────────────
                         .requestMatchers("/api/**").authenticated()
