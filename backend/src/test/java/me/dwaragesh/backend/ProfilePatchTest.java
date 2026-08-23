@@ -28,8 +28,10 @@ public class ProfilePatchTest {
         List<Project> projs = new ArrayList<>();
         Project p1 = new Project(); p1.setName("Proj1"); projs.add(p1);
         
-        PatchProfileRequest req = new PatchProfileRequest("Dev", "url", "test2", "Test Two", "test2@example.com", "ascii", 1, Arrays.asList("t:t"), projs);
-        
+        PatchProfileRequest req = new PatchProfileRequest(
+            "Senior Dev", "https://newurl.com", "test@test.com", "ASCII",
+            "newuser", "New Name", 1, Arrays.asList("t:t"), projs, null
+        );
         profileService.patchProfile(user, req);
     }
 }

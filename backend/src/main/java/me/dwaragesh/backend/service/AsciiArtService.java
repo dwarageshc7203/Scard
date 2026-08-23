@@ -73,13 +73,48 @@ public class AsciiArtService {
         return "/uploads/" + filename;
     }
 
+    private static final java.util.Set<String> ALLOWED_CONTENT_TYPES =
+            java.util.Set.of("image/png", "image/jpeg", "image/gif", "image/webp");
+
+    private static final java.util.Map<byte[], String> MAGIC_BYTES = new java.util.LinkedHashMap<>() {{
+        put(new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF}, "image/jpeg");
+        put(new byte[]{(byte)0x89, 0x50, 0x4E, 0x47}, "image/png");
+        put(new byte[]{0x47, 0x49, 0x46, 0x38}, "image/gif");
+        put(new byte[]{0x52, 0x49, 0x46, 0x46}, "image/webp"); // RIFF header
+    }};
+
     private void validateImage(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file is empty");
+        }
         if (file.getSize() > 5 * 1024 * 1024) {
             throw new IllegalArgumentException("File size exceeds the 5MB limit");
         }
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Uploaded file is not a valid image");
+        // Validate by magic bytes — not the user-controlled Content-Type header
+        try {
+            byte[] header = new byte[12];
+            try (java.io.InputStream is = file.getInputStream()) {
+                int bytesRead = is.read(header);
+                if (bytesRead < 4) {
+                    throw new IllegalArgumentException("File too small to be a valid image");
+                }
+            }
+            boolean validMagic = false;
+            for (java.util.Map.Entry<byte[], String> entry : MAGIC_BYTES.entrySet()) {
+                byte[] magic = entry.getKey();
+                boolean matches = true;
+                for (int i = 0; i < magic.length && i < header.length; i++) {
+                    if (header[i] != magic[i]) { matches = false; break; }
+                }
+                if (matches) { validMagic = true; break; }
+            }
+            if (!validMagic) {
+                throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG, GIF, WebP)");
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not validate image file: " + e.getMessage());
         }
     }
 

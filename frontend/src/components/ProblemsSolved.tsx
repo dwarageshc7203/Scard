@@ -23,11 +23,6 @@ const platformConfig: Record<string, {
     color: "#FFA116",
     label: "LeetCode",
   },
-  CODEFORCES: {
-    logo: "https://cdn.iconscout.com/icon/free/png-256/code-forces-3628695-3029920.png",
-    color: "#1F8ACB",
-    label: "Codeforces",
-  },
   HACKERRANK: {
     logo: "https://upload.wikimedia.org/wikipedia/commons/4/40/HackerRank_Icon-1000px.png",
     color: "#00EA64",

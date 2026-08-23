@@ -5,6 +5,7 @@ import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
 import me.dwaragesh.backend.service.ProfileService;
 import me.dwaragesh.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,7 +42,7 @@ public class ProfileController {
     }
 
     @PatchMapping
-    public ResponseEntity<ProfileResponse> patchProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody PatchProfileRequest request) {
+    public ResponseEntity<ProfileResponse> patchProfile(@AuthenticationPrincipal OidcUser principal, @Valid @RequestBody PatchProfileRequest request) {
         if (principal == null) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
         }
@@ -92,7 +93,7 @@ public class ProfileController {
     }
 
     @PostMapping
-    public ResponseEntity<ProfileResponse> createProfile(@AuthenticationPrincipal OidcUser principal, @RequestBody me.dwaragesh.backend.model.dto.OnBoardingRequest request) {
+    public ResponseEntity<ProfileResponse> createProfile(@AuthenticationPrincipal OidcUser principal, @Valid @RequestBody me.dwaragesh.backend.model.dto.OnBoardingRequest request) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

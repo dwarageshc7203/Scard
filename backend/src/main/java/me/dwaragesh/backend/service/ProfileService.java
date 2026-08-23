@@ -167,11 +167,16 @@ public class ProfileService {
         return trimmed;
     }
 
+    private String escapeLikePattern(String str) {
+        if (str == null) return null;
+        return str.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
     @Transactional(readOnly = true)
     public String checkLinkedinOwner(String username) {
-        java.util.List<String> owners = repository.findUserNameByLinkedin(extractUsernameFromUrl(username));
+        java.util.List<String> owners = repository.findUserNameByLinkedin(escapeLikePattern(extractUsernameFromUrl(username)));
         if (owners.isEmpty()) {
-            owners = repository.findUserNameByLinkedin(username);
+            owners = repository.findUserNameByLinkedin(escapeLikePattern(username));
         }
         return owners.isEmpty() ? null : owners.get(0);
     }

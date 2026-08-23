@@ -61,9 +61,7 @@ public class SecurityConfig {
                         .failureUrl(frontendUrl + "/?error=oauth_failure")
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(request ->
-                                request.getServletPath().equals("/logout") &&
-                                request.getMethod().equals("GET"))
+                        .logoutUrl("/logout")
                         .logoutSuccessUrl(frontendUrl + "/?logout=success")
                         .permitAll()
                 )
@@ -80,7 +78,7 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(
                         new CsrfCookieFilter(),
-                        org.springframework.security.web.authentication.www.BasicAuthenticationFilter.class
+                        org.springframework.security.web.authentication.AnonymousAuthenticationFilter.class
                 );
 
         return http.build();

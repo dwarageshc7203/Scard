@@ -16,6 +16,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class MigrationRunner {
 
@@ -53,7 +56,7 @@ public class MigrationRunner {
                                 contributionRepository.save(c);
                             }
                         } catch (Exception e) {
-                            System.err.println("Skipping malformed contribution record for profile " + profile.getProfileId());
+                            log.warn("Skipping malformed contribution record for profile {}", profile.getProfileId());
                         }
                     }
                     
@@ -62,7 +65,7 @@ public class MigrationRunner {
                     profileRepository.save(profile);
 
                 } catch (Exception e) {
-                    System.err.println("Failed to migrate heatmapJson for profile " + profile.getProfileId() + ": " + e.getMessage());
+                    log.error("Failed to migrate heatmapJson for profile {}: {}", profile.getProfileId(), e.getMessage());
                 }
             }
         }

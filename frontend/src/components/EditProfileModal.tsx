@@ -26,6 +26,7 @@ import {
   syncPlatform,
   checkUsername,
   deleteAccount,
+  logoutUser,
   fetchBanners,
   checkGithub,
   checkLeetcode,
@@ -97,11 +98,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   const [leetcodeError, setLeetcodeError] = useState("")
   const [leetcodeSuccess, setLeetcodeSuccess] = useState(false)
 
-  const [codeforcesUser, setCodeforcesUser] = useState(
-    extractUsername(
-      savedSocials.codeforcesUrl || user.socials?.codeforces || "",
-    ),
-  )
 
   const savedPrefs = JSON.parse(
     localStorage.getItem(`platform_prefs_${user.username}`) || "{}",
@@ -270,32 +266,38 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   // Debounced GitHub check
   useEffect(() => {
     let isMounted = true
-    const check = async () => {
-      if (!githubUser.trim() || githubUser === extractUsername(user.socials?.github || "")) {
-        if (isMounted) {
-          setGithubChecking(false)
-          setGithubError("")
-          setGithubSuccess(false)
-        }
-        return
-      }
-      setGithubChecking(true)
-      setGithubSuccess(false)
+    if (!githubUser.trim() || githubUser === extractUsername(user.socials?.github || "")) {
+      setGithubChecking(false)
       setGithubError("")
+      setGithubSuccess(false)
+      return
+    }
+
+    setGithubChecking(true)
+    setGithubSuccess(false)
+    setGithubError("")
+
+    const check = async () => {
       try {
-        const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`)
-        if (res.status !== 200) {
-          if (isMounted) setGithubError("GitHub user not found")
-        } else {
-          const dbCheck = await checkGithub(githubUser.trim())
-          if (isMounted) {
-            if (dbCheck.taken) {
-              setGithubError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
-            } else {
-              setGithubSuccess(true)
-            }
+        const dbCheck = await checkGithub(githubUser.trim())
+        if (isMounted) {
+          if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
+            setGithubError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+            return
           }
         }
+        
+        try {
+          const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`)
+          if (res.status === 404) {
+            if (isMounted) setGithubError("GitHub user not found")
+            return
+          }
+        } catch (e) {
+          // Ignore external API errors
+        }
+        
+        if (isMounted) setGithubSuccess(true)
       } catch (err) {
         if (isMounted) setGithubError("Error checking GitHub")
       } finally {
@@ -309,37 +311,49 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   // Debounced LeetCode check
   useEffect(() => {
     let isMounted = true
-    const check = async () => {
-      if (!leetcodeUser.trim() || leetcodeUser === extractUsername(user.socials?.leetcode || "")) {
-        if (isMounted) {
-          setLeetcodeChecking(false)
-          setLeetcodeError("")
-          setLeetcodeSuccess(false)
-        }
-        return
-      }
-      setLeetcodeChecking(true)
-      setLeetcodeSuccess(false)
+    if (!leetcodeUser.trim() || leetcodeUser === extractUsername(user.socials?.leetcode || "")) {
+      setLeetcodeChecking(false)
       setLeetcodeError("")
+      setLeetcodeSuccess(false)
+      return
+    }
+
+    setLeetcodeChecking(true)
+    setLeetcodeSuccess(false)
+    setLeetcodeError("")
+
+    const check = async () => {
       try {
-        const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`)
-        if (res.status !== 200) {
-          if (isMounted) setLeetcodeError("LeetCode user not found")
-        } else {
-          const data = await res.json()
-          if (data.errors) {
-            if (isMounted) setLeetcodeError("LeetCode user not found")
-          } else {
-            const dbCheck = await checkLeetcode(leetcodeUser.trim())
-            if (isMounted) {
-              if (dbCheck.taken) {
-                setLeetcodeError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
-              } else {
-                setLeetcodeSuccess(true)
-              }
-            }
+        const dbCheck = await checkLeetcode(leetcodeUser.trim())
+        if (isMounted) {
+          if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
+            setLeetcodeError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+            return
           }
         }
+
+        try {
+          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`)
+          if (res.status === 404) {
+            if (isMounted) setLeetcodeError("LeetCode user not found")
+            return
+          } else if (res.status === 200) {
+            const text = await res.text()
+            try {
+              const data = JSON.parse(text)
+              if (data.errors) {
+                if (isMounted) setLeetcodeError("LeetCode user not found")
+                return
+              }
+            } catch (e) {
+              // Not JSON (e.g. rate limit text), ignore and let it succeed
+            }
+          }
+        } catch (e) {
+          // Ignore external API errors
+        }
+        
+        if (isMounted) setLeetcodeSuccess(true)
       } catch (err) {
         if (isMounted) setLeetcodeError("Error checking LeetCode")
       } finally {
@@ -359,26 +373,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       const url = social.url.trim()
       if (!url) return
       if (social.type !== "linkedin" && social.type !== "mail") return
-      
+
       // Skip if this matches user's initial saved customSocials URL
       const initialSocial = (user.customSocials || []).find(s => s.type === social.type && s.url.trim() === url)
       if (initialSocial) return
 
-      // Skip if we already checked or are currently checking
-      if (social.checking || social.success || social.error) return
+      // Wait until checking is synchronously set to true in onChange, and skip if already finished
+      if (!social.checking || social.success || social.error) return
 
       const timer = setTimeout(async () => {
         try {
-          if (isMounted) {
-            setCustomSocials(prev => {
-              const next = [...prev];
-              if (next[idx]) {
-                next[idx] = { ...next[idx], checking: true, error: "", success: false };
-              }
-              return next;
-            });
-          }
-
           let dbCheck = { taken: false, ownerUsername: "" };
           if (social.type === "linkedin") {
             dbCheck = await checkLinkedin(url) as any;
@@ -390,7 +394,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
             setCustomSocials(prev => {
               const next = [...prev];
               if (next[idx]) {
-                if (dbCheck.taken) {
+                if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
                   next[idx] = { ...next[idx], checking: false, error: `This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries` };
                 } else {
                   next[idx] = { ...next[idx], checking: false, success: true };
@@ -453,14 +457,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       const leetcodeUrl = leetcodeUser
         ? `https://leetcode.com/${leetcodeUser}`
         : ""
-      const codeforcesUrl = codeforcesUser
-        ? `https://codeforces.com/profile/${codeforcesUser}`
-        : ""
-
       // 1. Save connection links & avatar to localStorage
       localStorage.setItem(
         `socials_${user.username}`,
-        JSON.stringify({ githubUrl, leetcodeUrl, codeforcesUrl }),
+        JSON.stringify({ githubUrl, leetcodeUrl }),
       )
       let uploadFile = photoFile
       if (!uploadFile && photoBase64 && photoBase64.startsWith("data:image")) {
@@ -508,7 +508,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         const mappedSocials = customSocials.map((s) => `${s.type}:${s.url}`)
         if (githubUser) mappedSocials.push(`GITHUB:${githubUser}`)
         if (leetcodeUser) mappedSocials.push(`LEETCODE:${leetcodeUser}`)
-        if (codeforcesUser) mappedSocials.push(`CODEFORCES:${codeforcesUser}`)
+
         const platformPreferences = {
           leetcode: {
             showRating: leetcodeShowRating,
@@ -542,7 +542,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
 
       const ghUser = githubUser
       const lcUser = leetcodeUser
-      const cfUser = codeforcesUser
+
 
       // 3. Sync platforms with backend in parallel
       const syncPromises = []
@@ -558,14 +558,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         syncPromises.push(
           syncPlatform("LEETCODE", lcUser).catch((e) => {
             console.error("LeetCode sync failed:", e)
-            toast.error(e.message)
-          }),
-        )
-      }
-      if (cfUser) {
-        syncPromises.push(
-          syncPlatform("CODEFORCES", cfUser).catch((e) => {
-            console.error("Codeforces sync failed:", e)
             toast.error(e.message)
           }),
         )
@@ -611,7 +603,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       updatedUser.socials = {
         github: githubUrl || updatedUser.socials?.github,
         leetcode: leetcodeUrl || updatedUser.socials?.leetcode,
-        codeforces: codeforcesUrl || updatedUser.socials?.codeforces,
       }
       updatedUser.customSocials = customSocials
       updatedUser.projects = projects
@@ -635,8 +626,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     try {
       await deleteAccount()
       toast.success("Account successfully deleted.")
-      // Redirect to logout endpoint to clear session cookie
-      window.location.href = "/logout"
+      logoutUser()
     } catch (err) {
       console.error("Failed to delete account:", err)
       toast.error("Failed to delete account. Please try again.")
@@ -681,8 +671,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     if (tab === "account") setActiveSection("theme")
                   }}
                   className={`relative flex-1 text-center py-1.5 text-xs rounded-md transition-colors z-10 ${activeTab === tab
-                      ? "text-text"
-                      : "text-muted hover:text-text"
+                    ? "text-text"
+                    : "text-muted hover:text-text"
                     }`}
                 >
                   {activeTab === tab && (
@@ -717,8 +707,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                       key={section.id}
                       onClick={() => setActiveSection(section.id as any)}
                       className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${activeSection === section.id
-                          ? "text-text"
-                          : "text-muted hover:text-text hover:bg-surface/50"
+                        ? "text-text"
+                        : "text-muted hover:text-text hover:bg-surface/50"
                         }`}
                     >
                       {activeSection === section.id && (
@@ -746,8 +736,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                       key={section.id}
                       onClick={() => setActiveSection(section.id as any)}
                       className={`relative shrink-0 md:w-full flex items-center px-3 py-2 text-left text-xs rounded-md transition-colors z-10 ${activeSection === section.id
-                          ? "text-text"
-                          : "text-muted hover:text-text hover:bg-surface/50"
+                        ? "text-text"
+                        : "text-muted hover:text-text hover:bg-surface/50"
                         }`}
                     >
                       {activeSection === section.id && (
@@ -797,8 +787,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                         }
                         placeholder="e.g. dwaragesh"
                         className={`w-full ${isUsernameTaken
-                            ? "border-red-500 focus:ring-red-500"
-                            : ""
+                          ? "border-red-500 focus:ring-red-500"
+                          : ""
                           }`}
                       />
                     </div>
@@ -865,8 +855,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                         icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                         rightIcon={
                           githubChecking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
-                          githubSuccess ? <Check className="w-4 h-4 text-green-500" /> :
-                          githubError ? <X className="w-4 h-4 text-red-500" /> : undefined
+                            githubSuccess ? <Check className="w-4 h-4 text-green-500" /> :
+                              githubError ? <X className="w-4 h-4 text-red-500" /> : undefined
                         }
                       />
                     </div>
@@ -886,8 +876,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                         icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
                         rightIcon={
                           leetcodeChecking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
-                          leetcodeSuccess ? <Check className="w-4 h-4 text-green-500" /> :
-                          leetcodeError ? <X className="w-4 h-4 text-red-500" /> : undefined
+                            leetcodeSuccess ? <Check className="w-4 h-4 text-green-500" /> :
+                              leetcodeError ? <X className="w-4 h-4 text-red-500" /> : undefined
                         }
                       />
                     </div>
@@ -916,14 +906,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setLeetcodeShowRating(!leetcodeShowRating)}
-                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
-                                leetcodeShowRating ? "bg-accent" : "bg-surface border border-border"
-                              }`}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${leetcodeShowRating ? "bg-accent" : "bg-surface border border-border"
+                                }`}
                             >
                               <div
-                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                  leetcodeShowRating ? "translate-x-4" : "translate-x-0"
-                                }`}
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${leetcodeShowRating ? "translate-x-4" : "translate-x-0"
+                                  }`}
                               />
                             </button>
                           </div>
@@ -933,14 +921,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setLeetcodeShowProblems(!leetcodeShowProblems)}
-                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
-                                leetcodeShowProblems ? "bg-accent" : "bg-surface border border-border"
-                              }`}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${leetcodeShowProblems ? "bg-accent" : "bg-surface border border-border"
+                                }`}
                             >
                               <div
-                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                  leetcodeShowProblems ? "translate-x-4" : "translate-x-0"
-                                }`}
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${leetcodeShowProblems ? "translate-x-4" : "translate-x-0"
+                                  }`}
                               />
                             </button>
                           </div>
@@ -950,14 +936,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setLeetcodeShowHeatmap(!leetcodeShowHeatmap)}
-                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
-                                leetcodeShowHeatmap ? "bg-accent" : "bg-surface border border-border"
-                              }`}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${leetcodeShowHeatmap ? "bg-accent" : "bg-surface border border-border"
+                                }`}
                             >
                               <div
-                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                  leetcodeShowHeatmap ? "translate-x-4" : "translate-x-0"
-                                }`}
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${leetcodeShowHeatmap ? "translate-x-4" : "translate-x-0"
+                                  }`}
                               />
                             </button>
                           </div>
@@ -967,33 +951,18 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setLeetcodeShowBadges(!leetcodeShowBadges)}
-                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
-                                leetcodeShowBadges ? "bg-accent" : "bg-surface border border-border"
-                              }`}
+                              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${leetcodeShowBadges ? "bg-accent" : "bg-surface border border-border"
+                                }`}
                             >
                               <div
-                                className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                  leetcodeShowBadges ? "translate-x-4" : "translate-x-0"
-                                }`}
+                                className={`w-4 h-4 rounded-full bg-white transition-transform ${leetcodeShowBadges ? "translate-x-4" : "translate-x-0"
+                                  }`}
                               />
                             </button>
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
-
-                  {/* Codeforces URL */}
-                  <div className="space-y-1.5 border border-border/40 rounded-xl p-3 bg-surface-2/20">
-                    <label className="text-[11px] text-muted">
-                      Codeforces Username
-                    </label>
-                    <Input
-                      value={codeforcesUser}
-                      onChange={(e) => setCodeforcesUser(e.target.value)}
-                      className="bg-surface border-border"
-                      icon={<LinkIcon className="w-3.5 h-3.5 text-muted" />}
-                    />
                   </div>
                 </div>
               ) : activeSection === "socials" ? (
@@ -1031,6 +1000,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                 newSocials[idx].type = e.target.value
                                 newSocials[idx].error = ""
                                 newSocials[idx].success = false
+                                const isCheckable = e.target.value === "linkedin" || e.target.value === "mail"
+                                const url = newSocials[idx].url.trim()
+                                const initial = (user.customSocials || []).find(s => s.type === e.target.value && s.url.trim() === url)
+                                newSocials[idx].checking = isCheckable && url !== "" && !initial
                                 setCustomSocials(newSocials)
                               }}
                             >
@@ -1046,6 +1019,10 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                 newSocials[idx].url = e.target.value
                                 newSocials[idx].error = ""
                                 newSocials[idx].success = false
+                                const isCheckable = newSocials[idx].type === "linkedin" || newSocials[idx].type === "mail"
+                                const url = e.target.value.trim()
+                                const initial = (user.customSocials || []).find(s => s.type === newSocials[idx].type && s.url.trim() === url)
+                                newSocials[idx].checking = isCheckable && url !== "" && !initial
                                 setCustomSocials(newSocials)
                               }}
                               placeholder={
@@ -1058,8 +1035,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                               className={`bg-surface flex-1 ${social.error ? "border-red-500" : social.success ? "border-green-500" : "border-border"}`}
                               rightIcon={
                                 social.checking ? <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" /> :
-                                social.success ? <Check className="w-4 h-4 text-green-500" /> :
-                                social.error ? <X className="w-4 h-4 text-red-500" /> : undefined
+                                  social.success ? <Check className="w-4 h-4 text-green-500" /> :
+                                    social.error ? <X className="w-4 h-4 text-red-500" /> : undefined
                               }
                             />
                             <button
@@ -1481,8 +1458,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                     <div
                       onClick={() => setSelectedBannerId(0)}
                       className={`h-24 rounded-lg border-2 cursor-pointer flex items-center justify-center transition-all bg-surface-2 ${selectedBannerId === 0
-                          ? "border-accent ring-2 ring-accent/30"
-                          : "border-border hover:border-muted"
+                        ? "border-accent ring-2 ring-accent/30"
+                        : "border-border hover:border-muted"
                         }`}
                     >
                       <span className="text-xs text-muted ">
@@ -1494,8 +1471,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                         key={banner.id}
                         onClick={() => setSelectedBannerId(banner.id)}
                         className={`h-24 rounded-lg border-2 cursor-pointer transition-all relative overflow-hidden bg-cover bg-center ${selectedBannerId === banner.id
-                            ? "border-accent ring-2 ring-accent/30"
-                            : "border-border hover:border-muted"
+                          ? "border-accent ring-2 ring-accent/30"
+                          : "border-border hover:border-muted"
                           }`}
                         style={{ backgroundImage: banner.cssBackground }}
                       >
@@ -1517,43 +1494,43 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                   <h3 className="text-sm text-text mb-4">Theme Settings</h3>
 
                   {/* Theme Settings selector mimicking a shadcn tab/select */}
-                <div className="space-y-2">
-                  <label className="text-[11px]  text-muted block">
-                    System Theme
-                  </label>
-                  <div className="flex border border-border rounded-lg bg-surface/30 p-1 max-w-sm">
-                    <button
-                      onClick={() => setTheme("light")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "light"
+                  <div className="space-y-2">
+                    <label className="text-[11px]  text-muted block">
+                      System Theme
+                    </label>
+                    <div className="flex border border-border rounded-lg bg-surface/30 p-1 max-w-sm">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "light"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                        }`}
-                    >
-                      <Sun className="w-3.5 h-3.5" />
-                      <span>Light</span>
-                    </button>
-                    <button
-                      onClick={() => setTheme("dark")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "dark"
+                          }`}
+                      >
+                        <Sun className="w-3.5 h-3.5" />
+                        <span>Light</span>
+                      </button>
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "dark"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                        }`}
-                    >
-                      <Moon className="w-3.5 h-3.5" />
-                      <span>Dark</span>
-                    </button>
-                    <button
-                      onClick={() => setTheme("system")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "system"
+                          }`}
+                      >
+                        <Moon className="w-3.5 h-3.5" />
+                        <span>Dark</span>
+                      </button>
+                      <button
+                        onClick={() => setTheme("system")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs  rounded-md transition-all ${theme === "system"
                           ? "bg-surface text-text border border-border shadow-sm"
                           : "text-muted hover:text-text"
-                        }`}
-                    >
-                      <Monitor className="w-3.5 h-3.5" />
-                      <span>System</span>
-                    </button>
+                          }`}
+                      >
+                        <Monitor className="w-3.5 h-3.5" />
+                        <span>System</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
                 </div>
               ) : activeSection === "danger" ? (
                 <div className="space-y-6 flex-1">

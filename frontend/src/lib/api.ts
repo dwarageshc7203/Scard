@@ -197,17 +197,12 @@ export function mapProfileToUser(profile: BackendProfile): User {
         )
         return s ? `https://leetcode.com/${s.split(":", 2)[1]}` : ""
       })(),
-      codeforces: (() => {
-        const s = (profile.socials || []).find((s) =>
-          s.toLowerCase().startsWith("codeforces:"),
-        )
-        return s ? `https://codeforces.com/profile/${s.split(":", 2)[1]}` : ""
-      })(),
+
     },
     customSocials: (profile.socials || [])
       .filter(
         (s) =>
-          !["github", "leetcode", "codeforces"].includes(
+          !["github", "leetcode"].includes(
             s.split(":", 1)[0].toLowerCase(),
           ),
       )
@@ -358,7 +353,7 @@ export async function fetchAnalytics() {
 }
 
 export async function syncPlatform(
-  platform: "GITHUB" | "LEETCODE" | "CODEFORCES",
+  platform: "GITHUB" | "LEETCODE",
   externalUsername: string,
 ) {
   const res = await fetch("/api/profile/platforms", {
@@ -383,5 +378,24 @@ export async function deleteAccount() {
       "X-XSRF-TOKEN": getCsrfToken(),
     },
   })
-  if (!res.ok) throw new Error("Failed to delete account")
+  if (!res.ok) throw new Error("Failed to delete user")
+}
+
+export function logoutUser() {
+  localStorage.removeItem("scard_username");
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/logout";
+
+  const token = getCsrfToken();
+  if (token) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "_csrf";
+    input.value = token;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
 }

@@ -174,8 +174,8 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
             </h4>
             <div className="flex items-end gap-3 h-[60px]">
               <Image
-                src="/logos/codeforces.png"
-                alt="Codeforces"
+                src="/logos/leetcode.png"
+                alt="LeetCode"
                 className="w-10 h-10 object-contain mr-2 mb-1"
               />
               <div className="w-4 h-full bg-warning rounded-t-sm"></div>
@@ -183,6 +183,7 @@ const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {
               <div className="w-4 h-[40%] bg-red-500 rounded-t-sm"></div>
             </div>
           </div>
+
 
           {/* Card 2 */}
           <div className="bg-surface-2 border border-border rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px] hover:brightness-110 transition-all drop-shadow-sm dark:drop-shadow-none">

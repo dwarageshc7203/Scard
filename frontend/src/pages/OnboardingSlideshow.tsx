@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import confetti from "canvas-confetti"
-import { createProfile, updateProfile, syncPlatform, getCsrfToken } from "../lib/api"
+import { createProfile, updateProfile, syncPlatform, getCsrfToken, logoutUser } from "../lib/api"
 import UsernameSlide from "../components/onboarding/UsernameSlide"
 import SocialsSlide from "../components/onboarding/SocialsSlide"
 import DsaDevSlide from "../components/onboarding/DsaDevSlide"
@@ -178,7 +178,7 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
     <div className="min-h-screen bg-bg text-text flex flex-col items-center py-12 px-6 overflow-hidden relative">
       {/* Top Header Logo */}
       <div className="flex items-center gap-3 mb-16 select-none mt-4">
-        <Image src="/logos/scard-1.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={() => window.location.href = '/logout'} />
+        <Image src="/logos/scard-1.png" alt="Scard Logo" className="w-8 h-8 rounded-lg cursor-pointer" onClick={logoutUser} />
         <span className="text-text text-2xl font-bold font-sans tracking-wide">Scard</span>
       </div>
 

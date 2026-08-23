@@ -56,7 +56,17 @@ public class PlatformController {
         }
 
         try {
-            syncService.syncPlatform(profile, request.platform(), request.externalUsername());
+            String externalUsername = request.externalUsername();
+            if (externalUsername == null || externalUsername.isBlank()) {
+                return ResponseEntity.badRequest().body("External username is required");
+            }
+            if (externalUsername.length() > 50) {
+                return ResponseEntity.badRequest().body("External username must be 50 characters or fewer");
+            }
+            if (!externalUsername.matches("^[a-zA-Z0-9._-]+$")) {
+                return ResponseEntity.badRequest().body("External username contains invalid characters");
+            }
+            syncService.syncPlatform(profile, request.platform(), externalUsername);
             return ResponseEntity.ok("Synced");
         } catch (PlatformFetchException e) {
             // Return 422 with the fetch error message so the frontend can display it

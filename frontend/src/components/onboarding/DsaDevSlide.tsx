@@ -112,39 +112,37 @@ export default function DsaDevSlide({
       }
       try {
         const username = leetcode.trim()
-        // Try direct LeetCode profile check or public API
-        let userExists = false
+
+        const dbCheck = await checkLeetcode(username)
+        if (isMounted && dbCheck.taken) {
+          setErrorDsa(`Already linked to @${dbCheck.ownerUsername}`)
+          setSuccessDsa(false)
+          return
+        }
+
         try {
-          const res = await fetch(`https://leetcode-stats-api.herokuapp.com/${username}`)
+          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${username}`)
+          if (res.status === 404) {
+            if (isMounted) { setErrorDsa("LeetCode user not found"); setSuccessDsa(false) }
+            return
+          }
           if (res.status === 200) {
-            const data = await res.json()
-            if (data.status === "success" || data.totalSolved !== undefined) {
-              userExists = true
+            const text = await res.text()
+            try {
+              const data = JSON.parse(text)
+              if (data.errors) {
+                if (isMounted) { setErrorDsa("LeetCode user not found"); setSuccessDsa(false) }
+                return
+              }
+            } catch {
+              // not JSON — likely rate limited, let it pass
             }
           }
         } catch {
-          // Fallback to Alfa API if primary fails
-          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${username}`)
-          if (res.status === 200) {
-            const data = await res.json()
-            if (!data.errors && data.username) userExists = true
-          }
+          // network/CORS error — let it pass
         }
 
-        if (!userExists) {
-          if (isMounted) { setErrorDsa("LeetCode user not found"); setSuccessDsa(false) }
-        } else {
-          const dbCheck = await checkLeetcode(username)
-          if (isMounted) {
-            if (dbCheck.taken) {
-              setErrorDsa(`Already linked to @${dbCheck.ownerUsername}`)
-              setSuccessDsa(false)
-            } else {
-              setErrorDsa("")
-              setSuccessDsa(true)
-            }
-          }
-        }
+        if (isMounted) { setErrorDsa(""); setSuccessDsa(true) }
       } catch {
         if (isMounted) { setErrorDsa("Error checking LeetCode"); setSuccessDsa(false) }
       } finally {
@@ -166,20 +164,28 @@ export default function DsaDevSlide({
       }
       try {
         const username = github.trim()
-        const res = await fetch(`https://api.github.com/users/${username}`)
-        if (res.status !== 200) {
-          if (isMounted) { setErrorDev("GitHub user not found"); setSuccessDev(false) }
-        } else {
-          const dbCheck = await checkGithub(username)
-          if (isMounted) {
-            if (dbCheck.taken) {
-              setErrorDev(`Already linked to @${dbCheck.ownerUsername}`)
-              setSuccessDev(false)
-            } else {
-              setErrorDev("")
-              setSuccessDev(true)
-            }
+        const dbCheck = await checkGithub(username)
+        if (isMounted) {
+          if (dbCheck.taken) {
+            setErrorDev(`Already linked to @${dbCheck.ownerUsername}`)
+            setSuccessDev(false)
+            return
           }
+        }
+
+        try {
+          const res = await fetch(`https://api.github.com/users/${username}`)
+          if (res.status === 404) {
+            if (isMounted) { setErrorDev("GitHub user not found"); setSuccessDev(false) }
+            return
+          }
+        } catch (e) {
+          // ignore api errors
+        }
+
+        if (isMounted) {
+          setErrorDev("")
+          setSuccessDev(true)
         }
       } catch {
         if (isMounted) { setErrorDev("Error checking GitHub"); setSuccessDev(false) }

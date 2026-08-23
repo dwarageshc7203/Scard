@@ -23,6 +23,9 @@ public class ImageController {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    private static final java.util.Set<String> ALLOWED_IMAGE_TYPES =
+            java.util.Set.of("image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml");
+
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
@@ -37,13 +40,14 @@ public class ImageController {
 
             if (resource.exists() && resource.isReadable()) {
                 String contentType = Files.probeContentType(file);
-                if (contentType == null) {
-                    contentType = "application/octet-stream";
+                if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }
 
                 return ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(contentType))
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .header("X-Content-Type-Options", "nosniff")
                         .body(resource);
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

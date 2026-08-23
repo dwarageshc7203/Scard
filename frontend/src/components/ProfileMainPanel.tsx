@@ -133,7 +133,7 @@ const ProfileMainPanel: FC<ProfileMainPanelProps> = ({ user }) => {
           <div className="flex items-center justify-between">
             <SectionLabel>Contributions Activity</SectionLabel>
             <div className="flex bg-surface-2/50 p-1 rounded-lg text-[10px] font-semibold border border-border/40">
-              {["All", "GitHub", "LeetCode", "CodeForces"].map((platform) => (
+              {["All", "GitHub", "LeetCode"].map((platform) => (
                 <button
                   key={platform}
                   onClick={() => setHeatmapPlatform(platform)}

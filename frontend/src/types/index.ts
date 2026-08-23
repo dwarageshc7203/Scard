@@ -1,4 +1,4 @@
-export type Platform = "github" | "leetcode" | "codeforces" | "hackerrank"
+export type Platform = "github" | "leetcode" | "hackerrank"
 
 export interface Badge {
   platform: Platform
@@ -32,7 +32,6 @@ export interface Project {
 export interface SocialLinks {
   github?: string
   leetcode?: string
-  codeforces?: string
 }
 
 export interface User {

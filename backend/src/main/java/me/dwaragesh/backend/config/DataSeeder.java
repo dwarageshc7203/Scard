@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class DataSeeder implements CommandLineRunner {
 
@@ -33,7 +36,7 @@ public class DataSeeder implements CommandLineRunner {
                 new Banner(0, "Mountains", "url('/banners/mountains.jpg')")
             );
             bannerRepository.saveAll(banners);
-            System.out.println("Seeded predefined banners.");
+            log.info("Seeded {} predefined banners.", banners.size());
         }
     }
 }

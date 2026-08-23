@@ -33,11 +33,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (request.getRequestURI().startsWith("/api/profile/platforms")) {
-            String ip = request.getHeader("X-Forwarded-For");
-            if (ip == null || ip.isEmpty()) {
-                ip = request.getRemoteAddr();
-            }
-
+            // forward-headers-strategy=framework already resolves the real client IP;
+            // never trust a user-supplied X-Forwarded-For header for rate limiting.
+            String ip = request.getRemoteAddr();
             Bucket bucket = resolveBucket(ip);
             if (bucket.tryConsume(1)) {
                 return true;

@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class SyncService {
 
@@ -44,8 +47,7 @@ public class SyncService {
                 } catch (IllegalArgumentException e) {
                     // Ignore socials that are not valid Sync Platforms (like linkedin, mail, twitter)
                 } catch (Exception e) {
-                    // Log fetch errors during background sync
-                    System.err.println("Failed to sync platform for " + parts[0] + ": " + e.getMessage());
+                    log.warn("Failed to sync platform {} during background sync: {}", parts[0], e.getMessage());
                 }
             }
         }
