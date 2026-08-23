@@ -95,7 +95,7 @@ public class OgImageController {
                     }
                 } else if (bg.contains("linear-gradient")) {
                     try {
-                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("#[a-fA-F0-9]{3,6}|rgba?\\([^)]+\\)|black|white").matcher(bg);
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("#[a-fA-F0-9]{3,6}|rgba?\\([0-9,\\s\\.]+\\)|black|white|blue|red|purple").matcher(bg);
                         java.util.List<Color> colors = new java.util.ArrayList<>();
                         while (m.find()) {
                             String match = m.group();
@@ -110,7 +110,12 @@ public class OgImageController {
                             }
                         }
                         if (colors.size() >= 2) {
-                            GradientPaint grad = new GradientPaint(0, 0, colors.get(0), width, height, colors.get(colors.size() - 1));
+                            // Check gradient direction (to right vs to bottom/top)
+                            boolean isHorizontal = bg.contains("to right");
+                            int x2 = isHorizontal ? width : 0;
+                            int y2 = isHorizontal ? 0 : height;
+                            
+                            GradientPaint grad = new GradientPaint(0, 0, colors.get(0), x2, y2, colors.get(colors.size() - 1));
                             g2d.setPaint(grad);
                             g2d.fillRect(0, 0, width, height);
                             bannerDrawn = true;
