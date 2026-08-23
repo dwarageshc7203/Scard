@@ -49,7 +49,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
             initials={activeUser.initials}
             color={activeUser.color}
             src={activeUser.imageURL}
-
             size="xl"
             isOnline={activeUser.isOnline}
             className="w-28 h-28 sm:w-40 sm:h-40 rounded-full shadow-2xl"

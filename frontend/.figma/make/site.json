@@ -1,7 +1,11 @@
 {
-  "description": "Scard streamlines project management by allowing users to create, organize, and track tasks efficiently, enhancing productivity for teams and individuals.",
+  "title": "Scard — Developer Profile & Card Showcase",
+  "description": "Scard streamlines developer profile showcase by allowing users to display tech stacks, projects, github stats, and social links.",
+  "openGraph": {
+    "image": "https://scard.dwaragesh.me/logos/scard-1.png"
+  },
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
