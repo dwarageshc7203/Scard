@@ -63,24 +63,33 @@ public class OgImageController {
                 String bg = banner.getCssBackground();
                 if (bg.contains("url(")) {
                     try {
-                        String imageUrl = bg.substring(bg.indexOf("url('") + 5, bg.indexOf("')"));
+                        String imageUrl = bg.replaceAll(".*url\\(['\"]?([^'\")]+)['\"]?\\).*", "$1");
+                        BufferedImage bannerImg = null;
                         if (imageUrl.startsWith("http")) {
-                            BufferedImage bannerImg = ImageIO.read(new URL(imageUrl));
-                            if (bannerImg != null) {
-                                // Draw background keeping aspect ratio fill
-                                double scale = Math.max((double) width / bannerImg.getWidth(), (double) height / bannerImg.getHeight());
-                                int w = (int) (bannerImg.getWidth() * scale);
-                                int h = (int) (bannerImg.getHeight() * scale);
-                                int x = (width - w) / 2;
-                                int y = (height - h) / 2;
-                                g2d.drawImage(bannerImg, x, y, w, h, null);
-                                bannerDrawn = true;
+                            bannerImg = ImageIO.read(new URL(imageUrl));
+                        } else if (imageUrl.startsWith("/")) {
+                            // Relative static asset inside classpath or frontend build (e.g. /banners/mountain-abstract.jpg)
+                            java.io.File bannerFile = new java.io.File("./static" + imageUrl);
+                            if (!bannerFile.exists()) {
+                                bannerFile = new java.io.File("/app/static" + imageUrl);
                             }
+                            if (bannerFile.exists()) {
+                                bannerImg = ImageIO.read(bannerFile);
+                            }
+                        }
+                        if (bannerImg != null) {
+                            // Draw background keeping aspect ratio fill
+                            double scale = Math.max((double) width / bannerImg.getWidth(), (double) height / bannerImg.getHeight());
+                            int w = (int) (bannerImg.getWidth() * scale);
+                            int h = (int) (bannerImg.getHeight() * scale);
+                            int x = (width - w) / 2;
+                            int y = (height - h) / 2;
+                            g2d.drawImage(bannerImg, x, y, w, h, null);
+                            bannerDrawn = true;
                         }
                     } catch (Exception ignored) {
                     }
                 } else if (bg.contains("linear-gradient")) {
-                    // Try parsing colors from linear-gradient string e.g. linear-gradient(to right, #434343 0%, black 100%)
                     try {
                         java.util.regex.Matcher m = java.util.regex.Pattern.compile("#[a-fA-F0-9]{3,6}|rgba?\\([^)]+\\)|black|white").matcher(bg);
                         java.util.List<Color> colors = new java.util.ArrayList<>();
@@ -88,7 +97,13 @@ public class OgImageController {
                             String match = m.group();
                             if (match.equalsIgnoreCase("black")) colors.add(Color.BLACK);
                             else if (match.equalsIgnoreCase("white")) colors.add(Color.WHITE);
-                            else if (match.startsWith("#")) colors.add(Color.decode(match));
+                            else if (match.startsWith("#")) {
+                                String hex = match;
+                                if (hex.length() == 4) { // #abc -> #aabbcc
+                                    hex = "#" + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2) + hex.charAt(3) + hex.charAt(3);
+                                }
+                                colors.add(Color.decode(hex));
+                            }
                         }
                         if (colors.size() >= 2) {
                             GradientPaint grad = new GradientPaint(0, 0, colors.get(0), width, height, colors.get(colors.size() - 1));
@@ -108,8 +123,8 @@ public class OgImageController {
                 g2d.fillRect(0, 0, width, height);
             }
 
-            // Dark semi-transparent overlay for readability
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.40f));
+            // Light semi-transparent overlay (0.25f) so banner pops while text remains readable
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, width, height);
             g2d.setComposite(AlphaComposite.SrcOver);
@@ -165,11 +180,11 @@ public class OgImageController {
                 
                 gAvatar.drawImage(avatarImg, x, y, w, h, null);
                 
-                // Subtle white border around circular avatar
+                // Subtle, dimmed border around circular avatar
                 gAvatar.setClip(null);
-                gAvatar.setStroke(new BasicStroke(4.0f));
-                gAvatar.setColor(new Color(255, 255, 255, 180));
-                gAvatar.drawOval(2, 2, avatarSize - 4, avatarSize - 4);
+                gAvatar.setStroke(new BasicStroke(2.5f));
+                gAvatar.setColor(new Color(255, 255, 255, 100));
+                gAvatar.drawOval(1, 1, avatarSize - 2, avatarSize - 2);
                 
                 gAvatar.dispose();
 
