@@ -122,15 +122,19 @@ public class OgImageController {
                 avatarUrl = profile.getUser().getImageURL();
             }
 
-            if (avatarUrl != null) {
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 try {
                     if (avatarUrl.startsWith("http")) {
                         avatarImg = ImageIO.read(new URL(avatarUrl));
-                    } else if (avatarUrl.startsWith("/uploads/") || avatarUrl.startsWith("uploads/")) {
-                        String cleanPath = avatarUrl.startsWith("/") ? avatarUrl.substring(1) : avatarUrl;
-                        java.io.File file = new java.io.File(cleanPath);
+                    } else {
+                        // Resolve uploaded file relative to current directory and /app/uploads
+                        String filename = avatarUrl.substring(avatarUrl.lastIndexOf('/') + 1);
+                        java.io.File file = new java.io.File("./uploads/" + filename);
                         if (!file.exists()) {
-                            file = new java.io.File("./uploads/" + cleanPath.replace("uploads/", ""));
+                            file = new java.io.File("/app/uploads/" + filename);
+                        }
+                        if (!file.exists()) {
+                            file = new java.io.File("uploads/" + filename);
                         }
                         if (file.exists()) {
                             avatarImg = ImageIO.read(file);
@@ -209,7 +213,7 @@ public class OgImageController {
             // Clean Scard Branding Tag (Bottom Right)
             g2d.setFont(new Font("SansSerif", Font.BOLD, 24));
             g2d.setColor(new Color(255, 255, 255, 140));
-            g2d.drawString("scard.dwaragesh.me", width - 270, height - 40);
+            g2d.drawString("scard.dwaragesh.me", width - 310, height - 40);
 
             g2d.dispose();
 
