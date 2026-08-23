@@ -26,8 +26,11 @@ public class OgImageController {
     @Autowired
     private ProfileRepository profileRepository;
 
-    @GetMapping(value = "/api/og/{userName}.png", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = {"/api/og/{userName}.png", "/api/og/{userName}"}, produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateOgImage(@PathVariable String userName) {
+        if (userName != null && userName.endsWith(".png")) {
+            userName = userName.substring(0, userName.length() - 4);
+        }
         try {
             Optional<Profile> profileOpt = profileRepository.findFirstByUserName(userName);
             if (profileOpt.isEmpty()) {
