@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController {
@@ -27,7 +30,7 @@ public class ProfileController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleExceptions(Exception e) {
-        e.printStackTrace();
+        log.error("Unhandled exception in ProfileController", e);
         return ResponseEntity.status(500).body(Map.of("error", e.getClass().getName(), "message", e.getMessage() == null ? "null" : e.getMessage()));
     }
 

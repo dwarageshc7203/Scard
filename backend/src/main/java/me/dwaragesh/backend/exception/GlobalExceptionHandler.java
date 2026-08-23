@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -24,8 +27,7 @@ public class GlobalExceptionHandler {
         body.put("path", request.getDescription(false).replace("uri=", ""));
         
         // Log the actual error internally
-        System.err.println("Unexpected Error: " + ex.getMessage());
-        ex.printStackTrace();
+        log.error("Unexpected Error: {}", ex.getMessage(), ex);
         
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -39,7 +41,7 @@ public class GlobalExceptionHandler {
         body.put("message", "Invalid data provided. Please check your inputs.");
         body.put("path", request.getDescription(false).replace("uri=", ""));
         
-        System.err.println("Data Integrity Violation: " + ex.getMessage());
+        log.error("Data Integrity Violation: {}", ex.getMessage(), ex);
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }

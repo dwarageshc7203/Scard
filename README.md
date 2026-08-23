@@ -13,25 +13,25 @@
 
 ---
 
-## 🌟 About Scard
+## About Scard
 
 **Scard** is a minimalist, card-focused digital portfolio generator for developers. Instead of building a portfolio from scratch, Scard automatically aggregates your data from platforms like **GitHub**, **LeetCode**, and **Codeforces**, generating a sleek, interactive, and shareable digital business card. 
 
 Inspired by minimalist aesthetic platforms like `path.cv` and `portfoliofy.me`, Scard is designed to put your skills, stats, and identity front and center without any of the noise.
 
-## ✨ Features
+## Features
 
-- 🎨 **Minimalist Card UI**: A gorgeous, glass-morphism inspired digital card with dark mode support.
-- 🔄 **Auto-Syncing Integrations**: Link your GitHub, LeetCode, and Codeforces accounts and watch your contribution graphs, badges, and projects sync automatically.
-- 🔐 **Persistent Authentication**: Powered by Spring Boot JDBC Sessions and Google OAuth2, ensuring you stay logged in securely.
-- 🚀 **Interactive Onboarding**: A beautiful Discord-style slideshow to easily set up your profile and link your platforms.
-- 📊 **Analytics Dashboard**: Track who visits your card and see your total anonymous views.
-- 📸 **Export as Image**: Generate a high-resolution PNG snapshot of your dev card to share on Twitter/LinkedIn.
-- 🛡️ **Robust Security**: Rate limited endpoints (Bucket4j), parameterized SQL, CSRF protection, and gracefully handled exceptions.
+- **Minimalist Card UI**: A gorgeous, glass-morphism inspired digital card with dark mode support.
+- **Auto-Syncing Integrations**: Link your GitHub, LeetCode, and Codeforces accounts and watch your contribution graphs, badges, and projects sync automatically.
+- **Persistent Authentication**: Powered by Spring Boot JDBC Sessions and Google OAuth2, ensuring you stay logged in securely.
+- **Interactive Onboarding**: A beautiful Discord-style slideshow to easily set up your profile and link your platforms.
+- **Analytics Dashboard**: Track who visits your card and see your total anonymous views.
+- **Export as Image**: Generate a high-resolution PNG snapshot of your dev card to share on Twitter/LinkedIn.
+- **Robust Security**: Rate limited endpoints (Bucket4j), parameterized SQL, CSRF protection, and gracefully handled exceptions.
 
 ---
 
-## 🏗️ Architecture & Database
+## Architecture & Database
 
 Scard is built on a modern decoupled architecture:
 - **Frontend**: A Single Page Application (SPA) built with React and Vite. Uses React Router for client-side routing.
@@ -46,7 +46,7 @@ The database architecture is fully normalized to 3NF. Notable tables include:
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **React 19 & TypeScript**: The latest React features with strong type safety.
@@ -67,9 +67,9 @@ The database architecture is fully normalized to 3NF. Notable tables include:
 
 ---
 
-## 🚀 Getting Started (Local Deployment)
+## Getting Started (Local Deployment)
 
-Want to run Scard locally or on your home lab? Follow these steps!
+Want to run Scard locally or on your home lab? Follow these steps.
 
 ### Prerequisites
 1. **Node.js** (v18 or higher)
@@ -94,9 +94,9 @@ cd backend
 # Copy the environment template
 cp .env.example .env
 
-# **EDIT .env NOW** and add your PostgreSQL password, Google OAuth IDs, and GH Token!
+# EDIT .env NOW and add your PostgreSQL password, Google OAuth IDs, and GH Token
 
-# Run the Spring Boot application (Flyway will automatically generate the schema!)
+# Run the Spring Boot application (Flyway will automatically generate the schema)
 ./mvnw spring-boot:run
 ```
 
@@ -121,7 +121,7 @@ The frontend will start on `http://localhost:5173`.
 
 ---
 
-## 🧪 Testing and CI/CD
+## Testing and CI/CD
 
 This project uses **GitHub Actions** for Continuous Integration.
 On every pull request to `main`, the CI pipeline automatically:
@@ -131,8 +131,8 @@ On every pull request to `main`, the CI pipeline automatically:
 
 ---
 
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+## Contributing
+Contributions, issues, and feature requests are welcome. Feel free to check the issues page.
 
-## 📝 License
+## License
 This project is open-source and available under the [MIT License](LICENSE).

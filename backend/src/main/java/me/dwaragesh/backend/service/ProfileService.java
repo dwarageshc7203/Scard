@@ -35,14 +35,12 @@ public class ProfileService {
 
     private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
-    public ProfileResponse toResponse(Profile profile) {
+    private String getOrFetchContribJson(Profile profile) {
         String contribJson = profile.getHeatmapJson();
         if (contribJson == null || contribJson.trim().isEmpty() || contribJson.equals("[]")) {
-            // Fallback to the new normalized table if migration happened or for new users
             java.time.LocalDate oneYearAgo = java.time.LocalDate.now().minusDays(365);
             List<Contribution> recent = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, java.time.LocalDate.now());
             
-            // Map back to the legacy JSON structure expected by the frontend
             List<java.util.Map<String, Object>> mapped = recent.stream().map(c -> {
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 map.put("platform", c.getPlatform().name());
@@ -57,7 +55,10 @@ public class ProfileService {
                 contribJson = "[]";
             }
         }
+        return contribJson;
+    }
 
+    public ProfileResponse toResponse(Profile profile, String contribJson) {
         return new ProfileResponse(
                 profile.getUserName(),
                 (profile.getProfileName() != null && !profile.getProfileName().trim().isEmpty()) ? profile.getProfileName() : profile.getUserName(),
@@ -83,7 +84,8 @@ public class ProfileService {
         // Idempotent: if this user already has a profile, return it
         Profile existing = repository.findByUser(user);
         if (existing != null) {
-            return toResponse(existing);
+            String contribJson = getOrFetchContribJson(existing);
+            return toResponse(existing, contribJson);
         }
 
         if (repository.existsByUserNameIgnoreCase(request.userName())) {
@@ -96,11 +98,16 @@ public class ProfileService {
             profile.setDesignation(request.designation());
             profile.setUserName(request.userName());
             profile.setProfileName(request.profileName() != null ? request.profileName() : request.userName());
-            return toResponse(repository.save(profile));
+            Profile saved = repository.save(profile);
+            String contribJson = getOrFetchContribJson(saved);
+            return toResponse(saved, contribJson);
         } catch (DataIntegrityViolationException e) {
             // Two concurrent requests raced; the other thread won — find and return theirs
             Profile race = repository.findByUser(user);
-            if (race != null) return toResponse(race);
+            if (race != null) {
+                String contribJson = getOrFetchContribJson(race);
+                return toResponse(race, contribJson);
+            }
             throw e;
         }
     }
@@ -109,7 +116,8 @@ public class ProfileService {
     public ProfileResponse getProfile(String userName) {
         Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
-        return toResponse(profile);
+        String contribJson = getOrFetchContribJson(profile);
+        return toResponse(profile, contribJson);
     }
 
     @Transactional
@@ -133,7 +141,8 @@ public class ProfileService {
             }
         }
         
-        return toResponse(profile);
+        String contribJson = getOrFetchContribJson(profile);
+        return toResponse(profile, contribJson);
     }
 
     @Transactional(readOnly = true)
@@ -270,7 +279,8 @@ public class ProfileService {
         Profile saved = repository.save(profile);
         userRepository.save(user);
 
-        return toResponse(saved);
+        String contribJson = getOrFetchContribJson(saved);
+        return toResponse(saved, contribJson);
     }
 
     @Transactional(readOnly = true)

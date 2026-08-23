@@ -1,24 +1,21 @@
 import React, { useState, useEffect, type FC } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { User } from '../types'
-import Sidebar from '../components/Sidebar'
-import Avatar from '../components/ui/avatar'
 import Button from '../components/ui/button'
-import BadgeContainer from '../components/BadgeContainer'
-import ContestGraph from '../components/ContestGraph'
-import Heatmap from '../components/Heatmap'
-import { mapContributionsToHeatmap, fetchBanners, fetchProfile } from '../lib/api'
+import { fetchBanners, fetchProfile } from '../lib/api'
 import EditProfileModal from '../components/EditProfileModal'
-import ProjectShowcase from '../components/ProjectShowcase'
-import ProblemsSolved from '../components/ProblemsSolved'
 import ExportCard from '../components/ExportCard'
-import { Menu, Pencil, BarChart2, Users, Sun, Moon, Monitor, LogOut, Mail, Globe, Download, ArrowLeft, Award, Briefcase } from 'lucide-react'
-import confetti from 'canvas-confetti'
+import { Menu, Pencil, BarChart2, Users, Sun, Moon, Monitor, LogOut, Download, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { toast } from 'sonner'
 import * as htmlToImage from 'html-to-image'
 import { saveAs } from 'file-saver'
 import Image from "../components/ui/Image"
+import AnalyticsOverlay from '../components/profile/AnalyticsOverlay'
+import UsersOverlay from '../components/profile/UsersOverlay'
+import ProfileHeader from '../components/profile/ProfileHeader'
+import ProfileWidgets from '../components/profile/ProfileWidgets'
+import HeatmapWidget from '../components/profile/HeatmapWidget'
 
 interface ProfilePageProps {
   users: User[]
@@ -31,13 +28,10 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
   const [selectedUserId, setSelectedUserId] = useState(initialUserId || users[0]?.id)
   const [activeOverlay, setActiveOverlay] = useState<'analytics' | 'menu' | 'users' | null>(null)
   const [expandedWidget, setExpandedWidget] = useState<'badges' | 'projects' | null>(null)
-  const [isIconBarVisible, setIsIconBarVisible] = useState(true)
   const [localUsers, setLocalUsers] = useState<User[]>(users)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
-  const [heatmapPlatforms, setHeatmapPlatforms] = useState<string[]>(['github', 'leetcode', 'codeforces'])
   const [analytics, setAnalytics] = useState<any>(null)
-
   const [availableBanners, setAvailableBanners] = useState<any[]>([])
   const [liveUser, setLiveUser] = useState<User | null>(null)
 
@@ -85,6 +79,7 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
       return true;
     })
   )).sort()
+  
   const [heatmapPlatform, setHeatmapPlatform] = useState<string>('all')
   const [heatmapYear, setHeatmapYear] = useState<string>(availableYears[0])
 
@@ -94,17 +89,12 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
     }
   }, [availableYears.join(','), heatmapYear])
 
-  // Ensure mutually exclusive UI states
   useEffect(() => {
-    if (isEditModalOpen && activeOverlay !== null) {
-      setActiveOverlay(null)
-    }
+    if (isEditModalOpen && activeOverlay !== null) setActiveOverlay(null)
   }, [isEditModalOpen])
 
   useEffect(() => {
-    if (activeOverlay !== null && isEditModalOpen) {
-      setIsEditModalOpen(false)
-    }
+    if (activeOverlay !== null && isEditModalOpen) setIsEditModalOpen(false)
   }, [activeOverlay])
 
   if (!matchedUser && variant === 'standalone' && !liveUser) {
@@ -117,19 +107,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
     )
   }
 
-  const togglePlatform = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setHeatmapPlatform(e.target.value)
-  }
-
-  const toggleYear = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setHeatmapYear(e.target.value)
-  }
-
-  // Recompute heatmap based on filtered platforms and platformPreferences
   const backendContribs = activeUser.rawContributions
     ?.filter(c => isLeetcodeHeatmapEnabled || c.platform.toLowerCase() !== 'leetcode')
     ?.filter(c => heatmapPlatform === 'all' || c.platform.toLowerCase() === heatmapPlatform)
-    // You can also filter by year here if rawContributions has proper date strings
     ?.filter(c => c.date.startsWith(heatmapYear))
     .map(c => ({
       platform: c.platform,
@@ -166,89 +146,39 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
 
   return (
     <div className="flex bg-gray-50 dark:bg-[#202020] text-gray-900 dark:text-gray-200 overflow-hidden" style={{ height: '100vh' }}>
-
-      {/* Static Left Sidebar (Desktop sidebar / Mobile bottom bar) */}
+      
       {isOwnProfile && (
         <aside className="w-full md:w-[64px] h-[56px] md:h-full flex flex-row md:flex-col items-center justify-around md:justify-start px-2 sm:px-6 md:px-0 py-0 md:py-6 border-t md:border-t-0 md:border-r border-gray-200 dark:border-white/10 bg-white dark:bg-[#252525] shrink-0 fixed md:relative bottom-0 left-0 right-0 z-[60]">
           <Image onClick={() => window.location.href = '/'} src="/logos/scard-1.png" className="w-8 h-8 rounded-[8px] cursor-pointer hover:opacity-80 transition-opacity hidden md:block" alt="Scard Logo" />
-
           <div className="flex flex-row md:flex-col gap-0 md:gap-10 flex-1 md:mt-12 justify-around md:justify-center items-center w-full">
-
-            {/* Analytics */}
-            <button
-              onClick={() => setActiveOverlay(activeOverlay === 'analytics' ? null : 'analytics')}
-              className={`transition-colors ${activeOverlay === 'analytics' ? 'text-accent' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-              title="Analytics"
-            >
+            <button onClick={() => setActiveOverlay(activeOverlay === 'analytics' ? null : 'analytics')} className={`transition-colors ${activeOverlay === 'analytics' ? 'text-accent' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`} title="Analytics">
               <BarChart2 className="w-5 h-5" />
             </button>
-
-            {/* Menu Popover Toggle */}
             <div className="relative flex justify-center">
-              <button
-                onClick={() => setActiveOverlay(activeOverlay === 'menu' ? null : 'menu')}
-                className={`transition-colors ${activeOverlay === 'menu' ? 'text-accent' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-                title="Menu"
-              >
-                <Menu className={`w-5 h-5`} />
+              <button onClick={() => setActiveOverlay(activeOverlay === 'menu' ? null : 'menu')} className={`transition-colors ${activeOverlay === 'menu' ? 'text-accent' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`} title="Menu">
+                <Menu className="w-5 h-5" />
               </button>
-
-              {/* Menu Popover */}
               <AnimatePresence>
                 {activeOverlay === 'menu' && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute bottom-16 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-auto md:left-[60px] md:top-1/2 md:-translate-y-1/2 bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 p-2 w-[160px] rounded-xl shadow-2xl flex flex-col gap-2 z-[70]"
-                  >
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute bottom-16 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-auto md:left-[60px] md:top-1/2 md:-translate-y-1/2 bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 p-2 w-[160px] rounded-xl shadow-2xl flex flex-col gap-2 z-[70]">
                     <div className="flex border border-gray-200 dark:border-white/10 rounded-lg bg-gray-50 dark:bg-[#202020] p-1 w-full">
-                      <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'light' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
-                        <Sun className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'dark' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
-                        <Moon className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'system' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
-                        <Monitor className="w-3.5 h-3.5" />
-                      </button>
+                      <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'light' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}><Sun className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'dark' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}><Moon className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center py-1.5 text-xs rounded-md transition-all ${theme === 'system' ? 'bg-white dark:bg-[#333333] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}><Monitor className="w-3.5 h-3.5" /></button>
                     </div>
-                    <button onClick={handleExport} className="w-full flex items-center justify-center gap-2 py-2 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
-                      <Download className="w-3.5 h-3.5" /> Export PNG
-                    </button>
+                    <button onClick={handleExport} className="w-full flex items-center justify-center gap-2 py-2 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"><Download className="w-3.5 h-3.5" /> Export PNG</button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Users */}
-            <button
-              onClick={() => setActiveOverlay(activeOverlay === 'users' ? null : 'users')}
-              className={`transition-colors ${activeOverlay === 'users' ? 'text-accent' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-              title="Users"
-            >
+            <button onClick={() => setActiveOverlay(activeOverlay === 'users' ? null : 'users')} className={`transition-colors ${activeOverlay === 'users' ? 'text-accent' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`} title="Users">
               <Users className="w-5 h-5" />
             </button>
-
-            {/* Edit Profile */}
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className={`transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white`}
-              title="Edit Profile"
-            >
+            <button onClick={() => setIsEditModalOpen(true)} className="transition-colors text-gray-500 hover:text-gray-900 dark:hover:text-white" title="Edit Profile">
               <Pencil className="w-5 h-5" />
             </button>
-
             <div className="md:mt-auto">
-              <button
-                onClick={() => {
-                  localStorage.removeItem('scard_username')
-                  window.location.href = '/logout'
-                }}
-                className="transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                title="Log Out"
-              >
+              <button onClick={() => { localStorage.removeItem('scard_username'); window.location.href = '/logout'; }} className="transition-colors text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Log Out">
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
@@ -256,409 +186,33 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         </aside>
       )}
 
-      {/* Main Content Area */}
       <div className="flex-1 flex relative overflow-hidden w-full">
-        {/* Go Back Button (Viewing Others) */}
         {!isOwnProfile && (
           <div className="absolute top-6 left-6 z-[70] hidden md:block">
-            {currentUser ? (
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-white/80 dark:bg-[#252525]/80 backdrop-blur-sm border-gray-200 dark:border-white/10"
-                onClick={() => window.location.href = `/${currentUser?.userName}`}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Go back
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-white/80 dark:bg-[#252525]/80 backdrop-blur-sm border-gray-200 dark:border-white/10"
-                onClick={() => window.location.href = `/`}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Create your own profile?
-              </Button>
-            )}
+            <Button variant="outline" className="flex items-center gap-2 bg-white/80 dark:bg-[#252525]/80 backdrop-blur-sm border-gray-200 dark:border-white/10" onClick={() => window.location.href = currentUser ? `/${currentUser?.userName}` : `/`}>
+              <ArrowLeft className="w-4 h-4" /> {currentUser ? "Go back" : "Create your own profile?"}
+            </Button>
           </div>
         )}
 
-        {/* Sliding Overlays Container */}
+        <AnalyticsOverlay isOpen={activeOverlay === 'analytics'} isOwnProfile={!!isOwnProfile} analytics={analytics} />
+        <UsersOverlay isOpen={activeOverlay === 'users'} localUsers={localUsers} selectedUserId={selectedUserId} onSelectUser={(id) => { variant === 'standalone' ? window.location.href = `/${id}` : setSelectedUserId(id) }} currentUser={currentUser} />
 
-        {/* 1. Analytics Overlay */}
-        <div
-          className={`absolute inset-y-0 left-0 h-full w-full md:w-72 z-50 transition-transform duration-300 ease-in-out ${activeOverlay === 'analytics' ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
-        >
-          <div className="h-full bg-white dark:bg-[#252525] border-r border-gray-200 dark:border-white/10 w-full p-6 pt-8 md:pt-12 flex flex-col">
-            {(() => {
-              const totalViews = (analytics?.anonymousViews || 0) + (analytics?.recentViewers?.length || 0);
-              let heading = "Analytics";
-              if (analytics != null) {
-                if (totalViews === 0) heading = "Seems you are boring...";
-                else if (totalViews <= 10) heading = "Guess someone is getting popular?";
-                else heading = "That one popular kid..";
-              }
-              return <h2 className="text-lg font-medium mb-6 leading-tight text-gray-900 dark:text-white">{heading}</h2>;
-            })()}
-            {isOwnProfile ? (
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6">
-                <div className="bg-gray-50 dark:bg-[#202020] rounded-xl p-4 border border-gray-200 dark:border-white/10 text-center">
-                  <span className="block text-3xl font-black text-gray-900 dark:text-white mb-1">{(analytics?.anonymousViews || 0) + (analytics?.recentViewers?.length || 0)}</span>
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 tracking-wider">Total Views</span>
-                </div>
-
-                <div>
-                  <h3 className="text-sm text-gray-900 dark:text-white mb-3">Recent Viewers</h3>
-                  <div className="space-y-3">
-                    {analytics?.recentViewers && analytics.recentViewers.length > 0 ? (
-                      analytics.recentViewers.map((viewer: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          {viewer.imageUrl || viewer.imageURL ? (
-                            <Image src={viewer.imageUrl || viewer.imageURL} referrerPolicy="no-referrer" alt={viewer.displayName} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#333333] object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-white uppercase">
-                              {viewer.displayName?.charAt(0) || '?'}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-900 dark:text-white truncate">{viewer.displayName}</p>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400">{new Date(viewer.viewedAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-4 border border-dashed border-gray-200 dark:border-white/10 rounded-lg">No logged-in viewers yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                <BarChart2 className="w-12 h-12 text-gray-400 dark:text-gray-600 mb-4 opacity-50" />
-                <p className="text-sm text-gray-900 dark:text-white mb-1">Access Denied</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">You can only view analytics for your own profile.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 2. Users Directory Overlay */}
-        <div
-          className={`absolute inset-y-0 left-0 h-full w-full md:w-72 z-50 transition-transform duration-300 ease-in-out ${activeOverlay === 'users' ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}
-        >
-          <div className="h-full bg-white dark:bg-[#252525] border-r border-gray-200 dark:border-white/10 w-full overflow-hidden flex flex-col">
-            <Sidebar
-              users={localUsers}
-              selectedUserId={selectedUserId}
-              onSelectUser={(id) => {
-                if (variant === 'standalone') {
-                  window.location.href = `/${id}`
-                } else {
-                  setSelectedUserId(id)
-                }
-              }}
-              currentUser={currentUser}
-            />
-          </div>
-        </div>
-
-        {/* Click outside overlay to close it */}
         {activeOverlay !== null && (
-          <div
-            className="absolute inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity cursor-pointer"
-            onClick={() => setActiveOverlay(null)}
-          />
+          <div className="absolute inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity cursor-pointer" onClick={() => setActiveOverlay(null)} />
         )}
 
-        {/* Main Layout Area */}
         <main className="flex-1 overflow-y-auto px-4 pt-6 pb-28 md:px-12 md:py-12 w-full relative z-10 custom-scrollbar">
           <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 w-full">
-
-            {/* Hero Banner & Overlapping Avatar */}
-            <div className="relative pt-[40px]">
-              {/* Banner Background */}
-              <div
-                className="absolute top-0 left-0 right-0 h-[220px] bg-white dark:bg-[#2A2A2A] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none transition-all duration-300"
-                style={activeBanner ? { background: activeBanner.cssBackground, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
-              >
-                {/* Social Icons Bottom Right of Banner */}
-                {activeUser.customSocials && activeUser.customSocials.length > 0 && (
-                  <div className="absolute bottom-4 right-4 flex gap-2 z-20">
-                    {activeUser.customSocials.map((social, idx) => (
-                      <a
-                        key={idx}
-                        href={social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail' ? `mailto:${social.url}` : social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-surface/50 backdrop-blur-md rounded-full hover:bg-surface/80 transition-colors border border-border/40 text-text shadow-sm"
-                        title={social.type}
-                      >
-                        {(social.type.toLowerCase() === 'linkedin' || social.type.toLowerCase() === 'linked_in') ? (
-                          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                        ) :
-                          social.type.toLowerCase() === 'twitter' ? (
-                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                          ) :
-                            (social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail') ? <Mail className="w-4 h-4" /> :
-                              <Globe className="w-4 h-4" />}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="relative px-8 sm:px-12 flex flex-col sm:flex-row gap-3 sm:gap-8 items-center self-start mt-[110px]">
-                {/* Avatar overlapping the banner */}
-                <div className="rounded-full bg-gray-50 dark:bg-[#202020] p-2 shrink-0">
-                  <Avatar
-                    initials={activeUser.initials}
-                    color={activeUser.color}
-                    src={activeUser.imageURL}
-                    asciiArt={activeUser.asciiArt}
-                    size="xl"
-                    isOnline={activeUser.isOnline}
-                    className="w-28 h-28 sm:w-40 sm:h-40 rounded-full shadow-2xl"
-                  />
-                </div>
-
-                {/* Name, Username & Title */}
-                <div className="flex flex-col z-10 items-center sm:items-start text-center sm:text-left">
-                  <div className="flex items-center flex-wrap gap-3">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                      {(activeUser.displayName && activeUser.displayName.trim()) ? activeUser.displayName : activeUser.username}
-                    </h1>
-                    {activeUser.pin && (
-                      <button
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          const x = (rect.left + rect.width / 2) / window.innerWidth
-                          const y = (rect.top + rect.height / 2) / window.innerHeight
-                          confetti({
-                            origin: { x, y },
-                            particleCount: 100,
-                            spread: 70,
-                            colors: ['#a855f7', '#d8b4fe', '#c084fc', '#f3e8ff']
-                          })
-                        }}
-                        className="inline-flex items-center justify-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md border border-purple-500 bg-gradient-to-r from-transparent to-purple-500/20 text-purple-600 dark:text-purple-400 shadow-sm self-center translate-y-[1px] cursor-pointer hover:to-purple-500/30 transition-colors"
-                      >
-                        {activeUser.pin}
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-mono mt-0.5">
-                    @{activeUser.username}
-                  </p>
-                  {activeUser.title && (
-                    <p className="text-gray-600 dark:text-gray-400 text-base mt-1">
-                      {activeUser.title}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 2-Column Dynamic Grid */}
-            {(() => {
-              const showRating = hasLeetCode && (activeUser.platformPreferences?.leetcode?.showRating ?? true);
-              const showProblems = hasLeetCode && (activeUser.platformPreferences?.leetcode?.showProblems ?? true);
-              const showBadges = hasLeetCode && (activeUser.platformPreferences?.leetcode?.showBadges ?? true);
-              const showProjects = hasProjects;
-              const visibleCount = [showRating, showProblems, showBadges, showProjects].filter(Boolean).length;
-              const singleItemClass = visibleCount === 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : "";
-
-              return visibleCount > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 relative items-start">
-
-                  {/* 1. Contest Rating Widget */}
-                  {showRating && (
-                    <div className={`bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative h-[350px] flex flex-col shadow-sm dark:shadow-none ${singleItemClass}`}>
-                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Contest Rating</span>
-                      {activeUser.contests && activeUser.contests.length > 0 && (
-                        <span className="absolute top-5 left-1/2 -translate-x-1/2 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white z-10">
-                          {activeUser.contests[activeUser.contests.length - 1].rating}
-                        </span>
-                      )}
-                      <div className="mt-10 flex-1 relative flex items-center justify-center">
-                        {activeUser.contests && activeUser.contests.length > 0 ? (
-                          <ContestGraph contests={activeUser.contests} />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-xs text-muted">No contests available</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. Problems Solved Widget */}
-                  {showProblems && (
-                    <div className={`h-[350px] ${singleItemClass}`}>
-                      <ProblemsSolved problems={activeUser.problemsSolved || {}} />
-                    </div>
-                  )}
-
-                  {/* 3. Badges Widget Base */}
-                  {showBadges && (
-                    <div className={`relative w-full h-[350px] ${singleItemClass}`}>
-                      <motion.div
-                        layoutId="badges-widget"
-                        className="w-full h-full bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none"
-                      >
-                        <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                          <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
-                          <button
-                            onClick={() => setExpandedWidget('badges')}
-                            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                          >
-                            Expand
-                          </button>
-                        </div>
-                        <div className="mt-12 flex-1 relative min-h-0">
-                          {activeUser.badges && activeUser.badges.length > 0 ? (
-                            <BadgeContainer badges={activeUser.badges} isExpanded={false} />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-surface-2/30 rounded-xl border border-dashed border-border/50">
-                              <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mb-3">
-                                <Award className="w-5 h-5 text-muted-foreground" />
-                              </div>
-                              <h3 className="text-sm font-medium text-text">No Badges Yet</h3>
-                              <p className="text-xs text-muted mt-1 max-w-[200px]">Link your LeetCode profile to automatically showcase your achievements.</p>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-
-                      {/* Badges Horizontal Expanded Overlay */}
-                      <AnimatePresence>
-                        {expandedWidget === 'badges' && (
-                          <motion.div
-                            layoutId="badges-widget"
-                            className={`absolute top-0 left-0 right-0 ${visibleCount === 1 ? 'z-50' : 'md:-right-[calc(100%+24px)]'} z-50 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden h-[350px]`}
-                          >
-                            <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Badges</span>
-                              <button
-                                onClick={() => setExpandedWidget(null)}
-                                className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                              >
-                                Collapse
-                              </button>
-                            </div>
-                            <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto">
-                              {activeUser.badges && activeUser.badges.length > 0 ? (
-                                <BadgeContainer badges={activeUser.badges} isExpanded={true} />
-                              ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-8">
-                                  <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center mb-4 border border-border/50">
-                                    <Award className="w-8 h-8 text-muted-foreground opacity-50" />
-                                  </div>
-                                  <h3 className="text-lg font-medium text-text mb-2">No Badges Collected</h3>
-                                  <p className="text-sm text-muted max-w-sm">Connect your competitive programming accounts like LeetCode in your profile settings to automatically display your earned badges here.</p>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-
-                  {/* 4. Project Showcase Widget Base */}
-                  {showProjects && (
-                    <div className={`relative w-full h-[350px] ${singleItemClass}`}>
-                      <motion.div
-                        layoutId="projects-widget"
-                        className="w-full h-full bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative flex flex-col shadow-sm dark:shadow-none"
-                      >
-                        <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                          <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
-                          <button
-                            onClick={() => setExpandedWidget('projects')}
-                            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                          >
-                            Expand
-                          </button>
-                        </div>
-                        <div className="mt-12 flex-1 relative min-h-0">
-                          <ProjectShowcase
-                            projects={activeUser.projects || []}
-                            isExpanded={false}
-                            onToggleExpand={() => setExpandedWidget('projects')}
-                          />
-                        </div>
-                      </motion.div>
-
-                      {/* Project Showcase Horizontal Expanded Overlay */}
-                      <AnimatePresence>
-                        {expandedWidget === 'projects' && (
-                          <motion.div
-                            layoutId="projects-widget"
-                            className={`absolute top-0 right-0 left-0 ${visibleCount === 1 ? 'z-50' : 'md:-left-[calc(100%+24px)]'} z-50 bg-white dark:bg-[#202020] border border-gray-200 dark:border-white/20 rounded-[20px] p-6 flex flex-col shadow-2xl overflow-hidden h-[350px]`}
-                          >
-                            <div className="flex justify-between items-center absolute top-5 left-6 right-6 z-10">
-                              <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans whitespace-nowrap">Project Showcase</span>
-                              <button
-                                onClick={() => setExpandedWidget(null)}
-                                className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 tracking-wider transition-colors cursor-pointer bg-transparent border-none outline-none whitespace-nowrap"
-                              >
-                                Collapse
-                              </button>
-                            </div>
-                            <div className="mt-12 flex-1 relative min-h-0 overflow-y-auto custom-scrollbar">
-                              <ProjectShowcase
-                                projects={activeUser.projects || []}
-                                isExpanded={true}
-                                onToggleExpand={() => setExpandedWidget(null)}
-                              />
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-
-                  {/* 5. Heatmap Widget (Full Width) */}
-                  {(hasGithub || (hasLeetCode && isLeetcodeHeatmapEnabled)) && (
-                    <div className="md:col-span-2 bg-white dark:bg-transparent border border-gray-200 dark:border-white/20 rounded-[20px] p-6 relative min-h-[250px] overflow-hidden shadow-sm dark:shadow-none">
-                      <span className="text-[15px] text-gray-600 dark:text-gray-400 font-sans absolute top-5 left-6 z-10">Heat Map</span>
-                      <div className="absolute top-5 right-6 z-10 flex items-center gap-3">
-                        <select
-                          value={heatmapPlatform}
-                          onChange={togglePlatform}
-                          className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
-                          style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                        >
-                          <option value="all">All</option>
-                          {availablePlatforms.map(p => (
-                            <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={heatmapYear}
-                          onChange={toggleYear}
-                          className="bg-white dark:bg-[#2A2A2A] border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 text-[13px] tracking-wider rounded-md px-3 py-1.5 focus:ring-2 focus:ring-accent appearance-none cursor-pointer min-w-[100px]"
-                          style={{ paddingRight: '2.5rem', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                        >
-                          {availableYears.map(y => (
-                            <option key={y} value={y}>{y}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div
-                        className="mt-14 overflow-x-auto pt-2 custom-scrollbar"
-                        style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)', maskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
-                      >
-                        <Heatmap data={heatmapData} year={heatmapYear} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : null
-            })()}
+            <ProfileHeader activeUser={activeUser} activeBanner={activeBanner} />
+            <ProfileWidgets activeUser={activeUser} hasLeetCode={hasLeetCode} hasProjects={hasProjects} expandedWidget={expandedWidget} setExpandedWidget={setExpandedWidget} />
+            {(hasGithub || (hasLeetCode && isLeetcodeHeatmapEnabled)) && (
+              <HeatmapWidget heatmapData={heatmapData} availablePlatforms={availablePlatforms} availableYears={availableYears} heatmapPlatform={heatmapPlatform} heatmapYear={heatmapYear} setHeatmapPlatform={setHeatmapPlatform} setHeatmapYear={setHeatmapYear} />
+            )}
           </div>
         </main>
       </div>
 
-      {/* Edit Profile Modal */}
       <AnimatePresence>
         {isEditModalOpen && (
           <EditProfileModal
@@ -681,11 +235,9 @@ const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initi
         )}
       </AnimatePresence>
 
-      {/* Hidden Export Node */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
         <ExportCard user={activeUser} banner={activeBanner} />
       </div>
-
     </div>
   )
 }
