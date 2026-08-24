@@ -1,5 +1,6 @@
 package me.dwaragesh.backend.model.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import me.dwaragesh.backend.model.Project;
@@ -34,6 +35,7 @@ public record PatchProfileRequest(
         List<String> socials,
 
         @Size(max = 10, message = "Maximum 10 projects allowed")
+        @Valid
         List<Project> projects,
 
         @Size(max = 5000, message = "Display preferences JSON is too large")

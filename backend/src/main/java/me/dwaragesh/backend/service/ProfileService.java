@@ -278,6 +278,16 @@ public class ProfileService {
             user.setEmail(request.email());
         }
         if (request.socials() != null) {
+            for (String s : request.socials()) {
+                String type = s.contains(":") ? s.split(":", 2)[0].toLowerCase() : "link";
+                String urlOrHandle = s.contains(":") ? s.split(":", 2)[1] : s;
+                if (!type.equals("github") && !type.equals("leetcode")) {
+                    // It's a custom link or email
+                    if (!type.equals("email") && !type.equals("mail") && !urlOrHandle.matches("^(https?://.+)$")) {
+                        throw new IllegalArgumentException("Custom social links must start with http:// or https://");
+                    }
+                }
+            }
             profile.setSocials(new java.util.ArrayList<>(request.socials()));
         }
         if (request.projects() != null) {
