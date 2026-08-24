@@ -58,7 +58,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
 
         {/* Name, Username & Title */}
         <div className="flex flex-col z-10 items-center sm:items-start text-center sm:text-left">
-          <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center justify-center sm:justify-start flex-wrap gap-3">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               {(activeUser.displayName && activeUser.displayName.trim()) ? activeUser.displayName : activeUser.username}
             </h1>

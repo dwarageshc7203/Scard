@@ -204,9 +204,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   const [photoFile, setPhotoFile] = useState<File | null>(null)
 
   useEffect(() => {
-    if (user.imageURL && user.imageURL.startsWith("data:image")) {
-      setPhotoBase64(user.imageURL)
-    } else if (user.imageURL && user.imageURL.startsWith("/uploads")) {
+    if (user.imageURL) {
       setPhotoBase64(user.imageURL)
     }
   }, [user.imageURL])
@@ -1235,6 +1233,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             placeholder="https://..."
                             className="w-full text-xs bg-surface-2/50"
                           />
+                          {newProject.projectUrl && !/^https?:\/\/.+$/.test(newProject.projectUrl) && (
+                            <p className="text-[10px] text-red-500 mt-1">URL must start with http:// or https://</p>
+                          )}
                         </div>
 
                         <div>
@@ -1252,6 +1253,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             placeholder="https://github.com/..."
                             className="w-full text-xs bg-surface-2/50"
                           />
+                          {newProject.repoUrl && !/^https?:\/\/.+$/.test(newProject.repoUrl) && (
+                            <p className="text-[10px] text-red-500 mt-1">URL must start with http:// or https://</p>
+                          )}
                         </div>
                       </div>
 

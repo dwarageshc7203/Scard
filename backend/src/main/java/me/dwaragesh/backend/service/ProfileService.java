@@ -178,23 +178,28 @@ public class ProfileService {
         Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
         
+        boolean isOwner = false;
         if (viewerGoogleId == null) {
             profile.setAnonymousViews(profile.getAnonymousViews() + 1);
             repository.save(profile);
         } else {
             User viewer = userRepository.findFirstByGoogleId(viewerGoogleId).orElse(null);
-            if (viewer != null && profile.getUser() != null && !viewer.getUserId().equals(profile.getUser().getUserId())) {
-                java.util.Optional<ProfileView> lastView = profileViewRepository.findFirstByProfileAndViewerOrderByViewedAtDesc(profile, viewer);
-                if (lastView.isEmpty() || java.time.Duration.between(lastView.get().getViewedAt(), java.time.Instant.now()).toHours() > 24) {
-                    ProfileView view = new ProfileView();
-                    view.setProfile(profile);
-                    view.setViewer(viewer);
-                    profileViewRepository.save(view);
+            if (viewer != null && profile.getUser() != null) {
+                if (viewer.getUserId().equals(profile.getUser().getUserId())) {
+                    isOwner = true;
+                } else {
+                    java.util.Optional<ProfileView> lastView = profileViewRepository.findFirstByProfileAndViewerOrderByViewedAtDesc(profile, viewer);
+                    if (lastView.isEmpty() || java.time.Duration.between(lastView.get().getViewedAt(), java.time.Instant.now()).toHours() > 24) {
+                        ProfileView view = new ProfileView();
+                        view.setProfile(profile);
+                        view.setViewer(viewer);
+                        profileViewRepository.save(view);
+                    }
                 }
             }
         }
         
-        return publicView ? toPublicResponse(profile) : toResponse(profile);
+        return (publicView && !isOwner) ? toPublicResponse(profile) : toResponse(profile);
     }
 
     /**

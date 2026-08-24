@@ -51,7 +51,6 @@ public class UserService {
         return findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
     }
 
-    @Transactional
     public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
         return repository.findFirstByGoogleId(googleId)
                 .orElseGet(() -> createOrLinkUser(googleId, email, imageURL));

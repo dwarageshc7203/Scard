@@ -47,6 +47,7 @@ public class ImageController {
                 return ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(contentType))
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
                         .header("X-Content-Type-Options", "nosniff")
                         .body(resource);
             } else {
