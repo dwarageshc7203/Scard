@@ -13,7 +13,7 @@ public record PatchProfileRequest(
         String designation,
 
         @Size(max = 300, message = "Profile URL must be 300 characters or fewer")
-        @Pattern(regexp = "^(https?://.+)$", message = "URL must start with http:// or https://")
+        @Pattern(regexp = "^$|^(https?://.+)$", message = "URL must start with http:// or https://")
         String profileUrl,
 
         @Pattern(

@@ -27,8 +27,8 @@ public class Project {
 
     @Column(columnDefinition = "TEXT")
     private String projectImageBase64;
-    @jakarta.validation.constraints.Pattern(regexp = "^(https?://.+)$", message = "URL must start with http:// or https://")
+    @jakarta.validation.constraints.Pattern(regexp = "^$|^(https?://.+)$", message = "URL must start with http:// or https://")
     private String projectUrl;
-    @jakarta.validation.constraints.Pattern(regexp = "^(https?://.+)$", message = "URL must start with http:// or https://")
+    @jakarta.validation.constraints.Pattern(regexp = "^$|^(https?://.+)$", message = "URL must start with http:// or https://")
     private String repoUrl;
 }
