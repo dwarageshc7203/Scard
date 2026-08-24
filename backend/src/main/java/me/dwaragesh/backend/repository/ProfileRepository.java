@@ -58,7 +58,7 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
                    "COALESCE(NULLIF(p.profile_name, ''), p.user_name) AS profile_name, " +
                    "p.designation, " +
                    "COALESCE(NULLIF(p.custom_image_url, ''), u.imageurl) AS image_url " +
-                   "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id \n#pageable\n",
+                   "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id",
            countQuery = "SELECT count(*) FROM profile p",
            nativeQuery = true)
     org.springframework.data.domain.Page<me.dwaragesh.backend.model.dto.ProfileSummaryProjection> findAllSummariesNative(org.springframework.data.domain.Pageable pageable);
