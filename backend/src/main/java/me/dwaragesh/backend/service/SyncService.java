@@ -90,26 +90,33 @@ public class SyncService {
         }
         PlatformSyncResult result = fetcher.fetch(externalUsername);
 
-        upsertContributions(profile, platform, result);
-        upsertBadges(profile, platform, result);
-        upsertContests(profile, platform, result);
-        
-        if (result.problemsSolved() != null) {
-            if (profile.getProblemStats() == null) {
-                profile.setProblemStats(new java.util.HashMap<>());
+        try {
+            upsertContributions(profile, platform, result);
+            upsertBadges(profile, platform, result);
+            upsertContests(profile, platform, result);
+            
+            if (result.problemsSolved() != null) {
+                if (profile.getProblemStats() == null) {
+                    profile.setProblemStats(new java.util.HashMap<>());
+                }
+                ProblemStats stats = new ProblemStats(
+                        result.problemsSolved().total(),
+                        result.problemsSolved().easy(),
+                        result.problemsSolved().medium(),
+                        result.problemsSolved().hard()
+                );
+                profile.getProblemStats().put(platform.name().toUpperCase(), stats);
             }
-            ProblemStats stats = new ProblemStats(
-                    result.problemsSolved().total(),
-                    result.problemsSolved().easy(),
-                    result.problemsSolved().medium(),
-                    result.problemsSolved().hard()
-            );
-            profile.getProblemStats().put(platform.name().toUpperCase(), stats);
-        }
 
-        // HIGH-6: Set lastSyncedAt before the single save — removes the redundant second write.
-        profile.setLastSyncedAt(Instant.now());
-        profileRepository.save(profile);
+            // HIGH-6: Set lastSyncedAt before the single save — removes the redundant second write.
+            profile.setLastSyncedAt(Instant.now());
+            profileRepository.save(profile);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Concurrent sync (e.g. background sync + manual sync) collided.
+            // Safely ignore, the other thread successfully updated the platform data.
+            org.slf4j.LoggerFactory.getLogger(SyncService.class)
+                .info("Ignored concurrent sync collision for platform: {}", platform);
+        }
     }
 
 

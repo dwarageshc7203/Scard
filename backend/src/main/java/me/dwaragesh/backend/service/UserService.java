@@ -53,7 +53,7 @@ public class UserService {
 
     @Transactional
     public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
-        return repository.findByGoogleId(googleId)
+        return repository.findFirstByGoogleId(googleId)
                 .orElseGet(() -> createOrLinkUser(googleId, email, imageURL));
     }
 
@@ -82,7 +82,7 @@ public class UserService {
         } catch (DataIntegrityViolationException e) {
             // Another thread won the race — just fetch the row they inserted.
             log.debug("Race on google_id={}, fetching existing user", googleId);
-            return repository.findByGoogleId(googleId)
+            return repository.findFirstByGoogleId(googleId)
                     .orElseThrow(() -> new IllegalStateException(
                             "User not found after DataIntegrityViolationException", e));
         }

@@ -182,7 +182,7 @@ public class ProfileService {
             profile.setAnonymousViews(profile.getAnonymousViews() + 1);
             repository.save(profile);
         } else {
-            User viewer = userRepository.findByGoogleId(viewerGoogleId).orElse(null);
+            User viewer = userRepository.findFirstByGoogleId(viewerGoogleId).orElse(null);
             if (viewer != null && profile.getUser() != null && !viewer.getUserId().equals(profile.getUser().getUserId())) {
                 java.util.Optional<ProfileView> lastView = profileViewRepository.findFirstByProfileAndViewerOrderByViewedAtDesc(profile, viewer);
                 if (lastView.isEmpty() || java.time.Duration.between(lastView.get().getViewedAt(), java.time.Instant.now()).toHours() > 24) {

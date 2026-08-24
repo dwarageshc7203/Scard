@@ -17,8 +17,8 @@ public record PatchProfileRequest(
         String profileUrl,
 
         @Pattern(
-            regexp = "^[a-z]{3,30}$",
-            message = "Username must be 3-30 lowercase letters only"
+            regexp = "^[a-z0-9_-]{3,30}$",
+            message = "Username must be 3-30 characters (lowercase letters, numbers, underscores, or hyphens)"
         )
         String userName,
 

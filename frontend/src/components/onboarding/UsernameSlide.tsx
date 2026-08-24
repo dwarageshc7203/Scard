@@ -28,10 +28,10 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
         return
       }
 
-      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "")
+      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z]/g, "")
       if (cleanUsername !== username.toLowerCase()) {
         if (isMounted) {
-          setError("Username can only contain alphanumeric characters, underscores, or hyphens")
+          setError("Username can only contain lowercase alphabets")
           setIsChecking(false)
           setIsSuccess(false)
         }
@@ -72,7 +72,7 @@ export default function UsernameSlide({ initialValue, onNext }: UsernameSlidePro
     if (e) e.preventDefault()
     if (isChecking || error || !username.trim()) return
 
-    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "")
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z]/g, "")
     setLoading(true)
     onNext(cleanUsername)
   }

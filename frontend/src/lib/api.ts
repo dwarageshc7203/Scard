@@ -115,7 +115,9 @@ export function mapProfileToUser(profile: BackendProfile): User {
     statusMessage: undefined,
     statusTime: "Recently",
     imageURL:
-      profile.imageURL ||
+      (profile.imageURL?.startsWith('/uploads/') 
+        ? profile.imageURL.replace('/uploads/', '/api/images/') 
+        : profile.imageURL) ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.profileName || profile.userName)}&background=random`,
     initials: profile.userName.substring(0, 2).toUpperCase(),
     color: stringToColor(profile.userName),
@@ -190,7 +192,8 @@ export function mapProfileToUser(profile: BackendProfile): User {
 export async function fetchProfiles(): Promise<User[]> {
   const res = await fetch("/api/profiles")
   if (!res.ok) throw new Error("Failed to fetch profiles")
-  const profiles: BackendProfile[] = await res.json()
+  const data = await res.json()
+  const profiles: BackendProfile[] = Array.isArray(data) ? data : (data.content || [])
   return profiles.map(mapProfileToUser)
 }
 
