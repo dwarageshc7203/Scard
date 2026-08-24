@@ -46,10 +46,7 @@ const HeatmapWidget: React.FC<HeatmapWidgetProps> = ({
           ))}
         </select>
       </div>
-      <div
-        className="mt-14 overflow-x-auto pt-2 custom-scrollbar"
-        style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)', maskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
-      >
+      <div className="mt-14 overflow-x-auto pt-2 custom-scrollbar">
         <Heatmap data={heatmapData} year={heatmapYear} />
       </div>
     </div>

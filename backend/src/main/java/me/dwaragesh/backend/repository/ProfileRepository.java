@@ -57,7 +57,7 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
     @Query(value = "SELECT p.user_name, " +
                    "COALESCE(NULLIF(p.profile_name, ''), p.user_name) AS profile_name, " +
                    "p.designation, " +
-                   "COALESCE(NULLIF(p.custom_image_url, ''), u.image_url) AS image_url " +
+                   "COALESCE(NULLIF(p.custom_image_url, ''), u.imageurl) AS image_url " +
                    "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id",
            nativeQuery = true)
     List<me.dwaragesh.backend.model.dto.ProfileSummaryProjection> findAllSummariesNative();

@@ -33,7 +33,7 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
-        return ResponseEntity.ok(service.getProfileAndTrackView(user.getUserName(), null));
+        return ResponseEntity.ok(service.getProfile(user.getUserName()));
     }
 
     @PatchMapping
