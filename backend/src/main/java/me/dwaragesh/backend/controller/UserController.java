@@ -26,11 +26,7 @@ public class UserController {
 
     @GetMapping("/me")
     public MeResponse getMe(@AuthenticationPrincipal OidcUser principal) {
-        User user = service.findOrCreateFromGoogle(
-                principal.getSubject(),
-                principal.getEmail(),
-                principal.getPicture()
-        );
+        User user = service.findOrCreateFromGoogle(principal);
         if (user.getProfile() != null) {
             syncService.syncAllPlatformsAsync(user.getProfile());
         }
@@ -39,11 +35,7 @@ public class UserController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal OidcUser principal) {
-        User user = service.findOrCreateFromGoogle(
-                principal.getSubject(),
-                principal.getEmail(),
-                principal.getPicture()
-        );
+        User user = service.findOrCreateFromGoogle(principal);
         service.deleteUser(user);
         return ResponseEntity.ok().build();
     }

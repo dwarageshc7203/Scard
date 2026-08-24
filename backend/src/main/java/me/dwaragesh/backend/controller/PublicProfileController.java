@@ -28,8 +28,11 @@ public class PublicProfileController {
     }
 
     @GetMapping("/api/profiles")
-    public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
-        return service.getAllProfiles();
+    public org.springframework.data.domain.Page<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "30") int size
+    ) {
+        return service.getAllProfiles(org.springframework.data.domain.PageRequest.of(page, Math.min(size, 100)));
     }
 
     @GetMapping("/api/profile/{userName}/contributions")
@@ -43,8 +46,5 @@ public class PublicProfileController {
 
 
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(me.dwaragesh.backend.exception.ProfileNotFoundException.class)
-    public org.springframework.http.ResponseEntity<String> handleProfileNotFound(me.dwaragesh.backend.exception.ProfileNotFoundException ex) {
-        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body("Profile not found");
-    }
+
 }

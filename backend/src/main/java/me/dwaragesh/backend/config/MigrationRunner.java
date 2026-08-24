@@ -19,7 +19,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
+// @Component // Disabled after migration is complete
 public class MigrationRunner {
 
     private final ProfileRepository profileRepository;
@@ -32,7 +32,7 @@ public class MigrationRunner {
         this.mapper = new ObjectMapper();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    // @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void migrateHeatmapJsonToContributionTable() {
         // LOW-9: Skip the full table scan if migration is already complete.

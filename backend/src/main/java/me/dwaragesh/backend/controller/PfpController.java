@@ -35,7 +35,13 @@ public class PfpController {
                 principal.getSubject(), principal.getEmail(), principal.getPicture());
         Profile profile = user.getProfile();
 
+        String oldImageUrl = profile.getCustomImageUrl();
         String imageUrl = imageUploadService.saveRawImage(file, "pfp-" + profile.getProfileId());
+        
+        if (oldImageUrl != null && !oldImageUrl.equals(imageUrl)) {
+            imageUploadService.deleteImage(oldImageUrl);
+        }
+        
         profile.setCustomImageUrl(imageUrl);
         profileRepository.save(profile);
         return imageUrl;
@@ -46,6 +52,10 @@ public class PfpController {
         User user = userService.findOrCreateFromGoogle(
                 principal.getSubject(), principal.getEmail(), principal.getPicture());
         Profile profile = user.getProfile();
+        String oldImageUrl = profile.getCustomImageUrl();
+        if (oldImageUrl != null) {
+            imageUploadService.deleteImage(oldImageUrl);
+        }
         profile.setCustomImageUrl(null);
         profileRepository.save(profile);
     }

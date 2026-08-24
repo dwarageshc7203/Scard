@@ -182,8 +182,8 @@ public class ProfileService {
      * every user into memory on every page load.
      */
     @Transactional(readOnly = true)
-    public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
-        return repository.findAllSummaries();
+    public org.springframework.data.domain.Page<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles(org.springframework.data.domain.Pageable pageable) {
+        return repository.findAllSummaries(pageable);
     }
 
     @Transactional(readOnly = true)

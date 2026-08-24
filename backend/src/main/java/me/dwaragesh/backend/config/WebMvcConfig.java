@@ -23,7 +23,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/profile/check-*",
                         "/api/profile/*/export",
                         "/api/profiles",
-                        "/api/profile/*/contributions"
+                        "/api/profile/*/contributions",
+                        "/api/profile"
                 );
     }
 }

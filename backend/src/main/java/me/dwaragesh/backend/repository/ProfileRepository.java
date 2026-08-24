@@ -58,17 +58,17 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
                    "COALESCE(NULLIF(p.profile_name, ''), p.user_name) AS profile_name, " +
                    "p.designation, " +
                    "COALESCE(NULLIF(p.custom_image_url, ''), u.imageurl) AS image_url " +
-                   "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id",
+                   "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id \n#pageable\n",
+           countQuery = "SELECT count(*) FROM profile p",
            nativeQuery = true)
-    List<me.dwaragesh.backend.model.dto.ProfileSummaryProjection> findAllSummariesNative();
+    org.springframework.data.domain.Page<me.dwaragesh.backend.model.dto.ProfileSummaryProjection> findAllSummariesNative(org.springframework.data.domain.Pageable pageable);
 
-    default List<me.dwaragesh.backend.model.dto.ProfileSummary> findAllSummaries() {
-        return findAllSummariesNative().stream()
+    default org.springframework.data.domain.Page<me.dwaragesh.backend.model.dto.ProfileSummary> findAllSummaries(org.springframework.data.domain.Pageable pageable) {
+        return findAllSummariesNative(pageable)
                 .map(r -> new me.dwaragesh.backend.model.dto.ProfileSummary(
                         r.getUser_name(),
                         r.getProfile_name(),
                         r.getDesignation(),
-                        r.getImage_url()))
-                .collect(java.util.stream.Collectors.toList());
+                        r.getImage_url()));
     }
 }

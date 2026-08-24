@@ -51,6 +51,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final Bandwidth EXPORT_LIMIT =
             Bandwidth.classic(3, Refill.greedy(3, Duration.ofMinutes(1)));
 
+    // 60 requests / minute for default public endpoints
+    private static final Bandwidth DEFAULT_LIMIT =
+            Bandwidth.classic(60, Refill.greedy(60, Duration.ofMinutes(1)));
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
@@ -68,6 +72,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             bucket = resolveBucket("check:" + ip, CHECK_LIMIT);
         } else if (uri.matches("/api/profile/[^/]+/export")) {
             bucket = resolveBucket("export:" + ip, EXPORT_LIMIT);
+        } else if (uri.equals("/api/profiles") || uri.matches("/api/profile/[^/]+/contributions")) {
+            bucket = resolveBucket("public:" + ip, DEFAULT_LIMIT);
+        } else if (uri.equals("/api/profile")) {
+            bucket = resolveBucket("profile:" + ip, DEFAULT_LIMIT);
         }
 
         if (bucket != null && !bucket.tryConsume(1)) {

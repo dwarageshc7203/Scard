@@ -32,7 +32,7 @@ public class ProfileController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        User user = userService.findOrCreateFromGoogle(principal);
         return ResponseEntity.ok(service.getProfile(user.getUserName()));
     }
 
@@ -41,7 +41,7 @@ public class ProfileController {
         if (principal == null) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        User user = userService.findOrCreateFromGoogle(principal);
         return ResponseEntity.ok(service.patchProfile(user, request));
     }
 
@@ -54,7 +54,7 @@ public class ProfileController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        User user = userService.findOrCreateFromGoogle(principal);
         return ResponseEntity.ok(service.getAnalytics(user, org.springframework.data.domain.PageRequest.of(page, Math.min(size, 100))));
     }
 
@@ -108,7 +108,7 @@ public class ProfileController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+        User user = userService.findOrCreateFromGoogle(principal);
         return ResponseEntity.ok(service.createProfile(user, request));
     }
 }

@@ -43,6 +43,14 @@ public class UserService {
      * <p>No {@code synchronized} — the DB unique constraint on {@code google_id}
      * handles concurrent inserts via the catch-and-retry pattern.
      */
+    public User findOrCreateFromGoogle(org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
+        Boolean verified = principal.getEmailVerified();
+        if (verified != null && !verified) {
+            throw new org.springframework.security.access.AccessDeniedException("Google email must be verified");
+        }
+        return findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
+    }
+
     @Transactional
     public User findOrCreateFromGoogle(String googleId, String email, String imageURL) {
         return repository.findByGoogleId(googleId)

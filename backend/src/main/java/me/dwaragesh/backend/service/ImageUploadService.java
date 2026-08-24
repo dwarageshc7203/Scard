@@ -49,13 +49,20 @@ public class ImageUploadService {
                 }
                 if (matches) { 
                     String mime = entry.getValue();
-                    return switch (mime) {
-                        case "image/jpeg" -> ".jpg";
-                        case "image/png" -> ".png";
-                        case "image/gif" -> ".gif";
-                        case "image/webp" -> ".webp";
-                        default -> ".png";
-                    };
+                    if ("image/webp".equals(mime)) {
+                        if (header.length < 12 || header[8] != 0x57 || header[9] != 0x45 || header[10] != 0x42 || header[11] != 0x50) {
+                            matches = false;
+                        }
+                    }
+                    if (matches) {
+                        return switch (mime) {
+                            case "image/jpeg" -> ".jpg";
+                            case "image/png" -> ".png";
+                            case "image/gif" -> ".gif";
+                            case "image/webp" -> ".webp";
+                            default -> ".png";
+                        };
+                    }
                 }
             }
             throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG, GIF, WebP)");
@@ -76,5 +83,16 @@ public class ImageUploadService {
         Files.copy(file.getInputStream(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         return "/uploads/" + filename;
+    }
+
+    public void deleteImage(String imageUrl) {
+        if (imageUrl != null && imageUrl.startsWith("/uploads/")) {
+            String filename = imageUrl.substring("/uploads/".length());
+            try {
+                Files.deleteIfExists(new File(uploadDir, filename).toPath());
+            } catch (IOException e) {
+                // Ignore if it fails to delete, orphaned file is better than breaking the flow
+            }
+        }
     }
 }
