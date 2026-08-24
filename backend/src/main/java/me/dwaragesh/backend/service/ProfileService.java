@@ -6,6 +6,7 @@ import me.dwaragesh.backend.model.*;
 import me.dwaragesh.backend.model.dto.OnBoardingRequest;
 import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
+import me.dwaragesh.backend.model.enums.Platform;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import me.dwaragesh.backend.repository.ProfileViewRepository;
 import me.dwaragesh.backend.repository.UserRepository;
@@ -37,6 +38,13 @@ public class ProfileService {
     private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public ProfileResponse toResponse(Profile profile) {
+        java.util.Set<String> activePlatforms = new java.util.HashSet<>();
+        if (profile.getSocials() != null) {
+            for (String s : profile.getSocials()) {
+                if (s.contains(":")) activePlatforms.add(s.split(":", 2)[0].toUpperCase());
+            }
+        }
+
         String contribJson = profile.getHeatmapJson();
         if (contribJson == null || contribJson.trim().isEmpty() || contribJson.equals("[]")) {
             // Fallback to the loaded contributions relation to keep the mapper pure
@@ -44,13 +52,15 @@ public class ProfileService {
             if (recent == null) recent = java.util.Collections.emptyList();
             
             // Map back to the legacy JSON structure expected by the frontend
-            List<java.util.Map<String, Object>> mapped = recent.stream().map(c -> {
-                java.util.Map<String, Object> map = new java.util.HashMap<>();
-                map.put("platform", c.getPlatform().name());
-                map.put("contributionDate", c.getDate().toString());
-                map.put("count", c.getCount());
-                return map;
-            }).collect(Collectors.toList());
+            List<java.util.Map<String, Object>> mapped = recent.stream()
+                .filter(c -> activePlatforms.contains(c.getPlatform().name()))
+                .map(c -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("platform", c.getPlatform().name());
+                    map.put("contributionDate", c.getDate().toString());
+                    map.put("count", c.getCount());
+                    return map;
+                }).collect(Collectors.toList());
             
             try {
                 contribJson = mapper.writeValueAsString(mapped);
@@ -58,6 +68,17 @@ public class ProfileService {
                 contribJson = "[]";
             }
         }
+
+        List<Badge> activeBadges = profile.getBadges() != null ? 
+            profile.getBadges().stream().filter(b -> activePlatforms.contains(b.getPlatform().name())).collect(Collectors.toList()) : null;
+
+        List<Contest> activeContests = profile.getContests() != null ?
+            profile.getContests().stream().filter(c -> activePlatforms.contains(c.getPlatform().name())).collect(Collectors.toList()) : null;
+
+        java.util.Map<String, ProblemStats> activeStats = profile.getProblemStats() != null ?
+            profile.getProblemStats().entrySet().stream()
+                .filter(e -> activePlatforms.contains(e.getKey()))
+                .collect(Collectors.toMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue)) : null;
 
         return new ProfileResponse(
                 profile.getUserName(),
@@ -68,9 +89,9 @@ public class ProfileService {
                 (profile.getCustomImageUrl() != null && !profile.getCustomImageUrl().trim().isEmpty()) ? profile.getCustomImageUrl() : (profile.getUser() != null ? profile.getUser().getImageURL() : null),
                 profile.getBannerId(),
                 profile.getSocials(),
-                profile.getBadges(),
-                profile.getContests(),
-                profile.getProblemStats(),
+                activeBadges,
+                activeContests,
+                activeStats,
                 profile.getProjects(),
                 profile.getAnonymousViews(),
                 profile.getUser() != null ? profile.getUser().getCreatedDateTime() : null,
@@ -278,6 +299,7 @@ public class ProfileService {
             user.setEmail(request.email());
         }
         if (request.socials() != null) {
+            java.util.List<String> oldSocials = profile.getSocials() != null ? profile.getSocials() : new java.util.ArrayList<>();
             for (String s : request.socials()) {
                 String type = s.contains(":") ? s.split(":", 2)[0].toLowerCase() : "link";
                 String urlOrHandle = s.contains(":") ? s.split(":", 2)[1] : s;
@@ -289,6 +311,36 @@ public class ProfileService {
                 }
             }
             profile.setSocials(new java.util.ArrayList<>(request.socials()));
+            
+            java.util.Set<String> newPlatforms = request.socials().stream()
+                    .filter(s -> s.contains(":"))
+                    .map(s -> s.split(":", 2)[0].toUpperCase())
+                    .collect(Collectors.toSet());
+                    
+            for (String oldSocial : oldSocials) {
+                if (oldSocial.contains(":")) {
+                    String oldPlatformStr = oldSocial.split(":", 2)[0].toUpperCase();
+                    if (!newPlatforms.contains(oldPlatformStr)) {
+                        try {
+                            Platform p = Platform.valueOf(oldPlatformStr);
+                            if (profile.getContributions() != null) {
+                                profile.getContributions().removeIf(c -> p.equals(c.getPlatform()));
+                            }
+                            if (profile.getBadges() != null) {
+                                profile.getBadges().removeIf(b -> p.equals(b.getPlatform()));
+                            }
+                            if (profile.getContests() != null) {
+                                profile.getContests().removeIf(c -> p.equals(c.getPlatform()));
+                            }
+                            if (profile.getProblemStats() != null) {
+                                profile.getProblemStats().remove(p.name());
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // Ignored
+                        }
+                    }
+                }
+            }
         }
         if (request.projects() != null) {
             java.util.List<Project> newProjects = new java.util.ArrayList<>();
