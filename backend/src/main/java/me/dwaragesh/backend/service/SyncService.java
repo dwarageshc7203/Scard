@@ -106,9 +106,7 @@ public class SyncService {
             profile.getProblemStats().put(platform.name().toUpperCase(), stats);
         }
 
-        profileRepository.save(profile);
-
-        // Update the last-synced timestamp after a successful sync
+        // HIGH-6: Set lastSyncedAt before the single save — removes the redundant second write.
         profile.setLastSyncedAt(Instant.now());
         profileRepository.save(profile);
     }
@@ -118,35 +116,39 @@ public class SyncService {
         // Wipe existing rows for this platform, then reinsert — idempotent and clean
         contributionRepository.deleteByProfileAndPlatform(profile, platform);
 
-        for (ContributionData c : result.contributions()) {
-            if (c.count() > 0) {
-                Contribution contribution = new Contribution();
-                contribution.setProfile(profile);
-                contribution.setPlatform(platform);
-                contribution.setDate(c.date());
-                contribution.setCount(c.count());
-                contributionRepository.save(contribution);
-            }
-        }
+        // LOW-8: Collect into a list and use saveAll() for a single batched INSERT
+        // instead of one INSERT per record (N+1 writes).
+        List<Contribution> toSave = result.contributions().stream()
+                .filter(c -> c.count() > 0)
+                .map(c -> {
+                    Contribution contribution = new Contribution();
+                    contribution.setProfile(profile);
+                    contribution.setPlatform(platform);
+                    contribution.setDate(c.date());
+                    contribution.setCount(c.count());
+                    return contribution;
+                })
+                .collect(Collectors.toList());
+        contributionRepository.saveAll(toSave);
     }
 
     private void upsertBadges(Profile profile, Platform platform, PlatformSyncResult result) {
-        // badges don't have a natural unique key to upsert against reliably yet —
-        // simplest correct approach for now: wipe this platform's badges and reinsert
         List<Badge> existing = badgeRepository.findByProfileProfileId(profile.getProfileId()).stream()
                 .filter(b -> platform.equals(b.getPlatform()))
                 .toList();
         badgeRepository.deleteAll(existing);
 
-        result.badges().forEach(b -> {
+        // LOW-8: Batch insert
+        List<Badge> toSave = result.badges().stream().map(b -> {
             Badge badge = new Badge();
             badge.setProfile(profile);
             badge.setPlatform(platform);
             badge.setBadgeName(b.badgeName());
             badge.setBadgeURL(b.badgeURL());
             badge.setBadgeDate(b.badgeDate());
-            badgeRepository.save(badge);
-        });
+            return badge;
+        }).collect(Collectors.toList());
+        badgeRepository.saveAll(toSave);
     }
 
     private void upsertContests(Profile profile, Platform platform, PlatformSyncResult result) {
@@ -155,14 +157,16 @@ public class SyncService {
                 .toList();
         contestRepository.deleteAll(existing);
 
-        result.contests().forEach(c -> {
+        // LOW-8: Batch insert
+        List<Contest> toSave = result.contests().stream().map(c -> {
             Contest contest = new Contest();
             contest.setProfile(profile);
             contest.setPlatform(platform);
             contest.setContestName(c.contestName());
             contest.setContestDate(c.contestDate());
             contest.setContestRating(c.contestRating());
-            contestRepository.save(contest);
-        });
+            return contest;
+        }).collect(Collectors.toList());
+        contestRepository.saveAll(toSave);
     }
 }

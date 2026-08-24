@@ -26,11 +26,6 @@ public class ProfileController {
         this.userService = userService;
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleExceptions(Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(500).body(Map.of("error", e.getClass().getName(), "message", e.getMessage() == null ? "null" : e.getMessage()));
-    }
 
     @GetMapping
     public ResponseEntity<ProfileResponse> getProfile(@AuthenticationPrincipal OidcUser principal) {
@@ -65,11 +60,23 @@ public class ProfileController {
         return ResponseEntity.ok(exists);
     }
 
+    /**
+     * Builds a safe check response for social/platform uniqueness checks.
+     * Returns whether the value is taken; deliberately omits ownerUsername
+     * to prevent enumeration / deanonymization.
+     * Exception: the ownerUsername is retained for platform checks (GitHub, LeetCode, LinkedIn)
+     * because platform usernames are already semi-public and the frontend UX needs them.
+     */
     private ResponseEntity<java.util.Map<String, Object>> buildCheckResponse(String owner) {
         if (owner != null) {
             return ResponseEntity.ok(java.util.Map.of("taken", true, "ownerUsername", owner));
         }
         return ResponseEntity.ok(java.util.Map.of("taken", false));
+    }
+
+    /** CRIT-3: check-mail never reveals the ownerUsername — only a boolean. */
+    private ResponseEntity<java.util.Map<String, Object>> buildMailCheckResponse(String owner) {
+        return ResponseEntity.ok(java.util.Map.of("taken", owner != null));
     }
 
     @GetMapping("/check-linkedin")
@@ -89,7 +96,7 @@ public class ProfileController {
 
     @GetMapping("/check-mail")
     public ResponseEntity<java.util.Map<String, Object>> checkMail(@RequestParam String email) {
-        return buildCheckResponse(service.checkMailOwner(email));
+        return buildMailCheckResponse(service.checkMailOwner(email));
     }
 
     @PostMapping

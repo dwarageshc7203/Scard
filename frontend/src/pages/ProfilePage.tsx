@@ -21,7 +21,7 @@ interface ProfilePageProps {
   users: User[]
   variant?: 'directory' | 'standalone'
   initialUserId?: string
-  currentUser?: any
+  currentUser?: import('../../types').MeResponse | null
 }
 
 const ProfilePage: FC<ProfilePageProps> = ({ users, variant = 'directory', initialUserId, currentUser }) => {

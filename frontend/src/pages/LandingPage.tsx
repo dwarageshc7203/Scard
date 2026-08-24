@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext"
 import { Sun, Moon, Laptop, Mail } from "lucide-react"
 
 interface LandingPageProps {
-  currentUser?: any
+  currentUser?: import('../types').MeResponse | null
 }
 
 const LandingPage: FC<LandingPageProps> = ({ currentUser }) => {

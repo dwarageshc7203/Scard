@@ -12,13 +12,19 @@ import java.util.List;
 @RestController
 public class PublicProfileController {
 
-    @Autowired
-    private ProfileService service;
+    private final ProfileService service;
+
+    public PublicProfileController(ProfileService service) {
+        this.service = service;
+    }
 
     @GetMapping("/api/profile/{userName}")
-    public ProfileResponse getPublicProfile(@PathVariable String userName, @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
+    public ProfileResponse getPublicProfile(
+            @PathVariable String userName,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
         String googleId = principal != null ? principal.getSubject() : null;
-        return service.getProfileAndTrackView(userName, googleId);
+
+        return service.getPublicProfileAndTrackView(userName, googleId);
     }
 
     @GetMapping("/api/profiles")

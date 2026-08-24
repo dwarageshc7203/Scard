@@ -17,8 +17,11 @@ import java.util.Optional;
 @RestController
 public class OgProfileHtmlController {
 
-    @Autowired
-    private ProfileRepository profileRepository;
+    private final ProfileRepository profileRepository;
+
+    public OgProfileHtmlController(ProfileRepository profileRepository) {
+        this.profileRepository = profileRepository;
+    }
 
     @Value("${app.frontend.url:https://scard.dwaragesh.me}")
     private String baseUrl;

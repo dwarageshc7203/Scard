@@ -11,7 +11,7 @@ import FinishSlide from "../components/onboarding/FinishSlide"
 import Image from "../components/ui/Image"
 
 interface OnboardingSlideshowProps {
-  currentUser: any
+  currentUser?: import('../types').MeResponse | null
 }
 
 const slideVariants = {

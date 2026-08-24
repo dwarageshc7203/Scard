@@ -35,6 +35,15 @@ public class MigrationRunner {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void migrateHeatmapJsonToContributionTable() {
+        // LOW-9: Skip the full table scan if migration is already complete.
+        // Once all heatmapJson columns are cleared this becomes a cheap COUNT query.
+        long remaining = profileRepository.countByHeatmapJsonNot("[]");
+        if (remaining == 0) {
+            log.debug("Heatmap migration already complete — nothing to do.");
+            return;
+        }
+        log.info("Migrating heatmapJson for {} profiles...", remaining);
+
         List<Profile> profiles = profileRepository.findAll();
         for (Profile profile : profiles) {
             String json = profile.getHeatmapJson();

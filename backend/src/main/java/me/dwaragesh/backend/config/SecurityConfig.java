@@ -18,6 +18,16 @@ public class SecurityConfig {
     private String frontendUrl;
 
     @Bean
+    public org.springframework.session.web.http.CookieSerializer cookieSerializer() {
+        org.springframework.session.web.http.DefaultCookieSerializer serializer = new org.springframework.session.web.http.DefaultCookieSerializer();
+        serializer.setCookieName("JSESSIONID");
+        serializer.setUseSecureCookie(true);
+        serializer.setSameSite("Lax");
+        serializer.setUseHttpOnlyCookie(true);
+        return serializer;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth

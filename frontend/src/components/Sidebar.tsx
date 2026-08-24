@@ -7,7 +7,7 @@ interface SidebarProps {
   users: User[]
   selectedUserId: string
   onSelectUser: (id: string) => void
-  currentUser?: any
+  currentUser?: import('../types').MeResponse | null
 }
 
 const Sidebar: FC<SidebarProps> = ({

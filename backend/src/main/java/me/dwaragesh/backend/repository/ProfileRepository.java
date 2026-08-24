@@ -17,6 +17,9 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
 
     Profile findByUser(User user);
 
+    /** LOW-9: Used by MigrationRunner to skip the full table scan when migration is done. */
+    long countByHeatmapJsonNot(String value);
+
     @Query(value = "SELECT p.user_name FROM profile p WHERE EXISTS (" +
                    "  SELECT 1 FROM unnest(p.socials) AS s" +
                    "  WHERE s ILIKE 'LINKED_IN:' || :username ESCAPE '\\'" +
@@ -45,4 +48,27 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
                    "WHERE LOWER('LEETCODE:' || :username) = ANY(SELECT LOWER(x) FROM unnest(p.socials) AS x)",
            nativeQuery = true)
     List<String> findUserNameByLeetcode(@Param("username") String username);
+
+    /**
+     * HIGH-4: Lightweight summary query — selects only the 4 columns needed for the
+     * public explore/directory page instead of loading the full entity graph.
+     * Uses a CASE expression to prefer custom avatar over OAuth avatar.
+     */
+    @Query(value = "SELECT p.user_name, " +
+                   "COALESCE(NULLIF(p.profile_name, ''), p.user_name) AS profile_name, " +
+                   "p.designation, " +
+                   "COALESCE(NULLIF(p.custom_image_url, ''), u.image_url) AS image_url " +
+                   "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id",
+           nativeQuery = true)
+    List<me.dwaragesh.backend.model.dto.ProfileSummaryProjection> findAllSummariesNative();
+
+    default List<me.dwaragesh.backend.model.dto.ProfileSummary> findAllSummaries() {
+        return findAllSummariesNative().stream()
+                .map(r -> new me.dwaragesh.backend.model.dto.ProfileSummary(
+                        r.getUser_name(),
+                        r.getProfile_name(),
+                        r.getDesignation(),
+                        r.getImage_url()))
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -21,14 +22,37 @@ import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.util.Optional;
 
+@Slf4j
 @RestController
 public class OgImageController {
 
-    @Autowired
-    private ProfileRepository profileRepository;
+    private final ProfileRepository profileRepository;
+
+    public OgImageController(ProfileRepository profileRepository) {
+        this.profileRepository = profileRepository;
+    }
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+    /**
+     * HIGH-7: Allowlist of trusted URL prefixes for outbound HTTP fetches.
+     * Anything outside this list is silently skipped; the fallback rendering
+     * path (gradient / initial-letter avatar) handles it gracefully.
+     *
+     * <p>Never pass an arbitrary DB-stored URL to URLConnection without checking here.
+     */
+    private static final java.util.List<String> TRUSTED_URL_PREFIXES = java.util.List.of(
+            "https://images.unsplash.com/",
+            "https://lh3.googleusercontent.com/",
+            "https://avatars.githubusercontent.com/",
+            "https://i.imgur.com/"
+    );
+
+    private static boolean isTrustedUrl(String url) {
+        if (url == null) return false;
+        return TRUSTED_URL_PREFIXES.stream().anyMatch(url::startsWith);
+    }
 
     @GetMapping(value = {"/api/og/{userName}.png", "/api/og/{userName}"}, produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateOgImage(@PathVariable String userName) {
@@ -70,9 +94,15 @@ public class OgImageController {
                         String imageUrl = bg.replaceAll(".*url\\(['\"]?([^'\")]+)['\"]?\\).*", "$1");
                         BufferedImage bannerImg = null;
                         if (imageUrl.startsWith("http")) {
-                            java.net.URLConnection conn = new URL(imageUrl).openConnection();
-                            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                            bannerImg = ImageIO.read(conn.getInputStream());
+                            // HIGH-7: Only fetch URLs on the allowlist to prevent SSRF.
+                            if (!isTrustedUrl(imageUrl)) {
+                                log.warn("Blocked SSRF attempt for banner URL: {}", imageUrl);
+                                // Fall through to gradient/default background
+                            } else {
+                                java.net.URLConnection conn = new URL(imageUrl).openConnection();
+                                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                                bannerImg = ImageIO.read(conn.getInputStream());
+                            }
                         } else if (imageUrl.startsWith("/")) {
                             java.io.File bannerFile = new java.io.File("./static" + imageUrl);
                             if (!bannerFile.exists()) {
@@ -150,9 +180,15 @@ public class OgImageController {
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 try {
                     if (avatarUrl.startsWith("http")) {
-                        java.net.URLConnection conn = new URL(avatarUrl).openConnection();
-                        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                        avatarImg = ImageIO.read(conn.getInputStream());
+                        // HIGH-7: Only fetch avatar URLs from trusted origins.
+                        if (!isTrustedUrl(avatarUrl)) {
+                            log.warn("Blocked SSRF attempt for avatar URL: {}", avatarUrl);
+                            avatarUrl = null; // fall through to initials fallback
+                        } else {
+                            java.net.URLConnection conn = new URL(avatarUrl).openConnection();
+                            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                            avatarImg = ImageIO.read(conn.getInputStream());
+                        }
                     } else {
                         String filename = avatarUrl.substring(avatarUrl.lastIndexOf('/') + 1);
                         java.io.File file = new java.io.File(uploadDir, filename);

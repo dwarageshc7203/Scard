@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,9 +42,8 @@ public class GlobalExceptionHandler {
         body.put("message", "An unexpected error occurred.");
         body.put("path", request.getDescription(false).replace("uri=", ""));
         
-        // Log the actual error internally
-        System.err.println("Unexpected Error: " + ex.getMessage());
-        ex.printStackTrace();
+        // MED-7: Use Slf4j instead of System.err — respects log level, MDC, and log correlation.
+        log.error("Unexpected error at {}: {}", request.getDescription(false), ex.getMessage(), ex);
         
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -55,7 +57,7 @@ public class GlobalExceptionHandler {
         body.put("message", "Invalid data provided. Please check your inputs.");
         body.put("path", request.getDescription(false).replace("uri=", ""));
         
-        System.err.println("Data Integrity Violation: " + ex.getMessage());
+        log.warn("Data integrity violation at {}: {}", request.getDescription(false), ex.getMessage());
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }

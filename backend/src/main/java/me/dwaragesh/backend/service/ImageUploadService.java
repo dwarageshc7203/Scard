@@ -26,7 +26,7 @@ public class ImageUploadService {
         put(new byte[]{0x52, 0x49, 0x46, 0x46}, "image/webp"); // RIFF header
     }};
 
-    private void validateImage(MultipartFile file) {
+    private String validateAndGetExtension(MultipartFile file) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
@@ -41,18 +41,24 @@ public class ImageUploadService {
                     throw new IllegalArgumentException("File too small to be a valid image");
                 }
             }
-            boolean validMagic = false;
             for (java.util.Map.Entry<byte[], String> entry : MAGIC_BYTES.entrySet()) {
                 byte[] magic = entry.getKey();
                 boolean matches = true;
                 for (int i = 0; i < magic.length && i < header.length; i++) {
                     if (header[i] != magic[i]) { matches = false; break; }
                 }
-                if (matches) { validMagic = true; break; }
+                if (matches) { 
+                    String mime = entry.getValue();
+                    return switch (mime) {
+                        case "image/jpeg" -> ".jpg";
+                        case "image/png" -> ".png";
+                        case "image/gif" -> ".gif";
+                        case "image/webp" -> ".webp";
+                        default -> ".png";
+                    };
+                }
             }
-            if (!validMagic) {
-                throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG, GIF, WebP)");
-            }
+            throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG, GIF, WebP)");
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
@@ -61,21 +67,9 @@ public class ImageUploadService {
     }
 
     public String saveRawImage(MultipartFile file, String filenamePrefix) throws IOException {
-        validateImage(file);
+        String extension = validateAndGetExtension(file);
         File dir = new File(uploadDir);
         if (!dir.exists()) dir.mkdirs();
-
-        String extension = ".png";
-        String contentType = file.getContentType();
-        if (contentType != null) {
-            if (contentType.equals("image/jpeg")) {
-                extension = ".jpg";
-            } else if (contentType.equals("image/gif")) {
-                extension = ".gif";
-            } else if (contentType.equals("image/webp")) {
-                extension = ".webp";
-            }
-        }
 
         String filename = filenamePrefix + "-" + UUID.randomUUID() + extension;
         File outFile = new File(dir, filename);

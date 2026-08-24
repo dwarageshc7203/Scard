@@ -1,50 +1,83 @@
 package me.dwaragesh.backend.interceptor;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * CRIT-5: Rate limiter applied to all sensitive enumeration and sync endpoints.
+ *
+ * <p>Per-IP buckets are stored in a Caffeine cache with TTL expiry to prevent the
+ * unbounded memory leak that would occur with a plain ConcurrentHashMap (old impl).
+ *
+ * <p>Limits:
+ *   - /api/profile/platforms      → 5 req / minute  (external API sync — expensive)
+ *   - /api/profile/check-*        → 20 req / minute (sign-up UX checks)
+ *   - /api/profile/{user}/export  → 3 req / minute  (CPU-bound PDF rendering)
+ */
+@Slf4j
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
 
-    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    // Buckets expire 2 hours after last access so memory is bounded.
+    private final Cache<String, Bucket> cache = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofHours(2))
+            .maximumSize(50_000)
+            .build();
 
-    public Bucket resolveBucket(String ip) {
-        return cache.computeIfAbsent(ip, this::newBucket);
+    private Bucket resolveBucket(String key, Bandwidth bandwidth) {
+        return cache.get(key, k -> Bucket.builder().addLimit(bandwidth).build());
     }
 
-    private Bucket newBucket(String ip) {
-        // Limit to 5 requests per minute for syncing external APIs to avoid bans
-        Bandwidth limit = Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
-        return Bucket.builder()
-                .addLimit(limit)
-                .build();
-    }
+    // 5 requests / minute for platform sync (calls external APIs)
+    private static final Bandwidth SYNC_LIMIT =
+            Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
+
+    // 20 requests / minute for check-* endpoints (sign-up form UX)
+    private static final Bandwidth CHECK_LIMIT =
+            Bandwidth.classic(20, Refill.greedy(20, Duration.ofMinutes(1)));
+
+    // 3 requests / minute for the PDF export (CPU-intensive, unauthenticated)
+    private static final Bandwidth EXPORT_LIMIT =
+            Bandwidth.classic(3, Refill.greedy(3, Duration.ofMinutes(1)));
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (request.getRequestURI().startsWith("/api/profile/platforms")) {
-            // forward-headers-strategy=framework already resolves the real client IP;
-            // never trust a user-supplied X-Forwarded-For header for rate limiting.
-            String ip = request.getRemoteAddr();
-            Bucket bucket = resolveBucket(ip);
-            if (bucket.tryConsume(1)) {
-                return true;
-            } else {
-                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                response.getWriter().write("Too many requests. Please wait before syncing again.");
-                return false;
-            }
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+            throws Exception {
+
+        // forward-headers-strategy=framework already resolves the real client IP;
+        // never trust a user-supplied X-Forwarded-For header for rate limiting.
+        String ip = request.getRemoteAddr();
+        String uri = request.getRequestURI();
+
+        Bucket bucket = null;
+
+        if (uri.startsWith("/api/profile/platforms")) {
+            bucket = resolveBucket("sync:" + ip, SYNC_LIMIT);
+        } else if (uri.startsWith("/api/profile/check-")) {
+            bucket = resolveBucket("check:" + ip, CHECK_LIMIT);
+        } else if (uri.matches("/api/profile/[^/]+/export")) {
+            bucket = resolveBucket("export:" + ip, EXPORT_LIMIT);
         }
+
+        if (bucket != null && !bucket.tryConsume(1)) {
+            log.warn("Rate limit exceeded for IP {} on {}", ip, uri);
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Too many requests. Please wait before trying again.\"}");
+            return false;
+        }
+
         return true;
     }
 }

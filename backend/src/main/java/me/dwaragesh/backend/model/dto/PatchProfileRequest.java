@@ -36,7 +36,10 @@ public record PatchProfileRequest(
         List<Project> projects,
 
         @Size(max = 5000, message = "Display preferences JSON is too large")
-        String displayPreferences
+        String displayPreferences,
+
+        @Size(max = 254, message = "Pin must be 254 characters or fewer")
+        String pin
 
 ) {
 }

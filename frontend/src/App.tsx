@@ -14,7 +14,7 @@ import OnboardingSlideshow from "./pages/OnboardingSlideshow"
 import ThemeProvider from "./context/ThemeContext"
 import { Toaster } from "sonner"
 import { fetchProfiles, fetchMe, createProfile } from "./lib/api"
-import type { User } from "./types"
+import type { User, MeResponse } from "./types"
 
 type Page = "landing" | "directory" | "standalone"
 
@@ -34,7 +34,7 @@ const PLACEHOLDER_USER: User = {
     const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
     return {
       date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
-      count: Math.floor(Math.random() * 5),
+      count: (i % 5),
     }
   }).reverse(),
   isOnline: true,
@@ -46,7 +46,7 @@ function AppContent() {
   const location = useLocation()
   const [currentPage, setCurrentPage] = useState<Page>("landing")
   const [users, setUsers] = useState<User[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<MeResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

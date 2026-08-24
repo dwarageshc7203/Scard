@@ -16,11 +16,13 @@ import org.springframework.http.ResponseEntity;
 @RequestMapping("/api")
 public class UserController {
 
-    @Autowired
-    private UserService service;
+    private final UserService service;
+    private final me.dwaragesh.backend.service.SyncService syncService;
 
-    @Autowired
-    private me.dwaragesh.backend.service.SyncService syncService;
+    public UserController(UserService service, me.dwaragesh.backend.service.SyncService syncService) {
+        this.service = service;
+        this.syncService = syncService;
+    }
 
     @GetMapping("/me")
     public MeResponse getMe(@AuthenticationPrincipal OidcUser principal) {

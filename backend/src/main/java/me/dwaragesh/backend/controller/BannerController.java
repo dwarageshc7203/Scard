@@ -14,8 +14,11 @@ import java.util.List;
 @RequestMapping("/api/banners")
 public class BannerController {
 
-    @Autowired
-    private BannerRepository bannerRepository;
+    private final BannerRepository bannerRepository;
+
+    public BannerController(BannerRepository bannerRepository) {
+        this.bannerRepository = bannerRepository;
+    }
 
     /**
      * Returns only banners that exist in the database.

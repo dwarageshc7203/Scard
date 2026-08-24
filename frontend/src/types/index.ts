@@ -77,3 +77,10 @@ export interface User {
   rawContributions: Array<{ platform: string; date: string; count: number }>
   isOnline: boolean
 }
+
+export interface MeResponse {
+  userId: string
+  userName: string | null
+  imageURL: string | null
+  hasProfile: boolean
+}

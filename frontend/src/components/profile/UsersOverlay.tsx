@@ -7,7 +7,7 @@ interface UsersOverlayProps {
   localUsers: User[]
   selectedUserId?: string
   onSelectUser: (id: string) => void
-  currentUser: any
+  currentUser?: import('../../types').MeResponse | null
 }
 
 const UsersOverlay: React.FC<UsersOverlayProps> = ({ isOpen, localUsers, selectedUserId, onSelectUser, currentUser }) => {

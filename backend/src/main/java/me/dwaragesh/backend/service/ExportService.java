@@ -50,7 +50,8 @@ public class ExportService {
             
             for (Contribution c : contributions) {
                 int count = c.getCount();
-                String date = c.getDate().toString();
+                // MED-6: Escape date coming from external API before embedding in HTML attribute.
+                String date = org.springframework.web.util.HtmlUtils.htmlEscape(c.getDate().toString());
                 int intensity = Math.min(count, 10) * 25;
                 heatmapHtml.append(String.format(
                         "<div style='width:10px;height:10px;display:inline-block;background:rgb(%d,%d,%d);margin:1px;' title='%s: %d'></div>",

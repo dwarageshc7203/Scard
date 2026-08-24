@@ -21,26 +21,27 @@ import java.util.stream.Collectors;
 @Service
 public class ProfileService {
 
-    @Autowired
-    private ProfileRepository repository;
+    private final ProfileRepository repository;
+    private final UserRepository userRepository;
+    private final ProfileViewRepository profileViewRepository;
+    private final ContributionRepository contributionRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ProfileViewRepository profileViewRepository;
-
-    @Autowired
-    private ContributionRepository contributionRepository;
+    public ProfileService(ProfileRepository repository, UserRepository userRepository, 
+                          ProfileViewRepository profileViewRepository, ContributionRepository contributionRepository) {
+        this.repository = repository;
+        this.userRepository = userRepository;
+        this.profileViewRepository = profileViewRepository;
+        this.contributionRepository = contributionRepository;
+    }
 
     private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public ProfileResponse toResponse(Profile profile) {
         String contribJson = profile.getHeatmapJson();
         if (contribJson == null || contribJson.trim().isEmpty() || contribJson.equals("[]")) {
-            // Fallback to the new normalized table if migration happened or for new users
-            java.time.LocalDate oneYearAgo = java.time.LocalDate.now().minusDays(365);
-            List<Contribution> recent = contributionRepository.findByProfileAndDateRange(profile, oneYearAgo, java.time.LocalDate.now());
+            // Fallback to the loaded contributions relation to keep the mapper pure
+            List<Contribution> recent = profile.getContributions();
+            if (recent == null) recent = java.util.Collections.emptyList();
             
             // Map back to the legacy JSON structure expected by the frontend
             List<java.util.Map<String, Object>> mapped = recent.stream().map(c -> {
@@ -111,8 +112,48 @@ public class ProfileService {
         return toResponse(profile);
     }
 
+    /**
+     * CRIT-2: Public (unauthenticated) version of getProfile.
+     * Strips MAIL: socials so email addresses are never returned to anonymous callers.
+     */
+    @Transactional(readOnly = true)
+    public ProfileResponse getPublicProfile(String userName) {
+        Profile profile = repository.findFirstByUserName(userName)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
+        return toPublicResponse(profile);
+    }
+
+    /**
+     * CRIT-2: Strips any social entry whose prefix is MAIL: before returning to anonymous callers.
+     * Authenticated profile owners still receive the full list via toResponse().
+     */
+    private ProfileResponse toPublicResponse(Profile profile) {
+        ProfileResponse full = toResponse(profile);
+        if (full.socials() == null) return full;
+        List<String> filtered = full.socials().stream()
+                .filter(s -> !s.toUpperCase().startsWith("MAIL:"))
+                .collect(Collectors.toList());
+        return new ProfileResponse(
+                full.userName(), full.profileName(), full.designation(), full.pin(),
+                full.profileUrl(), full.imageURL(), full.bannerId(), filtered,
+                full.badges(), full.contests(), full.problemStats(), full.projects(),
+                full.anonymousViews(), full.createdAt(), full.contributions(),
+                full.displayPreferences());
+    }
+
     @Transactional
     public ProfileResponse getProfileAndTrackView(String userName, String viewerGoogleId) {
+        return getProfileAndTrackViewInternal(userName, viewerGoogleId, false);
+    }
+
+    /** CRIT-2: Public variant — strips MAIL: socials from the response. */
+    @Transactional
+    public ProfileResponse getPublicProfileAndTrackView(String userName, String viewerGoogleId) {
+        return getProfileAndTrackViewInternal(userName, viewerGoogleId, true);
+    }
+
+    @Transactional
+    private ProfileResponse getProfileAndTrackViewInternal(String userName, String viewerGoogleId, boolean publicView) {
         Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
         
@@ -122,8 +163,8 @@ public class ProfileService {
         } else {
             User viewer = userRepository.findByGoogleId(viewerGoogleId).orElse(null);
             if (viewer != null && profile.getUser() != null && !viewer.getUserId().equals(profile.getUser().getUserId())) {
-                List<ProfileView> recentViews = profileViewRepository.findByProfileOrderByViewedAtDesc(profile);
-                if (recentViews.isEmpty() || !recentViews.get(0).getViewer().getUserId().equals(viewer.getUserId())) {
+                java.util.Optional<ProfileView> lastView = profileViewRepository.findFirstByProfileAndViewerOrderByViewedAtDesc(profile, viewer);
+                if (lastView.isEmpty() || java.time.Duration.between(lastView.get().getViewedAt(), java.time.Instant.now()).toHours() > 24) {
                     ProfileView view = new ProfileView();
                     view.setProfile(profile);
                     view.setViewer(viewer);
@@ -132,19 +173,17 @@ public class ProfileService {
             }
         }
         
-        return toResponse(profile);
+        return publicView ? toPublicResponse(profile) : toResponse(profile);
     }
 
+    /**
+     * HIGH-4: Use a targeted query that fetches only summary columns instead of
+     * loading the entire entity graph (socials, badges, contests, contributions) for
+     * every user into memory on every page load.
+     */
     @Transactional(readOnly = true)
     public List<me.dwaragesh.backend.model.dto.ProfileSummary> getAllProfiles() {
-        return repository.findAll().stream()
-                .map(p -> new me.dwaragesh.backend.model.dto.ProfileSummary(
-                        p.getUserName(),
-                        p.getProfileName() != null ? p.getProfileName() : p.getUserName(),
-                        p.getDesignation(),
-                        (p.getCustomImageUrl() != null && !p.getCustomImageUrl().trim().isEmpty()) ? p.getCustomImageUrl() : (p.getUser() != null ? p.getUser().getImageURL() : null)
-                ))
-                .collect(Collectors.toList());
+        return repository.findAllSummaries();
     }
 
     @Transactional(readOnly = true)
@@ -244,6 +283,12 @@ public class ProfileService {
         if (request.projects() != null) {
             java.util.List<Project> newProjects = new java.util.ArrayList<>();
             for (Project p : request.projects()) {
+                // HIGH-3: Enforce a per-project base64 size limit to prevent 100MB PATCH bombs.
+                // 540000 chars ≈ 400KB decoded — enough for a thumbnail.
+                if (p.getProjectImageBase64() != null && p.getProjectImageBase64().length() > 540_000) {
+                    throw new IllegalArgumentException(
+                        "Project image too large. Please use a URL instead or keep images under 400KB.");
+                }
                 p.setProjectId(null);
                 p.setProfile(profile);
                 newProjects.add(p);
@@ -265,6 +310,13 @@ public class ProfileService {
             }
         }
         if (request.displayPreferences() != null) {
+            // HIGH-2: Reject raw strings that aren't valid JSON to prevent stored XSS
+            // and ensure the frontend can always safely parse this field.
+            try {
+                new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.displayPreferences());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("displayPreferences must be valid JSON");
+            }
             profile.setDisplayPreferences(request.displayPreferences());
         }
 

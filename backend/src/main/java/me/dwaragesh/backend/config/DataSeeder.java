@@ -14,8 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class DataSeeder implements CommandLineRunner {
 
-    @Autowired
-    private BannerRepository bannerRepository;
+    private final BannerRepository bannerRepository;
+
+    public DataSeeder(BannerRepository bannerRepository) {
+        this.bannerRepository = bannerRepository;
+    }
 
     @Override
     public void run(String... args) throws Exception {

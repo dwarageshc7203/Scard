@@ -130,7 +130,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
       : 0,
     joinedText: getJoinedText(profile.createdAt),
     totalContributions: total,
-    isOnline: true,
+    isOnline: false,
     bannerId: profile.bannerId,
     badges: (profile.badges || []).map((b) => ({
       platform: b.platform.toLowerCase() as Platform,
