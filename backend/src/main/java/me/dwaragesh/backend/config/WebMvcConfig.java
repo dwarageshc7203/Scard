@@ -21,7 +21,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/api/profile/platforms",
                         "/api/profile/check-*",
-                        "/api/profile/*/export"
+                        "/api/profile/*/export",
+                        "/api/profiles",
+                        "/api/profile/*/contributions"
                 );
     }
 }

@@ -43,6 +43,7 @@ public class SyncService {
                 try {
                     Platform platform = Platform.valueOf(parts[0].toUpperCase());
                     String externalUsername = parts[1];
+                    me.dwaragesh.backend.util.ValidationUtils.validateExternalUsername(externalUsername);
                     self.syncPlatform(profile, platform, externalUsername);
                 } catch (IllegalArgumentException e) {
                     // Ignore socials that are not valid Sync Platforms (like linkedin, mail, twitter)

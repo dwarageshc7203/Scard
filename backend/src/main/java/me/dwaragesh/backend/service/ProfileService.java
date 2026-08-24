@@ -327,12 +327,12 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public me.dwaragesh.backend.model.dto.AnalyticsResponse getAnalytics(User user) {
+    public me.dwaragesh.backend.model.dto.AnalyticsResponse getAnalytics(User user, org.springframework.data.domain.Pageable pageable) {
         Profile profile = user.getProfile();
         if (profile == null) throw new ProfileNotFoundException("Profile does not exist");
         
-        List<ProfileView> views = profileViewRepository.findByProfileOrderByViewedAtDesc(profile);
-        List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = views.stream()
+        org.springframework.data.domain.Page<ProfileView> viewsPage = profileViewRepository.findByProfileOrderByViewedAtDesc(profile, pageable);
+        List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = viewsPage.getContent().stream()
                 .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
                         v.getViewer().getUserName(),
                         (v.getViewer().getProfile() != null && v.getViewer().getProfile().getProfileName() != null) ? v.getViewer().getProfile().getProfileName() : v.getViewer().getUserName(), 

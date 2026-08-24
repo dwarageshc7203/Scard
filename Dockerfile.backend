@@ -11,8 +11,6 @@ RUN mvn clean package -Dmaven.test.skip=true
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-# Create upload directory for persistent volume
-RUN mkdir -p /app/pfp_image_uploads
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

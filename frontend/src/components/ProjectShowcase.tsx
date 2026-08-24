@@ -2,6 +2,7 @@ import React from "react"
 import { Project } from "../types"
 import { ArrowRight, ExternalLink, Code, Briefcase } from "lucide-react"
 import Image from "./ui/Image"
+import { sanitizeUrl } from "../lib/urlUtils"
 
 interface ProjectShowcaseProps {
   projects: Project[]
@@ -91,9 +92,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                     {project.description}
                   </p>
                   <div className="flex gap-3 mt-auto">
-                    {(project.url || project.projectUrl) && (
+                    {(project.url || project.projectUrl) && sanitizeUrl(project.url || project.projectUrl) && (
                       <a
-                        href={project.url || project.projectUrl}
+                        href={sanitizeUrl(project.url || project.projectUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs bg-accent/10 text-accent hover:bg-accent/20 px-3 py-1.5 rounded-lg transition-colors"
@@ -101,9 +102,9 @@ const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                         <ExternalLink className="w-3.5 h-3.5" /> Live
                       </a>
                     )}
-                    {project.repoUrl && (
+                    {project.repoUrl && sanitizeUrl(project.repoUrl) && (
                       <a
-                        href={project.repoUrl}
+                        href={sanitizeUrl(project.repoUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs bg-surface-2 text-text hover:bg-border px-3 py-1.5 rounded-lg transition-colors"

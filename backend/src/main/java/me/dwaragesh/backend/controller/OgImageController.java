@@ -191,15 +191,9 @@ public class OgImageController {
                         }
                     } else {
                         String filename = avatarUrl.substring(avatarUrl.lastIndexOf('/') + 1);
-                        java.io.File file = new java.io.File(uploadDir, filename);
-                        if (!file.exists()) {
-                            file = new java.io.File("./uploads/" + filename);
-                        }
-                        if (!file.exists()) {
-                            file = new java.io.File("/app/uploads/" + filename);
-                        }
-                        if (file.exists()) {
-                            avatarImg = ImageIO.read(file);
+                        java.nio.file.Path file = java.nio.file.Paths.get(uploadDir).toAbsolutePath().normalize().resolve(filename);
+                        if (java.nio.file.Files.exists(file)) {
+                            avatarImg = ImageIO.read(file.toFile());
                         }
                     }
                 } catch (Exception ignored) {

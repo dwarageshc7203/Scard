@@ -4,7 +4,7 @@ services:
     container_name: scard_postgres
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: scard
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -34,8 +34,6 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GH_TOKEN=${GH_TOKEN}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
-    ports:
-      - "8080:8080"
     volumes:
       - uploads:/app/uploads
     healthcheck:

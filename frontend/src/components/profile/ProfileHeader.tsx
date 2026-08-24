@@ -2,6 +2,7 @@ import React from 'react'
 import { Mail, Globe } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import Avatar from '../ui/avatar'
+import { sanitizeUrl } from '../../lib/urlUtils'
 
 interface ProfileHeaderProps {
   activeUser: any
@@ -22,7 +23,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
             {activeUser.customSocials.map((social: any, idx: number) => (
               <a
                 key={idx}
-                href={social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail' ? `mailto:${social.url}` : social.url}
+                href={social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail' ? `mailto:${social.url}` : sanitizeUrl(social.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 bg-surface/50 backdrop-blur-md rounded-full hover:bg-surface/80 transition-colors border border-border/40 text-text shadow-sm"

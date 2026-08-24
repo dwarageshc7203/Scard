@@ -46,12 +46,16 @@ public class ProfileController {
     }
 
     @GetMapping("/analytics")
-    public ResponseEntity<me.dwaragesh.backend.model.dto.AnalyticsResponse> getAnalytics(@AuthenticationPrincipal OidcUser principal) {
+    public ResponseEntity<me.dwaragesh.backend.model.dto.AnalyticsResponse> getAnalytics(
+            @AuthenticationPrincipal OidcUser principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         User user = userService.findOrCreateFromGoogle(principal.getSubject(), principal.getEmail(), principal.getPicture());
-        return ResponseEntity.ok(service.getAnalytics(user));
+        return ResponseEntity.ok(service.getAnalytics(user, org.springframework.data.domain.PageRequest.of(page, Math.min(size, 100))));
     }
 
     @GetMapping("/check-username")

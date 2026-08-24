@@ -101,9 +101,6 @@ export function mapProfileToUser(profile: BackendProfile): User {
   const { heatmapData, total } = mapContributionsToHeatmap(
     profile.contributions || [],
   )
-  const savedSocials = JSON.parse(
-    localStorage.getItem(`socials_${profile.userName}`) || "{}",
-  )
 
   return {
     id: profile.userName,
@@ -180,7 +177,7 @@ export function mapProfileToUser(profile: BackendProfile): User {
       ? profile.displayPreferences
       : typeof profile.displayPreferences === "string" && profile.displayPreferences.trim() !== ""
       ? JSON.parse(profile.displayPreferences)
-      : JSON.parse(localStorage.getItem(`platform_prefs_${profile.userName}`) || "{}"),
+      : {},
     heatmapData,
     rawContributions: (profile.contributions || []).map((c) => ({
       platform: c.platform,

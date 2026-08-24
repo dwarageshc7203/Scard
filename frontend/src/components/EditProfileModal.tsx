@@ -57,11 +57,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
   // Theme support
   const { theme, setTheme } = useTheme()
 
-  // Load saved connection links from localStorage or user object
-  const savedSocials = JSON.parse(
-    localStorage.getItem(`socials_${user.username}`) || "{}",
-  )
-
   // Form Fields
   const [username, setUsername] = useState(user.username || "")
   const [isUsernameTaken, setIsUsernameTaken] = useState(false)
@@ -84,36 +79,32 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
 
   // Connections
   const [githubUser, setGithubUser] = useState(
-    extractUsername(savedSocials.githubUrl || user.socials?.github || ""),
+    extractUsername(user.socials?.github || ""),
   )
   const [githubChecking, setGithubChecking] = useState(false)
   const [githubError, setGithubError] = useState("")
   const [githubSuccess, setGithubSuccess] = useState(false)
 
   const [leetcodeUser, setLeetcodeUser] = useState(
-    extractUsername(savedSocials.leetcodeUrl || user.socials?.leetcode || ""),
+    extractUsername(user.socials?.leetcode || ""),
   )
   const [leetcodeChecking, setLeetcodeChecking] = useState(false)
   const [leetcodeError, setLeetcodeError] = useState("")
   const [leetcodeSuccess, setLeetcodeSuccess] = useState(false)
 
 
-  const savedPrefs = JSON.parse(
-    localStorage.getItem(`platform_prefs_${user.username}`) || "{}",
-  )
-
   const [leetcodeAccordionOpen, setLeetcodeAccordionOpen] = useState(false)
   const [leetcodeShowRating, setLeetcodeShowRating] = useState(
-    savedPrefs.leetcode?.showRating ?? user.platformPreferences?.leetcode?.showRating ?? true,
+    user.platformPreferences?.leetcode?.showRating ?? true,
   )
   const [leetcodeShowProblems, setLeetcodeShowProblems] = useState(
-    savedPrefs.leetcode?.showProblems ?? user.platformPreferences?.leetcode?.showProblems ?? true,
+    user.platformPreferences?.leetcode?.showProblems ?? true,
   )
   const [leetcodeShowHeatmap, setLeetcodeShowHeatmap] = useState(
-    savedPrefs.leetcode?.showHeatmap ?? user.platformPreferences?.leetcode?.showHeatmap ?? true,
+    user.platformPreferences?.leetcode?.showHeatmap ?? true,
   )
   const [leetcodeShowBadges, setLeetcodeShowBadges] = useState(
-    savedPrefs.leetcode?.showBadges ?? user.platformPreferences?.leetcode?.showBadges ?? true,
+    user.platformPreferences?.leetcode?.showBadges ?? true,
   )
 
   // Custom Socials (Dynamic)
@@ -439,11 +430,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       const leetcodeUrl = leetcodeUser
         ? `https://leetcode.com/${leetcodeUser}`
         : ""
-      // 1. Save connection links & avatar to localStorage
-      localStorage.setItem(
-        `socials_${user.username}`,
-        JSON.stringify({ githubUrl, leetcodeUrl }),
-      )
       let uploadFile = photoFile
       if (!uploadFile && photoBase64 && photoBase64.startsWith("data:image")) {
         try {
@@ -574,10 +560,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
           showBadges: leetcodeShowBadges,
         },
       }
-      localStorage.setItem(
-        `platform_prefs_${username}`,
-        JSON.stringify(platformPreferences),
-      )
+
 
       // Merge local connections state into updatedUser socials so they are immediately displayed
       updatedUser.socials = {

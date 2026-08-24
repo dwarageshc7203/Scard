@@ -19,7 +19,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
+@Slf4j
 public class GitHubFetcher implements PlatformFetcher{
 
     private static final String GRAPHQL_URL = "https://api.github.com/graphql";
@@ -94,7 +97,7 @@ public class GitHubFetcher implements PlatformFetcher{
             return new PlatformSyncResult(contributions, badges, contests, null);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to fetch GitHub data for {}", externalUsername, e);
             throw new PlatformFetchException("Failed to fetch GitHub data for " + externalUsername, e);
         }
     }
