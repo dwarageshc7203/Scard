@@ -32,7 +32,7 @@ public record PatchProfileRequest(
         Integer bannerId,
 
         @Size(max = 20, message = "Maximum 20 social links allowed")
-        List<String> socials,
+        List<@Size(max = 200, message = "Social link too long") String> socials,
 
         @Size(max = 10, message = "Maximum 10 projects allowed")
         @Valid

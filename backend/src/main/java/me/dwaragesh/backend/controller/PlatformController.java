@@ -38,7 +38,7 @@ public class PlatformController {
     @PostMapping
     public ResponseEntity<String> linkAndSync(
             @AuthenticationPrincipal OidcUser principal,
-            @RequestBody LinkPlatformRequest request
+            @jakarta.validation.Valid @RequestBody LinkPlatformRequest request
     ) {
         User user;
         if (principal != null) {
