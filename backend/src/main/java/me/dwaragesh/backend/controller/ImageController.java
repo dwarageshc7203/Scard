@@ -24,7 +24,7 @@ public class ImageController {
     private String uploadDir;
 
     private static final java.util.Set<String> ALLOWED_IMAGE_TYPES =
-            java.util.Set.of("image/png", "image/jpeg", "image/gif", "image/webp");
+            java.util.Set.of("image/png", "image/jpeg");
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {

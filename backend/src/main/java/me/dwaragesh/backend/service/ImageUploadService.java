@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.util.Iterator;
 
 @Service
 public class ImageUploadService {
@@ -70,18 +74,48 @@ public class ImageUploadService {
         String filename = filenamePrefix + "-" + UUID.randomUUID() + extension;
         File outFile = new File(dir, filename);
 
+        int originalWidth = 0;
+        int originalHeight = 0;
+        
+        try (ImageInputStream iis = ImageIO.createImageInputStream(file.getInputStream())) {
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                try {
+                    reader.setInput(iis, true, true);
+                    originalWidth = reader.getWidth(0);
+                    originalHeight = reader.getHeight(0);
+                    
+                    if (originalWidth > 4000 || originalHeight > 4000) {
+                        throw new IllegalArgumentException("Image dimensions too large (max 4000x4000)");
+                    }
+                } finally {
+                    reader.dispose();
+                }
+            }
+        }
+
+        boolean shouldResize = originalWidth > 512 || originalHeight > 512;
+
         if (".png".equals(extension)) {
-            net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
-                    .size(512, 512)
-                    .useExifOrientation(true)
-                    .toFile(outFile);
+            var builder = net.coobird.thumbnailator.Thumbnails.of(file.getInputStream());
+            if (shouldResize) {
+                builder.size(512, 512);
+            } else {
+                builder.scale(1.0);
+            }
+            builder.useExifOrientation(true).toFile(outFile);
         } else {
-            net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
-                    .size(512, 512)
-                    .useExifOrientation(true)
-                    .outputQuality(0.85)
-                    .outputFormat("jpg")
-                    .toFile(outFile);
+            var builder = net.coobird.thumbnailator.Thumbnails.of(file.getInputStream());
+            if (shouldResize) {
+                builder.size(512, 512);
+            } else {
+                builder.scale(1.0);
+            }
+            builder.useExifOrientation(true)
+                   .outputQuality(0.85)
+                   .outputFormat("jpg")
+                   .toFile(outFile);
         }
 
         return "/api/images/" + filename;
