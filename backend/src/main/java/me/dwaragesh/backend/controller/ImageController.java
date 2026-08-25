@@ -39,7 +39,18 @@ public class ImageController {
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() && resource.isReadable()) {
-                String contentType = Files.probeContentType(file);
+                String filenameLower = file.getFileName().toString().toLowerCase();
+                String contentType = null;
+                if (filenameLower.endsWith(".png")) {
+                    contentType = "image/png";
+                } else if (filenameLower.endsWith(".jpg") || filenameLower.endsWith(".jpeg")) {
+                    contentType = "image/jpeg";
+                } else if (filenameLower.endsWith(".gif")) {
+                    contentType = "image/gif";
+                } else if (filenameLower.endsWith(".webp")) {
+                    contentType = "image/webp";
+                }
+
                 if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }

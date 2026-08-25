@@ -18,6 +18,23 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:15
+    container_name: scard_db_backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: scard
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      SCHEDULE: '@daily'
+      BACKUP_KEEP_DAYS: 7
+    volumes:
+      - db-backups:/backups
+
   backend:
     build:
       context: .
@@ -52,8 +69,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
     restart: unless-stopped
 
 volumes:
   pgdata:
   uploads:
+  db-backups:

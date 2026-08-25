@@ -18,8 +18,8 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Install curl for Docker healthcheck
-RUN apk add --no-cache curl
+# Install curl for Docker healthcheck and fonts for AWT
+RUN apk add --no-cache curl fontconfig ttf-dejavu
 
 COPY --from=build /app/target/*.jar app.jar
 

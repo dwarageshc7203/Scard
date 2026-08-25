@@ -55,6 +55,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final Bandwidth OG_LIMIT =
             Bandwidth.classic(15, Refill.greedy(15, Duration.ofMinutes(1)));
 
+    // 5 requests / minute for profile picture uploads (Disk / CPU intensive)
+    private static final Bandwidth PFP_LIMIT =
+            Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
+
     // 60 requests / minute for default public endpoints
     private static final Bandwidth DEFAULT_LIMIT =
             Bandwidth.classic(60, Refill.greedy(60, Duration.ofMinutes(1)));
@@ -76,6 +80,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             bucket = resolveBucket("check:" + ip, CHECK_LIMIT);
         } else if (uri.matches("/api/profile/[^/]+/export")) {
             bucket = resolveBucket("export:" + ip, EXPORT_LIMIT);
+        } else if (uri.equals("/api/profile/pfp")) {
+            bucket = resolveBucket("pfp:" + ip, PFP_LIMIT);
         } else if (uri.equals("/api/profiles") || uri.matches("/api/profile/[^/]+/contributions") || uri.matches("/api/profile/[^/]+")) {
             bucket = resolveBucket("public:" + ip, DEFAULT_LIMIT);
         } else if (uri.equals("/api/profile")) {
