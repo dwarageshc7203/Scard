@@ -35,8 +35,7 @@ public record PatchProfileRequest(
         List<@Size(max = 200, message = "Social link too long") String> socials,
 
         @Size(max = 10, message = "Maximum 10 projects allowed")
-        @Valid
-        List<Project> projects,
+        List<@Valid Project> projects,
 
         @Size(max = 5000, message = "Display preferences JSON is too large")
         String displayPreferences,

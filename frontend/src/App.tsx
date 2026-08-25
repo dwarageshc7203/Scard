@@ -6,11 +6,12 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom"
+import React, { Suspense } from "react"
 import ErrorBoundary from "./components/ErrorBoundary"
 import NavBar from "./components/NavBar"
-import LandingPage from "./pages/LandingPage"
-import ProfilePage from "./pages/ProfilePage"
-import OnboardingSlideshow from "./pages/OnboardingSlideshow"
+const LandingPage = React.lazy(() => import("./pages/LandingPage"))
+const ProfilePage = React.lazy(() => import("./pages/ProfilePage"))
+const OnboardingSlideshow = React.lazy(() => import("./pages/OnboardingSlideshow"))
 import ThemeProvider from "./context/ThemeContext"
 import { Toaster } from "sonner"
 import { fetchProfiles, fetchMe, createProfile } from "./lib/api"
@@ -173,50 +174,56 @@ function AppContent() {
   return (
     <div className="bg-bg text-text min-h-screen transition-all duration-300">
       {/* <NavBar currentPage={currentPage} onNavigate={handleNavigate} /> */}
-      <Routes>
-        <Route path="/" element={<LandingPage currentUser={currentUser} />} />
-        <Route
-          path="/onboarding"
-          element={
-            <OnboardingSlideshow currentUser={currentUser} />
-          }
-        />
-        <Route
-          path="/explore"
-          element={
-            <ProfilePage
-              users={users.length > 0 ? users : [PLACEHOLDER_USER]}
-              variant="directory"
-              initialUserId={featuredUser.id}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="/:userId"
-          element={
-            <ProfilePageWrapper
-              users={users.length > 0 ? users : [PLACEHOLDER_USER]}
-              fallback={PLACEHOLDER_USER}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-              <h2 className="text-2xl ">404 - Page Not Found</h2>
-              <button
-                onClick={() => navigate("/")}
-                className="text-accent underline font-semibold cursor-pointer"
-              >
-                Go Back Home
-              </button>
-            </div>
-          }
-        />
-      </Routes>
+      <Suspense fallback={
+        <div className="min-h-screen bg-bg p-8 w-full flex items-center justify-center animate-pulse">
+          <div className="w-12 h-12 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<LandingPage currentUser={currentUser} />} />
+          <Route
+            path="/onboarding"
+            element={
+              <OnboardingSlideshow currentUser={currentUser} />
+            }
+          />
+          <Route
+            path="/explore"
+            element={
+              <ProfilePage
+                users={users.length > 0 ? users : [PLACEHOLDER_USER]}
+                variant="directory"
+                initialUserId={featuredUser.id}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/:userId"
+            element={
+              <ProfilePageWrapper
+                users={users.length > 0 ? users : [PLACEHOLDER_USER]}
+                fallback={PLACEHOLDER_USER}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+                <h2 className="text-2xl ">404 - Page Not Found</h2>
+                <button
+                  onClick={() => navigate("/")}
+                  className="text-accent underline font-semibold cursor-pointer"
+                >
+                  Go Back Home
+                </button>
+              </div>
+            }
+          />
+        </Routes>
+      </Suspense>
     </div>
   )
 }

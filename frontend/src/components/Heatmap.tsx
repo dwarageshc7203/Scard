@@ -124,68 +124,36 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
       className="w-full overflow-x-auto pb-4 flex items-center justify-start min-h-[160px] relative"
       style={{ scrollbarWidth: "thin" }}
     >
-      <TooltipProvider delayDuration={300}>
-        <div className="flex gap-5 px-2 pt-4 min-w-max">
-          {months.map((month, mIdx) => (
-            <div key={mIdx} className="flex flex-col items-center gap-3">
-              <div className="flex gap-[4px]">
-                {month.columns.map((col, cIdx) => (
-                  <div key={cIdx} className="flex flex-col gap-[4px]">
-                    {col.map((day, dIdx) => {
-                      if (!day) {
-                        return <div key={dIdx} className="w-[14px] h-[14px]" /> // Empty space
-                      }
-                      const dateStr = formatDate(day)
-                      const count = dataMap.get(dateStr) || 0
-                      return (
-                        <Tooltip key={dIdx}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className="w-[14px] h-[14px] rounded-[3px] transition-all hover:ring-1 hover:ring-gray-400 cursor-pointer"
-                              style={{ backgroundColor: getColor(count) }}
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            className={`py-2 px-3 shadow-lg border ${
-                              resolvedTheme === "dark"
-                                ? "bg-[#2A2A2A] border-white/10"
-                                : "bg-white border-gray-200"
-                            }`}
-                          >
-                            <span
-                              className={`${
-                                resolvedTheme === "dark"
-                                  ? "text-white"
-                                  : "text-gray-800"
-                              }`}
-                            >
-                              {count}
-                            </span>{" "}
-                            submissions on{" "}
-                            <span
-                              className={`font-mono ${
-                                resolvedTheme === "dark"
-                                  ? "text-gray-400"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {dateStr}
-                            </span>
-                          </TooltipContent>
-                        </Tooltip>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-              <span className="text-[11px] text-gray-500 font-medium">
-                {month.name}
-              </span>
+      <div className="flex gap-5 px-2 pt-4 min-w-max">
+        {months.map((month, mIdx) => (
+          <div key={mIdx} className="flex flex-col items-center gap-3">
+            <div className="flex gap-[4px]">
+              {month.columns.map((col, cIdx) => (
+                <div key={cIdx} className="flex flex-col gap-[4px]">
+                  {col.map((day, dIdx) => {
+                    if (!day) {
+                      return <div key={dIdx} className="w-[14px] h-[14px]" /> // Empty space
+                    }
+                    const dateStr = formatDate(day)
+                    const count = dataMap.get(dateStr) || 0
+                    return (
+                      <div
+                        key={dIdx}
+                        title={`${count} submissions on ${dateStr}`}
+                        className="w-[14px] h-[14px] rounded-[3px] transition-all hover:ring-1 hover:ring-gray-400 cursor-pointer"
+                        style={{ backgroundColor: getColor(count) }}
+                      />
+                    )
+                  })}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </TooltipProvider>
+            <span className="text-[11px] text-gray-500 font-medium">
+              {month.name}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
