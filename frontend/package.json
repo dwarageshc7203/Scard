@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "test": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.16",

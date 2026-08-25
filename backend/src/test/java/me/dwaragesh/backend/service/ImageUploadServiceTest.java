@@ -41,10 +41,10 @@ class ImageUploadServiceTest {
         
         java.lang.reflect.Method method;
         try {
-            method = ImageUploadService.class.getDeclaredMethod("validateAndGetExtension", MultipartFile.class);
+            method = ImageUploadService.class.getDeclaredMethod("validateAndGetExtension", byte[].class);
             method.setAccessible(true);
             java.lang.reflect.InvocationTargetException ex = assertThrows(java.lang.reflect.InvocationTargetException.class, () -> {
-                method.invoke(service, file);
+                method.invoke(service, content);
             });
             assertTrue(ex.getCause() instanceof IllegalArgumentException);
             assertTrue(ex.getCause().getMessage().contains("Uploaded file is not a supported image"));

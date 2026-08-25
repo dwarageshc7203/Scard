@@ -31,11 +31,14 @@ public class UserService {
 
     private final UserRepository repository;
     private final ProfileViewRepository profileViewRepository;
+    private final ImageUploadService imageUploadService;
 
     public UserService(UserRepository repository,
-                       ProfileViewRepository profileViewRepository) {
+                       ProfileViewRepository profileViewRepository,
+                       ImageUploadService imageUploadService) {
         this.repository = repository;
         this.profileViewRepository = profileViewRepository;
+        this.imageUploadService = imageUploadService;
     }
 
     /**
@@ -104,9 +107,14 @@ public class UserService {
 
         profileViewRepository.deleteByViewer(managedUser);
 
-        if (managedUser.getProfile() != null && managedUser.getProfile().getViews() != null) {
-            managedUser.getProfile().getViews().removeIf(v ->
-                v.getViewer() != null && v.getViewer().getUserId().equals(managedUser.getUserId()));
+        if (managedUser.getProfile() != null) {
+            if (managedUser.getProfile().getViews() != null) {
+                managedUser.getProfile().getViews().removeIf(v ->
+                    v.getViewer() != null && v.getViewer().getUserId().equals(managedUser.getUserId()));
+            }
+            if (managedUser.getProfile().getCustomImageUrl() != null) {
+                imageUploadService.deleteImage(managedUser.getProfile().getCustomImageUrl());
+            }
         }
 
         repository.delete(managedUser);

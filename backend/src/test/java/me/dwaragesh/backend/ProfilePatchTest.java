@@ -30,7 +30,7 @@ public class ProfilePatchTest {
         
         PatchProfileRequest req = new PatchProfileRequest(
             "Senior Dev", "https://newurl.com", "newuser", "New Name", "test@test.com", 
-            1, Arrays.asList("t:t"), projs, null
+            1, Arrays.asList("t:t"), projs, null, null
         );
         profileService.patchProfile(user, req);
     }
