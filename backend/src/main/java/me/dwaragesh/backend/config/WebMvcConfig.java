@@ -29,7 +29,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/profile/*/contributions",
                         "/api/profile",
                         "/api/profile/*",
-                        "/api/og/*"
+                        "/api/og/*",
+                        "/api/profile/pfp"
                 );
     }
 }

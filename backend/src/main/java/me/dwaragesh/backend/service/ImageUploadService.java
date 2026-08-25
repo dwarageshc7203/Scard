@@ -17,13 +17,11 @@ public class ImageUploadService {
     private String uploadDir;
 
     private static final java.util.Set<String> ALLOWED_CONTENT_TYPES =
-            java.util.Set.of("image/png", "image/jpeg", "image/gif", "image/webp");
+            java.util.Set.of("image/png", "image/jpeg");
 
     private static final java.util.Map<byte[], String> MAGIC_BYTES = new java.util.LinkedHashMap<>() {{
         put(new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF}, "image/jpeg");
         put(new byte[]{(byte)0x89, 0x50, 0x4E, 0x47}, "image/png");
-        put(new byte[]{0x47, 0x49, 0x46, 0x38}, "image/gif");
-        put(new byte[]{0x52, 0x49, 0x46, 0x46}, "image/webp"); // RIFF header
     }};
 
     private String validateAndGetExtension(MultipartFile file) {
@@ -49,23 +47,14 @@ public class ImageUploadService {
                 }
                 if (matches) { 
                     String mime = entry.getValue();
-                    if ("image/webp".equals(mime)) {
-                        if (header.length < 12 || header[8] != 0x57 || header[9] != 0x45 || header[10] != 0x42 || header[11] != 0x50) {
-                            matches = false;
-                        }
-                    }
-                    if (matches) {
-                        return switch (mime) {
-                            case "image/jpeg" -> ".jpg";
-                            case "image/png" -> ".png";
-                            case "image/gif" -> ".gif";
-                            case "image/webp" -> ".webp";
-                            default -> ".png";
-                        };
-                    }
+                    return switch (mime) {
+                        case "image/jpeg" -> ".jpg";
+                        case "image/png" -> ".png";
+                        default -> ".png";
+                    };
                 }
             }
-            throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG, GIF, WebP)");
+            throw new IllegalArgumentException("Uploaded file is not a supported image (PNG, JPEG)");
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
@@ -80,16 +69,34 @@ public class ImageUploadService {
 
         String filename = filenamePrefix + "-" + UUID.randomUUID() + extension;
         File outFile = new File(dir, filename);
-        Files.copy(file.getInputStream(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-        return "/uploads/" + filename;
+        if (".png".equals(extension)) {
+            net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
+                    .size(512, 512)
+                    .useExifOrientation(true)
+                    .toFile(outFile);
+        } else {
+            net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
+                    .size(512, 512)
+                    .useExifOrientation(true)
+                    .outputQuality(0.85)
+                    .outputFormat("jpg")
+                    .toFile(outFile);
+        }
+
+        return "/api/images/" + filename;
     }
 
     public void deleteImage(String imageUrl) {
-        if (imageUrl != null && imageUrl.startsWith("/uploads/")) {
-            String filename = imageUrl.substring("/uploads/".length());
+        if (imageUrl != null && imageUrl.startsWith("/api/images/")) {
+            String filename = imageUrl.substring("/api/images/".length());
             try {
-                Files.deleteIfExists(new File(uploadDir, filename).toPath());
+                java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir).toAbsolutePath().normalize();
+                java.nio.file.Path filePath = uploadPath.resolve(filename).toAbsolutePath().normalize();
+                
+                if (filePath.startsWith(uploadPath)) {
+                    Files.deleteIfExists(filePath);
+                }
             } catch (IOException e) {
                 // Ignore if it fails to delete, orphaned file is better than breaking the flow
             }

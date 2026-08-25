@@ -32,8 +32,10 @@ public class Project {
     private String projectImageBase64;
 
     @jakarta.validation.constraints.Size(max = 500, message = "Project URL is too long")
+    @jakarta.validation.constraints.Pattern(regexp = "^$|^(https?://.+)$", message = "URL must start with http:// or https://")
     private String projectUrl;
 
     @jakarta.validation.constraints.Size(max = 500, message = "Repo URL is too long")
+    @jakarta.validation.constraints.Pattern(regexp = "^$|^(https?://.+)$", message = "URL must start with http:// or https://")
     private String repoUrl;
 }
