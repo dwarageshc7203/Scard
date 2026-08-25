@@ -6,7 +6,7 @@ import path from "node:path"
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'happy-dom',
     setupFiles: './src/setupTests.ts',
   },
   base: process.env.FIGMA_PUBLIC_URL

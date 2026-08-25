@@ -27,9 +27,9 @@ class ImageUploadServiceTest {
         byte[] content = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
         MultipartFile file = new MockMultipartFile("file", "test.png", "image/png", content);
         
-        java.lang.reflect.Method method = ImageUploadService.class.getDeclaredMethod("validateAndGetExtension", MultipartFile.class);
+        java.lang.reflect.Method method = ImageUploadService.class.getDeclaredMethod("validateAndGetExtension", byte[].class);
         method.setAccessible(true);
-        String ext = (String) method.invoke(service, file);
+        String ext = (String) method.invoke(service, content);
         assertEquals(".png", ext);
     }
 

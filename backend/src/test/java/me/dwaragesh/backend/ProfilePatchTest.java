@@ -8,7 +8,14 @@ import me.dwaragesh.backend.model.dto.*;
 import me.dwaragesh.backend.repository.*;
 import java.util.*;
 
+import org.springframework.test.context.TestPropertySource;
+
 @SpringBootTest
+@TestPropertySource(properties = {
+    "spring.flyway.enabled=false",
+    "spring.jpa.hibernate.ddl-auto=update",
+    "spring.session.jdbc.initialize-schema=always"
+})
 public class ProfilePatchTest {
     @Autowired ProfileService profileService;
     @Autowired UserRepository userRepository;

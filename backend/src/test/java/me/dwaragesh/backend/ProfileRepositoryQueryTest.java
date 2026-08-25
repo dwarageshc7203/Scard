@@ -13,7 +13,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 
+import org.springframework.test.context.TestPropertySource;
+
 @SpringBootTest
+@TestPropertySource(properties = {
+    "spring.flyway.enabled=false",
+    "spring.jpa.hibernate.ddl-auto=update",
+    "spring.session.jdbc.initialize-schema=always"
+})
 public class ProfileRepositoryQueryTest {
 
     @Autowired

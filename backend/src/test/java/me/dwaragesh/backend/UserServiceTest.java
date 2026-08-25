@@ -79,7 +79,7 @@ public class UserServiceTest {
         assertNotNull(response);
         assertTrue(response.hasProfile());
         assertEquals("testUser123", response.userName());
-        assertEquals("https://google.com/avatar", response.imageURL());
+        assertEquals("http://image.url", response.imageURL());
     }
 
     @Test
