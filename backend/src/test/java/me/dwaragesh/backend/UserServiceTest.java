@@ -41,7 +41,7 @@ public class UserServiceTest {
 
     @Test
     void testFindOrCreateFromGoogle_ExistingGoogleId() {
-        when(userRepository.findByGoogleId("google-123")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findFirstByGoogleId("google-123")).thenReturn(Optional.of(sampleUser));
 
         User result = userService.findOrCreateFromGoogle("google-123", "test@test.com", "http://image.url");
         
@@ -52,7 +52,7 @@ public class UserServiceTest {
 
     @Test
     void testFindOrCreateFromGoogle_NewUser() {
-        when(userRepository.findByGoogleId("new-google-id")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByGoogleId("new-google-id")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
         
         User newUser = new User();

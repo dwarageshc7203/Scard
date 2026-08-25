@@ -28,21 +28,19 @@ public class ImageUploadService {
         put(new byte[]{(byte)0x89, 0x50, 0x4E, 0x47}, "image/png");
     }};
 
-    private String validateAndGetExtension(MultipartFile file) {
-        if (file.isEmpty()) {
+    private String validateAndGetExtension(byte[] fileBytes) {
+        if (fileBytes.length == 0) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
-        if (file.getSize() > 5 * 1024 * 1024) {
+        if (fileBytes.length > 5 * 1024 * 1024) {
             throw new IllegalArgumentException("File size exceeds the 5MB limit");
         }
         try {
-            byte[] header = new byte[12];
-            try (java.io.InputStream is = file.getInputStream()) {
-                int bytesRead = is.read(header);
-                if (bytesRead < 4) {
-                    throw new IllegalArgumentException("File too small to be a valid image");
-                }
+            if (fileBytes.length < 4) {
+                throw new IllegalArgumentException("File too small to be a valid image");
             }
+            byte[] header = new byte[Math.min(fileBytes.length, 12)];
+            System.arraycopy(fileBytes, 0, header, 0, header.length);
             for (java.util.Map.Entry<byte[], String> entry : MAGIC_BYTES.entrySet()) {
                 byte[] magic = entry.getKey();
                 boolean matches = true;
@@ -67,7 +65,8 @@ public class ImageUploadService {
     }
 
     public String saveRawImage(MultipartFile file, String filenamePrefix) throws IOException {
-        String extension = validateAndGetExtension(file);
+        byte[] fileBytes = file.getBytes();
+        String extension = validateAndGetExtension(fileBytes);
         File dir = new File(uploadDir);
         if (!dir.exists()) dir.mkdirs();
 
@@ -77,45 +76,50 @@ public class ImageUploadService {
         int originalWidth = 0;
         int originalHeight = 0;
         
-        try (ImageInputStream iis = ImageIO.createImageInputStream(file.getInputStream())) {
-            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
-            if (readers.hasNext()) {
-                ImageReader reader = readers.next();
-                try {
-                    reader.setInput(iis, true, true);
-                    originalWidth = reader.getWidth(0);
-                    originalHeight = reader.getHeight(0);
-                    
-                    if (originalWidth > 4000 || originalHeight > 4000) {
-                        throw new IllegalArgumentException("Image dimensions too large (max 4000x4000)");
+        try (java.io.InputStream rawIn = new java.io.ByteArrayInputStream(fileBytes);
+             ImageInputStream iis = ImageIO.createImageInputStream(rawIn)) {
+            if (iis != null) {
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    try {
+                        reader.setInput(iis, true, true);
+                        originalWidth = reader.getWidth(0);
+                        originalHeight = reader.getHeight(0);
+                        
+                        if (originalWidth > 4000 || originalHeight > 4000) {
+                            throw new IllegalArgumentException("Image dimensions too large (max 4000x4000)");
+                        }
+                    } finally {
+                        reader.dispose();
                     }
-                } finally {
-                    reader.dispose();
                 }
             }
         }
 
         boolean shouldResize = originalWidth > 512 || originalHeight > 512;
 
-        if (".png".equals(extension)) {
-            var builder = net.coobird.thumbnailator.Thumbnails.of(file.getInputStream());
-            if (shouldResize) {
-                builder.size(512, 512);
+        try (java.io.InputStream rawIn = new java.io.ByteArrayInputStream(fileBytes)) {
+            if (".png".equals(extension)) {
+                var builder = net.coobird.thumbnailator.Thumbnails.of(rawIn);
+                if (shouldResize) {
+                    builder.size(512, 512);
+                } else {
+                    builder.scale(1.0);
+                }
+                builder.useExifOrientation(true).toFile(outFile);
             } else {
-                builder.scale(1.0);
+                var builder = net.coobird.thumbnailator.Thumbnails.of(rawIn);
+                if (shouldResize) {
+                    builder.size(512, 512);
+                } else {
+                    builder.scale(1.0);
+                }
+                builder.useExifOrientation(true)
+                       .outputQuality(0.85)
+                       .outputFormat("jpg")
+                       .toFile(outFile);
             }
-            builder.useExifOrientation(true).toFile(outFile);
-        } else {
-            var builder = net.coobird.thumbnailator.Thumbnails.of(file.getInputStream());
-            if (shouldResize) {
-                builder.size(512, 512);
-            } else {
-                builder.scale(1.0);
-            }
-            builder.useExifOrientation(true)
-                   .outputQuality(0.85)
-                   .outputFormat("jpg")
-                   .toFile(outFile);
         }
 
         return "/api/images/" + filename;
