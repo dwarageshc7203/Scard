@@ -7,10 +7,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
+import org.springframework.context.annotation.Import;
 
 @WebMvcTest({ProfileController.class, PublicProfileController.class})
+@Import(me.dwaragesh.backend.config.SecurityConfig.class)
 public class ProfileControllerSecurityTest {
 
     @Autowired
@@ -18,6 +22,9 @@ public class ProfileControllerSecurityTest {
 
     @MockBean
     private me.dwaragesh.backend.service.ProfileService profileService;
+
+    @MockBean
+    private me.dwaragesh.backend.service.UserService userService;
 
     @MockBean
     private me.dwaragesh.backend.service.SyncService syncService;
@@ -41,11 +48,9 @@ public class ProfileControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser
     public void authenticatedAnalytics_ReturnsOk() throws Exception {
-        // Just verify it doesn't fail on authentication
-        // Might fail with 500 or 400 depending on mock, but auth passes
-        mockMvc.perform(get("/api/profile/analytics"))
+        // Mocking OIDC User is necessary because the controller explicitly checks for @AuthenticationPrincipal OidcUser
+        mockMvc.perform(get("/api/profile/analytics").with(oidcLogin()))
                 .andExpect(status().isOk());
     }
 }
