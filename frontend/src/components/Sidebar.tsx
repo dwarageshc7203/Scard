@@ -123,8 +123,9 @@ const Sidebar: FC<SidebarProps> = ({
                           (rect.top + rect.height / 2) / window.innerHeight
                         confetti({
                           origin: { x, y },
-                          particleCount: 60,
-                          spread: 50,
+                          particleCount: 100,
+                          spread: 70,
+                          zIndex: 99999,
                           colors: ["#a855f7", "#d8b4fe", "#c084fc", "#f3e8ff"],
                         })
                       }}

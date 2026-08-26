@@ -7,16 +7,17 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getJoinedText(createdAt?: string): string {
   if (!createdAt) return "today"
+  
+  const createdDate = new Date(createdAt);
+  if (isNaN(createdDate.getTime())) return "today";
+
   const diffDays = Math.floor(
-    (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24),
+    (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24),
   )
   if (diffDays <= 0) return "today"
   if (diffDays === 1) return "yesterday"
-  if (diffDays < 7) return "this week"
-  if (diffDays < 30) return "a few weeks ago"
-  if (diffDays < 60) return "this month"
-  if (diffDays < 365) return "few months ago"
-  return "few years ago"
+  
+  return "on " + createdDate.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export function stringToColor(str: string): string {

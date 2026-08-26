@@ -11,4 +11,6 @@ public interface ProfileSummaryProjection {
     String getProfile_name();
     String getDesignation();
     String getImage_url();
+    String getPin();
+    java.time.Instant getCreated_at();
 }

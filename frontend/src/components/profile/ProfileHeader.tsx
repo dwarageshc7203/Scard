@@ -64,15 +64,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
             </h1>
             {activeUser.pin && (
               <button
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect()
-                  const x = (rect.left + rect.width / 2) / window.innerWidth
-                  const y = (rect.top + rect.height / 2) / window.innerHeight
+                onClick={() => {
                   confetti({
-                    origin: { x, y },
                     particleCount: 100,
                     spread: 70,
-                    colors: ['#a855f7', '#d8b4fe', '#c084fc', '#f3e8ff']
+                    origin: { y: 0.6 },
+                    zIndex: 99999,
+                    colors: ["#a855f7", "#d8b4fe", "#c084fc", "#f3e8ff"],
                   })
                 }}
                 className="inline-flex items-center justify-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md border border-purple-500 bg-gradient-to-r from-transparent to-purple-500/20 text-purple-600 dark:text-purple-400 shadow-sm self-center translate-y-[1px] cursor-pointer hover:to-purple-500/30 transition-colors"
