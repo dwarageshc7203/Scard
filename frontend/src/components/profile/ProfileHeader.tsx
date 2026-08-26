@@ -64,11 +64,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
             </h1>
             {activeUser.pin && (
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const x = (rect.left + rect.width / 2) / window.innerWidth
+                  const y = (rect.top + rect.height / 2) / window.innerHeight
                   confetti({
+                    origin: { x, y },
                     particleCount: 100,
                     spread: 70,
-                    origin: { y: 0.6 },
                     zIndex: 99999,
                     colors: ["#a855f7", "#d8b4fe", "#c084fc", "#f3e8ff"],
                   })

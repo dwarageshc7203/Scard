@@ -16,8 +16,11 @@ export function getJoinedText(createdAt?: string): string {
   )
   if (diffDays <= 0) return "today"
   if (diffDays === 1) return "yesterday"
+  if (diffDays < 7) return "this week"
+  if (diffDays < 30) return "few weeks ago"
+  if (diffDays < 365) return "few months ago"
   
-  return "on " + createdDate.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
+  return "few years ago"
 }
 
 export function stringToColor(str: string): string {
