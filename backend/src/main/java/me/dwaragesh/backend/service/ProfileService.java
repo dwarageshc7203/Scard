@@ -150,17 +150,7 @@ public class ProfileService {
      * Authenticated profile owners still receive the full list via toResponse().
      */
     private ProfileResponse toPublicResponse(Profile profile) {
-        ProfileResponse full = toResponse(profile);
-        if (full.socials() == null) return full;
-        List<String> filtered = full.socials().stream()
-                .filter(s -> !s.toUpperCase().startsWith("MAIL:"))
-                .collect(Collectors.toList());
-        return new ProfileResponse(
-                full.userName(), full.profileName(), full.designation(), full.pin(),
-                full.profileUrl(), full.imageURL(), null, full.bannerId(), filtered,
-                full.badges(), full.contests(), full.problemStats(), full.projects(),
-                full.anonymousViews(), full.createdAt(), full.contributions(),
-                full.displayPreferences());
+        return toResponse(profile);
     }
 
     @Transactional
