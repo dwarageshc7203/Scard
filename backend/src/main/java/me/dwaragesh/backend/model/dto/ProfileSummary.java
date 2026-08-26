@@ -4,6 +4,8 @@ public record ProfileSummary(
         String userName,
         String profileName,
         String designation,
-        String imageURL
+        String imageURL,
+        String pin,
+        java.time.Instant createdAt
 ) {
 }

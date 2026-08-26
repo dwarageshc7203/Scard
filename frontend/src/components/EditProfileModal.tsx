@@ -169,6 +169,16 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       toast.error("Project name is required")
       return
     }
+    
+    if (newProject.projectUrl && !/^https?:\/\/.+$/.test(newProject.projectUrl)) {
+      toast.error("Live URL must start with http:// or https://")
+      return
+    }
+    
+    if (newProject.repoUrl && !/^https?:\/\/.+$/.test(newProject.repoUrl)) {
+      toast.error("Repository URL must start with http:// or https://")
+      return
+    }
 
     const projectToSave = {
       name: newProject.name,
@@ -261,19 +271,23 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         const dbCheck = await checkGithub(githubUser.trim())
         if (isMounted) {
           if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
-            setGithubError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+            setGithubError(`GitHub already taken`)
             return
           }
         }
         
         try {
-          const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`)
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 2000)
+          const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`, { signal: controller.signal })
+          clearTimeout(timeoutId)
+          
           if (res.status === 404) {
             if (isMounted) setGithubError("GitHub user not found")
             return
           }
         } catch (e) {
-          // Ignore external API errors
+          // Ignore external API errors or timeouts
         }
         
         if (isMounted) setGithubSuccess(true)
@@ -306,13 +320,17 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         const dbCheck = await checkLeetcode(leetcodeUser.trim())
         if (isMounted) {
           if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
-            setLeetcodeError(`This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries`)
+            setLeetcodeError(`LeetCode already taken`)
             return
           }
         }
 
         try {
-          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`)
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 2000)
+          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`, { signal: controller.signal })
+          clearTimeout(timeoutId)
+          
           if (res.status === 404) {
             if (isMounted) setLeetcodeError("LeetCode user not found")
             return
@@ -325,11 +343,11 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                 return
               }
             } catch (e) {
-              // Not JSON (e.g. rate limit text), ignore and let it succeed
+              // Not JSON
             }
           }
         } catch (e) {
-          // Ignore external API errors
+          // Ignore external API errors or timeouts
         }
         
         if (isMounted) setLeetcodeSuccess(true)
@@ -364,8 +382,34 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         try {
           let dbCheck = { taken: false, ownerUsername: "" };
           if (social.type === "linkedin") {
+            const linkedInRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/.+$/
+            if (!linkedInRegex.test(url)) {
+              if (isMounted) {
+                setCustomSocials(prev => {
+                  const next = [...prev];
+                  if (next[idx]) {
+                    next[idx] = { ...next[idx], checking: false, error: "Please enter a valid LinkedIn URL" };
+                  }
+                  return next;
+                });
+              }
+              return;
+            }
             dbCheck = await checkLinkedin(url) as any;
           } else if (social.type === "mail") {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailRegex.test(url)) {
+              if (isMounted) {
+                setCustomSocials(prev => {
+                  const next = [...prev];
+                  if (next[idx]) {
+                    next[idx] = { ...next[idx], checking: false, error: "Please enter a valid email address" };
+                  }
+                  return next;
+                });
+              }
+              return;
+            }
             dbCheck = await checkMail(url) as any;
           }
 
@@ -374,7 +418,8 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
               const next = [...prev];
               if (next[idx]) {
                 if (dbCheck.taken && dbCheck.ownerUsername !== user.username) {
-                  next[idx] = { ...next[idx], checking: false, error: `This account is already used by another user - ${dbCheck.ownerUsername}. Contact scard@dwaragesh.me to resolve any queries` };
+                  const sType = social.type.charAt(0).toUpperCase() + social.type.slice(1);
+                  next[idx] = { ...next[idx], checking: false, error: `${sType} already taken` };
                 } else {
                   next[idx] = { ...next[idx], checking: false, success: true };
                 }

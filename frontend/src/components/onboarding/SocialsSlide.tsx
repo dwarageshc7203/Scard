@@ -37,11 +37,22 @@ export default function SocialsSlide({
         }
         return
       }
+      
+      const linkedInRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/.+$/
+      if (!linkedInRegex.test(linkedUsername.trim())) {
+        if (isMounted) {
+          setErrorLinked("Please enter a valid LinkedIn URL")
+          setSuccessLinked(false)
+          setLoadingLinked(false)
+        }
+        return
+      }
+
       try {
         const result = await checkLinkedin(linkedUsername.trim())
         if (isMounted) {
           if (result.taken) {
-            setErrorLinked(`Already linked to ${result.ownerUsername} — contact scard@dwaragesh.me`)
+            setErrorLinked(`LinkedIn already taken`)
             setSuccessLinked(false)
           } else {
             setErrorLinked("")
@@ -93,7 +104,7 @@ export default function SocialsSlide({
         const result = await checkMail(mailAddress.trim())
         if (isMounted) {
           if (result.taken) {
-            setErrorMail(`Already linked to ${result.ownerUsername} — contact scard@dwaragesh.me`)
+            setErrorMail(`Mail already taken`)
             setSuccessMail(false)
           } else {
             setErrorMail("")

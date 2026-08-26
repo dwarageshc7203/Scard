@@ -87,6 +87,7 @@ public class ProfileService {
                 profile.getPin(),
                 profile.getProfileUrl(),
                 (profile.getCustomImageUrl() != null && !profile.getCustomImageUrl().trim().isEmpty()) ? profile.getCustomImageUrl() : (profile.getUser() != null ? profile.getUser().getImageURL() : null),
+                profile.getUser() != null ? profile.getUser().getEmail() : null,
                 profile.getBannerId(),
                 profile.getSocials(),
                 activeBadges,
@@ -156,7 +157,7 @@ public class ProfileService {
                 .collect(Collectors.toList());
         return new ProfileResponse(
                 full.userName(), full.profileName(), full.designation(), full.pin(),
-                full.profileUrl(), full.imageURL(), full.bannerId(), filtered,
+                full.profileUrl(), full.imageURL(), null, full.bannerId(), filtered,
                 full.badges(), full.contests(), full.problemStats(), full.projects(),
                 full.anonymousViews(), full.createdAt(), full.contributions(),
                 full.displayPreferences());

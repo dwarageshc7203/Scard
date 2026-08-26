@@ -115,17 +115,17 @@ export function mapProfileToUser(profile: BackendProfile): User {
     statusMessage: undefined,
     statusTime: "Recently",
     imageURL:
-      (profile.imageURL?.startsWith('/uploads/') 
-        ? profile.imageURL.replace('/uploads/', '/api/images/') 
+      (profile.imageURL?.startsWith('/uploads/')
+        ? profile.imageURL.replace('/uploads/', '/api/images/')
         : profile.imageURL) ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.profileName || profile.userName)}&background=random`,
     initials: profile.userName.substring(0, 2).toUpperCase(),
     color: stringToColor(profile.userName),
     joinedDaysAgo: profile.createdAt
       ? Math.floor(
-          (Date.now() - new Date(profile.createdAt).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
+        (Date.now() - new Date(profile.createdAt).getTime()) /
+        (1000 * 60 * 60 * 24),
+      )
       : 0,
     joinedText: getJoinedText(profile.createdAt),
     totalContributions: total,
@@ -173,13 +173,15 @@ export function mapProfileToUser(profile: BackendProfile): User {
       .map((s) => {
         const idx = s.indexOf(":")
         if (idx === -1) return { type: "link", url: s }
-        return { type: s.substring(0, idx), url: s.substring(idx + 1) }
+        let type = s.substring(0, idx).toLowerCase()
+        if (type === "linked_in") type = "linkedin"
+        return { type, url: s.substring(idx + 1) }
       }),
     platformPreferences: typeof profile.displayPreferences === "object" && profile.displayPreferences !== null
       ? profile.displayPreferences
       : typeof profile.displayPreferences === "string" && profile.displayPreferences.trim() !== ""
-      ? JSON.parse(profile.displayPreferences)
-      : {},
+        ? JSON.parse(profile.displayPreferences)
+        : {},
     heatmapData,
     rawContributions: (profile.contributions || []).map((c) => ({
       platform: c.platform,

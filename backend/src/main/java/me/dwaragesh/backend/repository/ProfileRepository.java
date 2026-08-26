@@ -57,7 +57,9 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
     @Query(value = "SELECT p.user_name, " +
                    "COALESCE(NULLIF(p.profile_name, ''), p.user_name) AS profile_name, " +
                    "p.designation, " +
-                   "COALESCE(NULLIF(p.custom_image_url, ''), u.imageurl) AS image_url " +
+                   "COALESCE(NULLIF(p.custom_image_url, ''), u.imageurl) AS image_url, " +
+                   "p.pin, " +
+                   "u.created_date_time AS created_at " +
                    "FROM profile p LEFT JOIN app_user u ON p.user_id = u.user_id",
            countQuery = "SELECT count(*) FROM profile p",
            nativeQuery = true)
@@ -69,6 +71,8 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
                         r.getUser_name(),
                         r.getProfile_name(),
                         r.getDesignation(),
-                        r.getImage_url()));
+                        r.getImage_url(),
+                        r.getPin(),
+                        r.getCreated_at()));
     }
 }

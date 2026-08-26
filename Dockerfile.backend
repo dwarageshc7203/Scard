@@ -10,7 +10,7 @@ RUN mvn dependency:go-offline -B
 
 COPY backend/src ./src
 
-RUN mvn clean package -Dmaven.test.skip=true
+RUN mvn clean package
 
 
 # Run stage

@@ -51,9 +51,9 @@ jobs:
       - name: Run backend tests
         working-directory: backend
         env:
-          DB_URL: jdbc:postgresql://localhost:5432/scard_test
-          DB_USERNAME: test
-          DB_PASSWORD: test
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/scard_test
+          SPRING_DATASOURCE_USERNAME: test
+          SPRING_DATASOURCE_PASSWORD: test
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
           GH_TOKEN: ci-placeholder
