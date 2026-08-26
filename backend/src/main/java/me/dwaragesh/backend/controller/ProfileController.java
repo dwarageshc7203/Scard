@@ -69,33 +69,43 @@ public class ProfileController {
      * Returns whether the value is taken; deliberately omits ownerUsername
      * to prevent enumeration / deanonymization.
      */
-    private ResponseEntity<java.util.Map<String, Object>> buildCheckResponse(String owner) {
-        return ResponseEntity.ok(java.util.Map.of("taken", owner != null));
+    private ResponseEntity<java.util.Map<String, Object>> buildCheckResponse(String owner, OidcUser principal) {
+        boolean taken = false;
+        if (owner != null) {
+            taken = true;
+            if (principal != null) {
+                User user = userService.findOrCreateFromGoogle(principal);
+                if (user.getProfile() != null && owner.equals(user.getProfile().getUserName())) {
+                    taken = false;
+                }
+            }
+        }
+        return ResponseEntity.ok(java.util.Map.of("taken", taken));
     }
 
     /** CRIT-3: check-mail never reveals the ownerUsername — only a boolean. */
-    private ResponseEntity<java.util.Map<String, Object>> buildMailCheckResponse(String owner) {
-        return ResponseEntity.ok(java.util.Map.of("taken", owner != null));
+    private ResponseEntity<java.util.Map<String, Object>> buildMailCheckResponse(String owner, OidcUser principal) {
+        return buildCheckResponse(owner, principal);
     }
 
     @GetMapping("/check-linkedin")
-    public ResponseEntity<java.util.Map<String, Object>> checkLinkedin(@RequestParam String username) {
-        return buildCheckResponse(service.checkLinkedinOwner(username));
+    public ResponseEntity<java.util.Map<String, Object>> checkLinkedin(@RequestParam String username, @AuthenticationPrincipal OidcUser principal) {
+        return buildCheckResponse(service.checkLinkedinOwner(username), principal);
     }
 
     @GetMapping("/check-github")
-    public ResponseEntity<java.util.Map<String, Object>> checkGithub(@RequestParam String username) {
-        return buildCheckResponse(service.checkGithubOwner(username));
+    public ResponseEntity<java.util.Map<String, Object>> checkGithub(@RequestParam String username, @AuthenticationPrincipal OidcUser principal) {
+        return buildCheckResponse(service.checkGithubOwner(username), principal);
     }
 
     @GetMapping("/check-leetcode")
-    public ResponseEntity<java.util.Map<String, Object>> checkLeetcode(@RequestParam String username) {
-        return buildCheckResponse(service.checkLeetcodeOwner(username));
+    public ResponseEntity<java.util.Map<String, Object>> checkLeetcode(@RequestParam String username, @AuthenticationPrincipal OidcUser principal) {
+        return buildCheckResponse(service.checkLeetcodeOwner(username), principal);
     }
 
     @GetMapping("/check-mail")
-    public ResponseEntity<java.util.Map<String, Object>> checkMail(@RequestParam String email) {
-        return buildMailCheckResponse(service.checkMailOwner(email));
+    public ResponseEntity<java.util.Map<String, Object>> checkMail(@RequestParam String email, @AuthenticationPrincipal OidcUser principal) {
+        return buildMailCheckResponse(service.checkMailOwner(email), principal);
     }
 
     @PostMapping

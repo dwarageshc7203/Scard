@@ -114,7 +114,13 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     checking?: boolean
     error?: string
     success?: boolean
-  }[]>(user.customSocials || [])
+  }[]>(() => {
+    const socials = [...(user.customSocials || [])]
+    if (user.email && !socials.some(s => s.type === "mail")) {
+      socials.push({ type: "mail", url: user.email, success: true })
+    }
+    return socials
+  })
 
   // Projects
   const [projects, setProjects] = useState<any[]>(user.projects || [])
@@ -169,12 +175,12 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       toast.error("Project name is required")
       return
     }
-    
+
     if (newProject.projectUrl && !/^https?:\/\/.+$/.test(newProject.projectUrl)) {
       toast.error("Live URL must start with http:// or https://")
       return
     }
-    
+
     if (newProject.repoUrl && !/^https?:\/\/.+$/.test(newProject.repoUrl)) {
       toast.error("Repository URL must start with http:// or https://")
       return
@@ -275,13 +281,9 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
             return
           }
         }
-        
+
         try {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 2000)
-          const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`, { signal: controller.signal })
-          clearTimeout(timeoutId)
-          
+          const res = await fetch(`https://api.github.com/users/${githubUser.trim()}`)
           if (res.status === 404) {
             if (isMounted) setGithubError("GitHub user not found")
             return
@@ -289,7 +291,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         } catch (e) {
           // Ignore external API errors or timeouts
         }
-        
+
         if (isMounted) setGithubSuccess(true)
       } catch (err) {
         if (isMounted) setGithubError("Error checking GitHub")
@@ -326,11 +328,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         }
 
         try {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 2000)
-          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`, { signal: controller.signal })
-          clearTimeout(timeoutId)
-          
+          const res = await fetch(`https://alfa-leetcode-api.onrender.com/${leetcodeUser.trim()}`)
           if (res.status === 404) {
             if (isMounted) setLeetcodeError("LeetCode user not found")
             return
@@ -349,7 +347,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         } catch (e) {
           // Ignore external API errors or timeouts
         }
-        
+
         if (isMounted) setLeetcodeSuccess(true)
       } catch (err) {
         if (isMounted) setLeetcodeError("Error checking LeetCode")
