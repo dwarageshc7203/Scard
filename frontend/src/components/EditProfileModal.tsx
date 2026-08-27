@@ -115,7 +115,13 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     error?: string
     success?: boolean
   }[]>(() => {
-    const socials = [...(user.customSocials || [])]
+    const socials = [...(user.customSocials || [])] as {
+      type: string
+      url: string
+      checking?: boolean
+      error?: string
+      success?: boolean
+    }[]
     if (user.email && !socials.some(s => s.type === "mail")) {
       socials.push({ type: "mail", url: user.email, success: true })
     }
