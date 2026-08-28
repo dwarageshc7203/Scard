@@ -25,8 +25,6 @@ public record PatchProfileRequest(
         @Size(max = 60, message = "Profile name must be 60 characters or fewer")
         String profileName,
 
-        @Size(max = 254, message = "Email must be 254 characters or fewer")
-        String email,
 
 
         Integer bannerId,

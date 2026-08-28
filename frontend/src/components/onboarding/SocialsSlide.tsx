@@ -5,26 +5,20 @@ import ValidationTooltip from "@/components/ui/ValidationTooltip"
 
 interface SocialsSlideProps {
   initialLinkedUsername: string
-  initialMailAddress: string
-  onNext: (linkedUsername: string, mailAddress: string) => void
+  onNext: (linkedUsername: string) => void
   onPrev: () => void
 }
 
 export default function SocialsSlide({
   initialLinkedUsername,
-  initialMailAddress,
   onNext,
   onPrev,
 }: SocialsSlideProps) {
   const [linkedUsername, setLinkedUsername] = useState(initialLinkedUsername)
-  const [mailAddress, setMailAddress] = useState(initialMailAddress)
 
   const [loadingLinked, setLoadingLinked] = useState(false)
-  const [loadingMail, setLoadingMail] = useState(false)
   const [errorLinked, setErrorLinked] = useState("")
-  const [errorMail, setErrorMail] = useState("")
   const [successLinked, setSuccessLinked] = useState(false)
-  const [successMail, setSuccessMail] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -78,62 +72,12 @@ export default function SocialsSlide({
     }
   }, [linkedUsername])
 
-  useEffect(() => {
-    let isMounted = true
-    const check = async () => {
-      if (!mailAddress.trim()) {
-        if (isMounted) {
-          setErrorMail("")
-          setLoadingMail(false)
-          setSuccessMail(false)
-        }
-        return
-      }
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(mailAddress.trim())) {
-        if (isMounted) {
-          setErrorMail("Please enter a valid email address")
-          setSuccessMail(false)
-          setLoadingMail(false)
-        }
-        return
-      }
-
-      try {
-        const result = await checkMail(mailAddress.trim())
-        if (isMounted) {
-          if (result.taken) {
-            setErrorMail(`Mail already taken`)
-            setSuccessMail(false)
-          } else {
-            setErrorMail("")
-            setSuccessMail(true)
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setErrorMail("Error checking email")
-          setSuccessMail(false)
-        }
-      } finally {
-        if (isMounted) setLoadingMail(false)
-      }
-    }
-
-    setLoadingMail(true)
-    setSuccessMail(false)
-    const timer = setTimeout(check, 500)
-    return () => {
-      isMounted = false
-      clearTimeout(timer)
-    }
-  }, [mailAddress])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (loadingLinked || loadingMail || errorLinked || errorMail) return
-    onNext(linkedUsername, mailAddress)
+    if (loadingLinked || errorLinked) return
+    onNext(linkedUsername)
   }
 
   return (
@@ -173,33 +117,7 @@ export default function SocialsSlide({
             </div>
           </div>
 
-          {/* Mail */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-[280px] sm:max-w-none gap-2 sm:gap-0 mx-auto">
-            <span className="onboarding-text mr-4 whitespace-nowrap">
-              Mail address
-            </span>
-            <div className="relative flex items-center">
-              {/* Tooltip anchor wrapper */}
-              <div className="relative">
-                <ValidationTooltip message={errorMail} visible={!!errorMail && !loadingMail} />
-                <input
-                  type="email"
-                  value={mailAddress}
-                  onChange={(e) => {
-                    setMailAddress(e.target.value)
-                    setErrorMail("")
-                    setSuccessMail(false)
-                  }}
-                  className={`w-[240px] sm:w-[280px] lg:w-[340px] xl:w-[380px] px-3 py-2 bg-transparent border ${errorMail ? "border-red-500" : successMail ? "border-green-500" : "border-border"} rounded-md outline-none text-text focus:border-text/50 transition-all font-sans text-[15px] lg:text-[16px]`}
-                />
-              </div>
-              <div className="absolute -right-6 flex items-center justify-center">
-                {loadingMail && <Loader2 className="w-4 h-4 animate-spin text-[#aaaaaa]" />}
-                {!loadingMail && successMail && <Check className="w-5 h-5 text-green-500" />}
-                {!loadingMail && errorMail && <X className="w-5 h-5 text-red-500" />}
-              </div>
-            </div>
-          </div>
+
 
         </div>
 
@@ -212,10 +130,10 @@ export default function SocialsSlide({
         </button>
         <button
           type="submit"
-          disabled={loadingLinked || loadingMail || !!errorLinked || !!errorMail}
+          disabled={loadingLinked || !!errorLinked}
           className="absolute bottom-6 right-6 md:bottom-12 md:right-12 px-5 py-2 border border-border hover:border-text/50 text-text rounded-md text-sm transition-all font-sans cursor-pointer flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loadingLinked || loadingMail ? "Checking..." : "Next →"}
+          {loadingLinked ? "Checking..." : "Next →"}
         </button>
       </form>
     </div>

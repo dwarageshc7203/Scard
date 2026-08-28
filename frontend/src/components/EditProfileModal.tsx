@@ -122,9 +122,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
       error?: string
       success?: boolean
     }[]
-    if (user.email && !socials.some(s => s.type === "mail")) {
-      socials.push({ type: "mail", url: user.email, success: true })
-    }
     return socials
   })
 
@@ -373,7 +370,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
     customSocials.forEach((social, idx) => {
       const url = social.url.trim()
       if (!url) return
-      if (social.type !== "linkedin" && social.type !== "mail") return
+      if (social.type !== "linkedin") return
 
       // Skip if this matches user's initial saved customSocials URL
       const initialSocial = (user.customSocials || []).find(s => s.type === social.type && s.url.trim() === url)
@@ -400,21 +397,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
               return;
             }
             dbCheck = await checkLinkedin(url) as any;
-          } else if (social.type === "mail") {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            if (!emailRegex.test(url)) {
-              if (isMounted) {
-                setCustomSocials(prev => {
-                  const next = [...prev];
-                  if (next[idx]) {
-                    next[idx] = { ...next[idx], checking: false, error: "Please enter a valid email address" };
-                  }
-                  return next;
-                });
-              }
-              return;
-            }
-            dbCheck = await checkMail(url) as any;
           }
 
           if (isMounted) {
@@ -1010,7 +992,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                 newSocials[idx].type = e.target.value
                                 newSocials[idx].error = ""
                                 newSocials[idx].success = false
-                                const isCheckable = e.target.value === "linkedin" || e.target.value === "mail"
+                                const isCheckable = e.target.value === "linkedin"
                                 const url = newSocials[idx].url.trim()
                                 const initial = (user.customSocials || []).find(s => s.type === e.target.value && s.url.trim() === url)
                                 newSocials[idx].checking = isCheckable && url !== "" && !initial
@@ -1019,7 +1001,6 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                             >
                               <option value="linkedin">LinkedIn</option>
                               <option value="twitter">Twitter / X</option>
-                              <option value="mail">Email</option>
                               <option value="website">Website</option>
                             </select>
                             <Input
@@ -1029,16 +1010,14 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
                                 newSocials[idx].url = e.target.value
                                 newSocials[idx].error = ""
                                 newSocials[idx].success = false
-                                const isCheckable = newSocials[idx].type === "linkedin" || newSocials[idx].type === "mail"
+                                const isCheckable = newSocials[idx].type === "linkedin"
                                 const url = e.target.value.trim()
                                 const initial = (user.customSocials || []).find(s => s.type === newSocials[idx].type && s.url.trim() === url)
                                 newSocials[idx].checking = isCheckable && url !== "" && !initial
                                 setCustomSocials(newSocials)
                               }}
                               placeholder={
-                                social.type === "mail"
-                                  ? "johndoe@example.com"
-                                  : social.type === "linkedin"
+                                  social.type === "linkedin"
                                     ? "https://linkedin.com/in/..."
                                     : "https://..."
                               }

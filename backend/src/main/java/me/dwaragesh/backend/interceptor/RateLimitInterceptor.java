@@ -15,7 +15,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import java.time.Duration;
 
 /**
- * CRIT-5: Rate limiter applied to all sensitive enumeration and sync endpoints.
  *
  * <p>Per-IP buckets are stored in a Caffeine cache with TTL expiry to prevent the
  * unbounded memory leak that would occur with a plain ConcurrentHashMap (old impl).
@@ -86,6 +85,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             bucket = resolveBucket("public:" + ip, DEFAULT_LIMIT);
         } else if (uri.equals("/api/profile")) {
             bucket = resolveBucket("profile:" + ip, DEFAULT_LIMIT);
+        } else if (uri.equals("/api/me")) {
+            bucket = resolveBucket("me:" + ip, DEFAULT_LIMIT);
         } else if (uri.startsWith("/api/og/")) {
             bucket = resolveBucket("og:" + ip, OG_LIMIT);
         }

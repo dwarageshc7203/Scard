@@ -23,6 +23,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns(
                         "/api/profile/platforms",
+                        "/api/me",
                         "/api/profile/check-*",
                         "/api/profile/*/export",
                         "/api/profiles",

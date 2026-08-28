@@ -6,6 +6,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useTheme } from "@/context/ThemeContext"
+import React from "react"
+
+const HeatmapCell = React.memo(({ count, dateStr, theme }: { count: number, dateStr: string, theme: string }) => {
+  const getColor = (count: number) => {
+    if (count === 0) return theme === "dark" ? "#3f3f3fff" : "#ebedf0"
+    if (count <= 3) return theme === "dark" ? "#0e4429" : "#9be9a8"
+    if (count <= 7) return theme === "dark" ? "#006d32" : "#40c463"
+    if (count <= 11) return theme === "dark" ? "#26a641" : "#30a14e"
+    return theme === "dark" ? "#39d353" : "#216e39"
+  }
+  return (
+    <div
+      title={`${count} submissions on ${dateStr}`}
+      className="w-[14px] h-[14px] rounded-[3px] transition-all hover:ring-1 hover:ring-gray-400 cursor-pointer"
+      style={{ backgroundColor: getColor(count) }}
+    />
+  )
+})
 
 interface HeatmapProps {
   data: Array<{ date: string; count: number }>
@@ -106,14 +124,6 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
     return monthGroups
   }, [allDays])
 
-  const getColor = (count: number) => {
-    if (count === 0) return resolvedTheme === "dark" ? "#3f3f3fff" : "#ebedf0"
-    if (count <= 3) return resolvedTheme === "dark" ? "#0e4429" : "#9be9a8"
-    if (count <= 7) return resolvedTheme === "dark" ? "#006d32" : "#40c463"
-    if (count <= 11) return resolvedTheme === "dark" ? "#26a641" : "#30a14e"
-    return resolvedTheme === "dark" ? "#39d353" : "#216e39"
-  }
-
   const formatDate = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
   }
@@ -137,11 +147,11 @@ const Heatmap: FC<HeatmapProps> = ({ data, year }) => {
                     const dateStr = formatDate(day)
                     const count = dataMap.get(dateStr) || 0
                     return (
-                      <div
+                      <HeatmapCell
                         key={dIdx}
-                        title={`${count} submissions on ${dateStr}`}
-                        className="w-[14px] h-[14px] rounded-[3px] transition-all hover:ring-1 hover:ring-gray-400 cursor-pointer"
-                        style={{ backgroundColor: getColor(count) }}
+                        count={count}
+                        dateStr={dateStr}
+                        theme={resolvedTheme}
                       />
                     )
                   })}

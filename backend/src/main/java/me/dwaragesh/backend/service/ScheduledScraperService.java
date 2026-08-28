@@ -20,7 +20,8 @@ public class ScheduledScraperService {
 
     @Scheduled(fixedRate = 900000)
     public void syncAllProfiles() {
-        List<Profile> profiles = profileRepository.findAll();
+        java.time.Instant cutoff = java.time.Instant.now().minus(java.time.Duration.ofHours(1));
+        List<Profile> profiles = profileRepository.findStale(cutoff, org.springframework.data.domain.PageRequest.of(0, 500));
         for (Profile profile : profiles) {
             syncService.syncAllPlatformsAsync(profile);
         }

@@ -13,11 +13,17 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
 
     Optional<Profile> findFirstByUserName(String userName);
 
+    @Query("SELECT p FROM Profile p WHERE p.lastSyncedAt IS NULL OR p.lastSyncedAt < :cutoff")
+    List<Profile> findStale(@Param("cutoff") java.time.Instant cutoff, org.springframework.data.domain.Pageable page);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Profile p SET p.anonymousViews = p.anonymousViews + 1 WHERE p.profileId = :id")
+    void incrementAnonymousViews(@Param("id") int id);
+
     Boolean existsByUserNameIgnoreCase(String username);
 
     Profile findByUser(User user);
 
-    /** LOW-9: Used by MigrationRunner to skip the full table scan when migration is done. */
     long countByHeatmapJsonNot(String value);
 
     @Query(value = "SELECT p.user_name FROM profile p WHERE EXISTS (" +
@@ -50,7 +56,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
     List<String> findUserNameByLeetcode(@Param("username") String username);
 
     /**
-     * HIGH-4: Lightweight summary query — selects only the 4 columns needed for the
      * public explore/directory page instead of loading the full entity graph.
      * Uses a CASE expression to prefer custom avatar over OAuth avatar.
      */

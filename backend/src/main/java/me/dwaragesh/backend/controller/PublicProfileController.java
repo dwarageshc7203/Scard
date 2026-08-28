@@ -1,6 +1,6 @@
 package me.dwaragesh.backend.controller;
 
-import me.dwaragesh.backend.model.dto.ProfileResponse;
+import me.dwaragesh.backend.model.dto.PublicProfileResponse;
 import me.dwaragesh.backend.service.ProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +19,7 @@ public class PublicProfileController {
     }
 
     @GetMapping("/api/profile/{userName}")
-    public ProfileResponse getPublicProfile(
+    public PublicProfileResponse getPublicProfile(
             @PathVariable String userName,
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
         String googleId = principal != null ? principal.getSubject() : null;

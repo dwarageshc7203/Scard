@@ -23,10 +23,18 @@ public class ImageUploadService {
     private static final java.util.Set<String> ALLOWED_CONTENT_TYPES =
             java.util.Set.of("image/png", "image/jpeg");
 
-    private static final java.util.Map<byte[], String> MAGIC_BYTES = new java.util.LinkedHashMap<>() {{
-        put(new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF}, "image/jpeg");
-        put(new byte[]{(byte)0x89, 0x50, 0x4E, 0x47}, "image/png");
+    private static final java.util.Map<String, String> MAGIC_BYTES = new java.util.LinkedHashMap<>() {{
+        put("FFD8FF", "image/jpeg");
+        put("89504E47", "image/png");
     }};
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
+    }
 
     private String validateAndGetExtension(byte[] fileBytes) {
         if (fileBytes.length == 0) {
@@ -41,13 +49,9 @@ public class ImageUploadService {
             }
             byte[] header = new byte[Math.min(fileBytes.length, 12)];
             System.arraycopy(fileBytes, 0, header, 0, header.length);
-            for (java.util.Map.Entry<byte[], String> entry : MAGIC_BYTES.entrySet()) {
-                byte[] magic = entry.getKey();
-                boolean matches = true;
-                for (int i = 0; i < magic.length && i < header.length; i++) {
-                    if (header[i] != magic[i]) { matches = false; break; }
-                }
-                if (matches) { 
+            String hexHeader = bytesToHex(header);
+            for (java.util.Map.Entry<String, String> entry : MAGIC_BYTES.entrySet()) {
+                if (hexHeader.startsWith(entry.getKey())) {
                     String mime = entry.getValue();
                     return switch (mime) {
                         case "image/jpeg" -> ".jpg";

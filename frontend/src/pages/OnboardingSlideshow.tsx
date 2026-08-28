@@ -37,7 +37,6 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   // State to hold data across slides
   const [username, setUsername] = useState("")
   const [linkedUsername, setLinkedUsername] = useState("")
-  const [mailAddress, setMailAddress] = useState("")
   const [leetcode, setLeetcode] = useState("")
   const [github, setGithub] = useState("")
   const [pfpUrl, setPfpUrl] = useState("")
@@ -62,9 +61,8 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
   }
 
   // Slide 2: Save socials temporarily
-  const handleSocialsNext = (lu: string, ma: string) => {
+  const handleSocialsNext = (lu: string) => {
     setLinkedUsername(lu)
-    setMailAddress(ma)
     nextStep()
   }
 
@@ -90,7 +88,6 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       if (github) socialsList.push(`GITHUB:${github}`)
       if (leetcode) socialsList.push(`LEETCODE:${leetcode}`)
       if (linkedUsername) socialsList.push(`LINKED_IN:${linkedUsername}`)
-      if (mailAddress) socialsList.push(`MAIL:${mailAddress}`)
 
       const finalDesignation = designation || ""
 
@@ -99,7 +96,8 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       await updateProfile(
         finalDesignation,
         undefined, // profileUrl should not be the base64 PFP
-        mailAddress || undefined,
+        undefined, // email
+
         username,
         tagline || username,
         undefined,
@@ -155,7 +153,6 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
     <UsernameSlide initialValue={username} onNext={handleUsernameNext} />,
     <SocialsSlide
       initialLinkedUsername={linkedUsername}
-      initialMailAddress={mailAddress}
       onNext={handleSocialsNext}
       onPrev={prevStep}
     />,

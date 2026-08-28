@@ -29,6 +29,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfRepo.setCookieCustomizer(c -> c.sameSite("Lax"));
+
         http
                 .authorizeHttpRequests(auth -> auth
 
@@ -64,6 +67,10 @@ public class SecurityConfig {
                         // ── EVERYTHING ELSE under /api requires authentication ────────────────
                         .requestMatchers("/api/**").authenticated()
 
+                        // ── ACTUATOR endpoints ───────────────────────────────────────────────
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/**").denyAll()
+
                         // Allow non-API routes (OAuth redirects, static files, etc.)
                         .anyRequest().permitAll()
                 )
@@ -84,7 +91,7 @@ public class SecurityConfig {
                         })
                 )
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfRepo)
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 )
                 .addFilterAfter(

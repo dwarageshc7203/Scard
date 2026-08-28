@@ -71,6 +71,7 @@ export default function Image({
         src={currentSrc}
         alt={alt || "Image"}
         loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         decoding="async"
         onLoad={handleLoad}
         onError={handleError}

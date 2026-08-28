@@ -8,6 +8,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -31,8 +32,15 @@ public class ProfileControllerSecurityTest {
 
     @Test
     public void unauthenticatedPublicProfile_ReturnsOk() throws Exception {
+        me.dwaragesh.backend.model.dto.PublicProfileResponse mockResponse = new me.dwaragesh.backend.model.dto.PublicProfileResponse(
+            "testuser", "Test", null, null, null, null, null, java.util.List.of("github:test"), null, null, null, null, 0, java.time.Instant.now(), null, null
+        );
+        org.mockito.Mockito.when(profileService.getPublicProfileAndTrackView(org.mockito.ArgumentMatchers.eq("testuser"), org.mockito.ArgumentMatchers.any())).thenReturn(mockResponse);
+
         mockMvc.perform(get("/api/profile/testuser"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.socials[?(@ =~ /(?i)^mail:.*/)]").isEmpty());
     }
 
     @Test

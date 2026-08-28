@@ -83,7 +83,6 @@ public class ProfileController {
         return ResponseEntity.ok(java.util.Map.of("taken", taken));
     }
 
-    /** CRIT-3: check-mail never reveals the ownerUsername — only a boolean. */
     private ResponseEntity<java.util.Map<String, Object>> buildMailCheckResponse(String owner, OidcUser principal) {
         return buildCheckResponse(owner, principal);
     }

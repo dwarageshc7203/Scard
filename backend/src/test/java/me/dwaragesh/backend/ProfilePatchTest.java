@@ -36,7 +36,7 @@ public class ProfilePatchTest {
         Project p1 = new Project(); p1.setName("Proj1"); projs.add(p1);
         
         PatchProfileRequest req = new PatchProfileRequest(
-            "Senior Dev", "https://newurl.com", "newuser", "New Name", "test@test.com", 
+            "Senior Dev", "https://newurl.com", "newuser", "New Name",
             1, Arrays.asList("t:t"), projs, null, null
         );
         profileService.patchProfile(user, req);

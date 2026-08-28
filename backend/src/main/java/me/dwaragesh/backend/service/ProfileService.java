@@ -6,6 +6,7 @@ import me.dwaragesh.backend.model.*;
 import me.dwaragesh.backend.model.dto.OnBoardingRequest;
 import me.dwaragesh.backend.model.dto.PatchProfileRequest;
 import me.dwaragesh.backend.model.dto.ProfileResponse;
+import me.dwaragesh.backend.model.dto.PublicProfileResponse;
 import me.dwaragesh.backend.model.enums.Platform;
 import me.dwaragesh.backend.repository.ProfileRepository;
 import me.dwaragesh.backend.repository.ProfileViewRepository;
@@ -135,22 +136,34 @@ public class ProfileService {
     }
 
     /**
-     * CRIT-2: Public (unauthenticated) version of getProfile.
      * Strips MAIL: socials so email addresses are never returned to anonymous callers.
      */
     @Transactional(readOnly = true)
-    public ProfileResponse getPublicProfile(String userName) {
+    public PublicProfileResponse getPublicProfile(String userName) {
         Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
         return toPublicResponse(profile);
     }
 
     /**
-     * CRIT-2: Strips any social entry whose prefix is MAIL: before returning to anonymous callers.
      * Authenticated profile owners still receive the full list via toResponse().
      */
-    private ProfileResponse toPublicResponse(Profile profile) {
-        return toResponse(profile);
+    private PublicProfileResponse toPublicResponse(Profile profile) {
+        ProfileResponse full = toResponse(profile);
+        List<String> safeSocials = full.socials() == null ? List.of()
+                : full.socials().stream()
+                .filter(s -> {
+                    String type = s.contains(":") ? s.split(":", 2)[0].toLowerCase() : "";
+                    return !type.equals("mail") && !type.equals("email");
+                })
+                .toList();
+
+        return new PublicProfileResponse(
+                full.userName(), full.profileName(), full.designation(), full.pin(),
+                full.profileUrl(), full.imageURL(),
+                full.bannerId(), safeSocials, full.badges(), full.contests(),
+                full.problemStats(), full.projects(), full.anonymousViews(),
+                full.createdAt(), full.contributions(), full.displayPreferences());
     }
 
     @Transactional
@@ -158,21 +171,18 @@ public class ProfileService {
         return getProfileAndTrackViewInternal(userName, viewerGoogleId, false);
     }
 
-    /** CRIT-2: Public variant — strips MAIL: socials from the response. */
     @Transactional
-    public ProfileResponse getPublicProfileAndTrackView(String userName, String viewerGoogleId) {
+    public PublicProfileResponse getPublicProfileAndTrackView(String userName, String viewerGoogleId) {
         return getProfileAndTrackViewInternal(userName, viewerGoogleId, true);
     }
 
-    @Transactional
-    private ProfileResponse getProfileAndTrackViewInternal(String userName, String viewerGoogleId, boolean publicView) {
+    private <T> T getProfileAndTrackViewInternal(String userName, String viewerGoogleId, boolean publicView) {
         Profile profile = repository.findFirstByUserName(userName)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile does not exist"));
         
         boolean isOwner = false;
         if (viewerGoogleId == null) {
-            profile.setAnonymousViews(profile.getAnonymousViews() + 1);
-            repository.save(profile);
+            repository.incrementAnonymousViews(profile.getProfileId());
         } else {
             User viewer = userRepository.findFirstByGoogleId(viewerGoogleId).orElse(null);
             if (viewer != null && profile.getUser() != null) {
@@ -190,11 +200,13 @@ public class ProfileService {
             }
         }
         
-        return (publicView && !isOwner) ? toPublicResponse(profile) : toResponse(profile);
+        if (publicView) {
+            return (T) toPublicResponse(profile);
+        }
+        return (T) toResponse(profile);
     }
 
     /**
-     * HIGH-4: Use a targeted query that fetches only summary columns instead of
      * loading the entire entity graph (socials, badges, contests, contributions) for
      * every user into memory on every page load.
      */
@@ -291,9 +303,6 @@ public class ProfileService {
         if (request.profileName() != null) {
             profile.setProfileName(request.profileName());
         }
-        if (request.email() != null) {
-            user.setEmail(request.email());
-        }
         if (request.socials() != null) {
             java.util.List<String> oldSocials = profile.getSocials() != null ? profile.getSocials() : new java.util.ArrayList<>();
             for (String s : request.socials()) {
@@ -341,7 +350,6 @@ public class ProfileService {
         if (request.projects() != null) {
             java.util.List<Project> newProjects = new java.util.ArrayList<>();
             for (Project p : request.projects()) {
-                // HIGH-3: Enforce a per-project base64 size limit to prevent 100MB PATCH bombs.
                 // 540000 chars ≈ 400KB decoded — enough for a thumbnail.
                 if (p.getProjectImageBase64() != null && p.getProjectImageBase64().length() > 540_000) {
                     throw new IllegalArgumentException(
@@ -368,7 +376,6 @@ public class ProfileService {
             }
         }
         if (request.displayPreferences() != null) {
-            // HIGH-2: Reject raw strings that aren't valid JSON to prevent stored XSS
             // and ensure the frontend can always safely parse this field.
             try {
                 new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.displayPreferences());

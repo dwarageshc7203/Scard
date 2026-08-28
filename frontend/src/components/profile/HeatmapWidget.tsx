@@ -1,5 +1,6 @@
 import React from 'react'
 import Heatmap from '../Heatmap'
+import ErrorBoundary from '../ErrorBoundary'
 
 interface HeatmapWidgetProps {
   heatmapData: { date: string; count: number }[]
@@ -47,7 +48,9 @@ const HeatmapWidget: React.FC<HeatmapWidgetProps> = ({
         </select>
       </div>
       <div className="mt-14 overflow-x-auto pt-2 custom-scrollbar">
-        <Heatmap data={heatmapData} year={heatmapYear} />
+        <ErrorBoundary>
+          <Heatmap data={heatmapData} year={heatmapYear} />
+        </ErrorBoundary>
       </div>
     </div>
   )

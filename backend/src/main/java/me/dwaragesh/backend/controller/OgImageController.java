@@ -36,7 +36,6 @@ public class OgImageController {
     private String uploadDir;
 
     /**
-     * HIGH-7: Allowlist of trusted URL prefixes for outbound HTTP fetches.
      * Anything outside this list is silently skipped; the fallback rendering
      * path (gradient / initial-letter avatar) handles it gracefully.
      *
@@ -94,12 +93,13 @@ public class OgImageController {
                         String imageUrl = bg.replaceAll(".*url\\(['\"]?([^'\")]+)['\"]?\\).*", "$1");
                         BufferedImage bannerImg = null;
                         if (imageUrl.startsWith("http")) {
-                            // HIGH-7: Only fetch URLs on the allowlist to prevent SSRF.
                             if (!isTrustedUrl(imageUrl)) {
                                 log.warn("Blocked SSRF attempt for banner URL: {}", imageUrl);
                                 // Fall through to gradient/default background
                             } else {
                                 java.net.URLConnection conn = new URL(imageUrl).openConnection();
+                                conn.setConnectTimeout(3000);
+                                conn.setReadTimeout(5000);
                                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                                 bannerImg = ImageIO.read(conn.getInputStream());
                             }
@@ -180,12 +180,13 @@ public class OgImageController {
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 try {
                     if (avatarUrl.startsWith("http")) {
-                        // HIGH-7: Only fetch avatar URLs from trusted origins.
                         if (!isTrustedUrl(avatarUrl)) {
                             log.warn("Blocked SSRF attempt for avatar URL: {}", avatarUrl);
                             avatarUrl = null; // fall through to initials fallback
                         } else {
                             java.net.URLConnection conn = new URL(avatarUrl).openConnection();
+                            conn.setConnectTimeout(3000);
+                            conn.setReadTimeout(5000);
                             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                             avatarImg = ImageIO.read(conn.getInputStream());
                         }

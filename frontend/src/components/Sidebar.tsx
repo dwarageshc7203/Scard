@@ -113,7 +113,9 @@ const Sidebar: FC<SidebarProps> = ({
                     {user.displayName}
                   </div>
                   {user.pin && (
-                    <button
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => {
                         e.stopPropagation() // Prevent selecting the user when clicking the pin
                         const rect = e.currentTarget.getBoundingClientRect()
@@ -132,7 +134,7 @@ const Sidebar: FC<SidebarProps> = ({
                       className="inline-flex items-center justify-center text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md border border-purple-500 bg-gradient-to-r from-transparent to-purple-500/20 text-purple-600 dark:text-purple-400 shadow-sm shrink-0 mt-[1px] cursor-pointer hover:to-purple-500/30 transition-colors"
                     >
                       {user.pin}
-                    </button>
+                    </span>
                   )}
                 </div>
                 <div className="text-[10px] text-muted truncate">

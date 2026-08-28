@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class SyncService {
 
-    @org.springframework.scheduling.annotation.Async
+    @org.springframework.scheduling.annotation.Async("syncExecutor")
     public void syncAllPlatformsAsync(Profile profile) {
         if (profile == null || profile.getSocials() == null) return;
 
@@ -108,7 +108,6 @@ public class SyncService {
                 profile.getProblemStats().put(platform.name().toUpperCase(), stats);
             }
 
-            // HIGH-6: Set lastSyncedAt before the single save — removes the redundant second write.
             profile.setLastSyncedAt(Instant.now());
             profileRepository.save(profile);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
@@ -124,7 +123,6 @@ public class SyncService {
         // Wipe existing rows for this platform, then reinsert — idempotent and clean
         contributionRepository.deleteByProfileAndPlatform(profile, platform);
 
-        // LOW-8: Collect into a list and use saveAll() for a single batched INSERT
         // instead of one INSERT per record (N+1 writes).
         List<Contribution> toSave = result.contributions().stream()
                 .filter(c -> c.count() > 0)
@@ -146,7 +144,6 @@ public class SyncService {
                 .toList();
         badgeRepository.deleteAll(existing);
 
-        // LOW-8: Batch insert
         List<Badge> toSave = result.badges().stream().map(b -> {
             Badge badge = new Badge();
             badge.setProfile(profile);
@@ -165,7 +162,6 @@ public class SyncService {
                 .toList();
         contestRepository.deleteAll(existing);
 
-        // LOW-8: Batch insert
         List<Contest> toSave = result.contests().stream().map(c -> {
             Contest contest = new Contest();
             contest.setProfile(profile);

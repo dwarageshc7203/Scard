@@ -42,7 +42,6 @@ public class GlobalExceptionHandler {
         body.put("message", "An unexpected error occurred.");
         body.put("path", request.getDescription(false).replace("uri=", ""));
         
-        // MED-7: Use Slf4j instead of System.err — respects log level, MDC, and log correlation.
         log.error("Unexpected error at {}: {}", request.getDescription(false), ex.getMessage(), ex);
         
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -68,8 +67,10 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("error", "Bad Request");
-        body.put("message", ex.getMessage());
+        body.put("message", "Invalid argument provided.");
         body.put("path", request.getDescription(false).replace("uri=", ""));
+        
+        log.warn("Illegal argument at {}: {}", request.getDescription(false), ex.getMessage());
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }

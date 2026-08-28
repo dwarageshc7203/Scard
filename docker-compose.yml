@@ -8,7 +8,8 @@ services:
       POSTGRES_DB: scard
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # LOW-17: Added healthcheck so dependent services wait for Postgres to be ready
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
     # instead of racing against the startup sequence.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d scard"]
@@ -51,6 +52,11 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GH_TOKEN=${GH_TOKEN}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    mem_limit: 768m
+    cpus: 1.5
     volumes:
       - uploads:/app/uploads
     healthcheck:
@@ -70,7 +76,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8080:8080"
     restart: unless-stopped
 
 volumes:

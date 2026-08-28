@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * User lifecycle service.
  *
- * <p>HIGH-5: Removed {@code synchronized} from {@code findOrCreateFromGoogle}.
  * The method was previously serialising every authenticated request behind a
  * single JVM lock — catastrophic for throughput and incompatible with
  * multi-pod deployments.
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
  * {@link DataIntegrityViolationException}, which we catch and retry as a
  * SELECT — the same pattern already used in {@code ProfileService.createProfile()}.
  *
- * <p>LOW-6: Converted to constructor injection; fields are {@code final}.
  */
 @Slf4j
 @Service
@@ -71,8 +69,11 @@ public class UserService {
                         user.setImageURL(imageURL);
                     }
                     return repository.save(user);
+                } else if (user.getGoogleId().equals(googleId)) {
+                    return user;
+                } else {
+                    throw new org.springframework.security.access.AccessDeniedException("Email already registered via a different method");
                 }
-                return user;
             }
         }
         try {

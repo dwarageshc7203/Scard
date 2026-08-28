@@ -27,9 +27,7 @@ public class UserController {
     @GetMapping("/me")
     public MeResponse getMe(@AuthenticationPrincipal OidcUser principal) {
         User user = service.findOrCreateFromGoogle(principal);
-        if (user.getProfile() != null) {
-            syncService.syncAllPlatformsAsync(user.getProfile());
-        }
+
         return service.toMeResponse(user);
     }
 
