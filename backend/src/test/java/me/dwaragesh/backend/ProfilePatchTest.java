@@ -19,6 +19,7 @@ import org.springframework.test.context.TestPropertySource;
 public class ProfilePatchTest {
     @Autowired ProfileService profileService;
     @Autowired UserRepository userRepository;
+    @Autowired ProfileRepository profileRepository;
     @Test
     public void testPatch() {
         User user = new User();
@@ -28,8 +29,9 @@ public class ProfilePatchTest {
         Profile p = new Profile();
         p.setUser(user);
         p.setUserName("test2");
+        p = profileRepository.save(p);
         user.setProfile(p);
-        userRepository.save(user);
+        user = userRepository.save(user);
         
         List<Project> projs = new ArrayList<>();
         Project p1 = new Project(); p1.setName("Proj1"); projs.add(p1);
