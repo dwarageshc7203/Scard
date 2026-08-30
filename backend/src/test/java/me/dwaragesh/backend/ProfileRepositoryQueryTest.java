@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@org.springframework.context.annotation.Import(me.dwaragesh.backend.TestScardApplication.class)
 
 public class ProfileRepositoryQueryTest {
 

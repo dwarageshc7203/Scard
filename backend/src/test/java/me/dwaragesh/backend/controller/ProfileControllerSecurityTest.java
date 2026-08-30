@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import org.springframework.context.annotation.Import;
 
 @WebMvcTest({ProfileController.class, PublicProfileController.class})
-@Import({me.dwaragesh.backend.config.SecurityConfig.class, me.dwaragesh.backend.TestScardApplication.class})
+@Import({me.dwaragesh.backend.config.SecurityConfig.class})
 public class ProfileControllerSecurityTest {
 
     @Autowired
