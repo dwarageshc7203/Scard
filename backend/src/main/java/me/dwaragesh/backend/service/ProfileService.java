@@ -297,7 +297,6 @@ public class ProfileService {
                     throw new UsernameTakenException("Username already taken: " + request.userName());
                 }
                 profile.setUserName(request.userName());
-                user.setUserName(request.userName());
             }
         }
         if (request.profileName() != null) {
@@ -399,8 +398,8 @@ public class ProfileService {
         org.springframework.data.domain.Page<ProfileView> viewsPage = profileViewRepository.findByProfileOrderByViewedAtDesc(profile, pageable);
         List<me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto> recentViewers = viewsPage.getContent().stream()
                 .map(v -> new me.dwaragesh.backend.model.dto.AnalyticsResponse.ViewerDto(
-                        v.getViewer().getUserName(),
-                        (v.getViewer().getProfile() != null && v.getViewer().getProfile().getProfileName() != null) ? v.getViewer().getProfile().getProfileName() : v.getViewer().getUserName(), 
+                        v.getViewer().getProfile() != null ? v.getViewer().getProfile().getUserName() : "Anonymous",
+                        (v.getViewer().getProfile() != null && v.getViewer().getProfile().getProfileName() != null) ? v.getViewer().getProfile().getProfileName() : (v.getViewer().getProfile() != null ? v.getViewer().getProfile().getUserName() : "Anonymous"), 
                         (v.getViewer().getProfile() != null && v.getViewer().getProfile().getCustomImageUrl() != null && !v.getViewer().getProfile().getCustomImageUrl().isEmpty()) ? v.getViewer().getProfile().getCustomImageUrl() : v.getViewer().getImageURL(),
                         v.getViewedAt()
                 ))

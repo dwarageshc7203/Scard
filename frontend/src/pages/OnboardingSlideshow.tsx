@@ -96,8 +96,6 @@ export default function OnboardingSlideshow({ currentUser }: OnboardingSlideshow
       await updateProfile(
         finalDesignation,
         undefined, // profileUrl should not be the base64 PFP
-        undefined, // email
-
         username,
         tagline || username,
         undefined,

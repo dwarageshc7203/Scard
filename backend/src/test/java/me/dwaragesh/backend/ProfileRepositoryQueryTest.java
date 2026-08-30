@@ -16,11 +16,8 @@ import java.util.ArrayList;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@TestPropertySource(properties = {
-    "spring.flyway.enabled=false",
-    "spring.jpa.hibernate.ddl-auto=update",
-    "spring.session.jdbc.initialize-schema=always"
-})
+@org.springframework.context.annotation.Import(me.dwaragesh.backend.TestScardApplication.class)
+
 public class ProfileRepositoryQueryTest {
 
     @Autowired
@@ -39,7 +36,6 @@ public class ProfileRepositoryQueryTest {
     public void testGithubCollision_JamesAndJamesBond() {
         User user1 = new User();
         user1.setEmail("jamesbond@test.com");
-        user1.setUserName("jamesbond");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();
@@ -59,7 +55,6 @@ public class ProfileRepositoryQueryTest {
     public void testLinkedinSuffixCollision() {
         User user1 = new User();
         user1.setEmail("jamesbond@test.com");
-        user1.setUserName("jamesbond");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();
@@ -76,7 +71,6 @@ public class ProfileRepositoryQueryTest {
     public void testLinkedinPrefixCollision() {
         User user1 = new User();
         user1.setEmail("oldjames@test.com");
-        user1.setUserName("oldjames");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();
@@ -93,7 +87,6 @@ public class ProfileRepositoryQueryTest {
     public void testLinkedinWildcardInjectionEscape() {
         User user1 = new User();
         user1.setEmail("james@test.com");
-        user1.setUserName("james");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();
@@ -112,7 +105,6 @@ public class ProfileRepositoryQueryTest {
     public void testLinkedinLegitimateMatch() {
         User user1 = new User();
         user1.setEmail("james@test.com");
-        user1.setUserName("james");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();
@@ -129,7 +121,6 @@ public class ProfileRepositoryQueryTest {
     public void testGithubExactMatchSanity() {
         User user1 = new User();
         user1.setEmail("james@test.com");
-        user1.setUserName("james");
         user1 = userRepository.save(user1);
 
         Profile p1 = new Profile();

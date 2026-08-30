@@ -275,7 +275,7 @@ export async function createProfile(
 export async function updateProfile(
   designation?: string,
   profileUrl?: string,
-  email?: string,
+
   userName?: string,
   profileName?: string,
   bannerId?: number,
@@ -293,7 +293,7 @@ export async function updateProfile(
     body: JSON.stringify({
       designation,
       profileUrl,
-      email,
+
       userName,
       profileName,
       bannerId,

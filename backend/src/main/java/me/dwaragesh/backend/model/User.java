@@ -24,7 +24,6 @@ public class User {
     private String googleId;
     private String email;
     private String imageURL;
-    private String userName;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;

@@ -11,6 +11,7 @@ import java.util.*;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
+@org.springframework.context.annotation.Import(me.dwaragesh.backend.TestScardApplication.class)
 @TestPropertySource(properties = {
     "spring.flyway.enabled=false",
     "spring.jpa.hibernate.ddl-auto=update",
@@ -23,7 +24,6 @@ public class ProfilePatchTest {
     public void testPatch() {
         User user = new User();
         user.setEmail("test2@example.com");
-        user.setUserName("test2");
         user = userRepository.save(user);
         
         Profile p = new Profile();

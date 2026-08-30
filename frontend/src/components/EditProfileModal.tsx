@@ -518,7 +518,7 @@ const EditProfileModal: FC<EditProfileModalProps> = ({
         await updateProfile(
           designation,
           undefined,
-          undefined,
+
           username,
           profileName,
           selectedBannerId,

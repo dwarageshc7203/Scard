@@ -1,5 +1,5 @@
 import React from 'react'
-import { Mail, Globe } from 'lucide-react'
+import { Globe } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import Avatar from '../ui/avatar'
 import { sanitizeUrl } from '../../lib/urlUtils'
@@ -23,7 +23,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
             {activeUser.customSocials.map((social: any, idx: number) => (
               <a
                 key={idx}
-                href={social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail' ? `mailto:${social.url}` : sanitizeUrl(social.url)}
+                href={sanitizeUrl(social.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 bg-surface/50 backdrop-blur-md rounded-full hover:bg-surface/80 transition-colors border border-border/40 text-text shadow-sm"
@@ -35,8 +35,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ activeUser, activeBanner 
                   social.type.toLowerCase() === 'twitter' ? (
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                   ) :
-                    (social.type.toLowerCase() === 'email' || social.type.toLowerCase() === 'mail') ? <Mail className="w-4 h-4" /> :
-                      <Globe className="w-4 h-4" />}
+                    <Globe className="w-4 h-4" />}
               </a>
             ))}
           </div>
